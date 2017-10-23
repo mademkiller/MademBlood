@@ -1,0 +1,156 @@
+*start
+;━━━━━━━━━━━━━━━━━━━━━━━━;
+[iscript]
+
+//0
+tf.area[0]=%[
+	'No'           => 0,
+	'AreaName'     => 'テストエリア',
+	'GroundType'   => 1,
+	'Government'   => 'オーディン軍',
+	'PostDivision' => 1,
+	'MaxPost'      => 1,
+	'Experience'   => 2454,
+	'Level'        => 16,
+	'PowRevision'  => 10,
+	'DefRevision'  => 15,
+	'SpdRevision'  => 5,
+	'MorRevision'  => 3,
+	'HP'           => %['base' => 50 ,'max' => 50 ,'now' => 50],
+	'Cost'         => 150,
+	'BuildingTyep' => 7,
+	'Divine'       => '光',
+	'Growth'       => 'A',
+	'Revenue'      => 77,
+	'Deposits'     => 41,
+	'product'      => 15,
+	'Images'       => 'bg_05',
+];
+
+//0
+tf.area[1]=%[
+	'No'           => 0,
+	'AreaName'     => 'テストエリア',
+	'GroundType'   => 1,
+	'Government'   => 'オーディン軍',
+	'PostDivision' => 1,
+	'MaxPost'      => 1,
+	'Experience'   => 2454,
+	'Level'        => 16,
+	'PowRevision'  => 10,
+	'DefRevision'  => 15,
+	'SpdRevision'  => 5,
+	'MorRevision'  => 3,
+	'HP'           => %['base' => 100 ,'max' => 1200 ,'now' => 800],
+	'Cost'         => 150,
+	'BuildingTyep' => 7,
+	'Divine'       => '光',
+	'Growth'       => 'A',
+	'Revenue'      => 77,
+	'Deposits'     => 41,
+	'product'      => 15,
+	'Images'       => 'bg_02a',
+];
+
+//0
+tf.area[2]=%[
+	'No'           => 0,
+	'AreaName'     => 'テストエリア',
+	'GroundType'   => 1,
+	'Government'   => 'オーディン軍',
+	'PostDivision' => 1,
+	'MaxPost'      => 1,
+	'Experience'   => 2454,
+	'Level'        => 16,
+	'PowRevision'  => 10,
+	'DefRevision'  => 15,
+	'SpdRevision'  => 5,
+	'MorRevision'  => 3,
+	'HP'           => %['base' => 100 ,'max' => 1200 ,'now' => 800],
+	'Cost'         => 150,
+	'BuildingTyep' => 7,
+	'Divine'       => '光',
+	'Growth'       => 'A',
+	'Revenue'      => 77,
+	'Deposits'     => 41,
+	'product'      => 15,
+	'Images'       => 'bg_03',
+];
+//0
+tf.area[3]=%[
+	'No'           => 0,
+	'AreaName'     => 'テストエリア',
+	'GroundType'   => 1,
+	'Government'   => 'オーディン軍',
+	'PostDivision' => 1,
+	'MaxPost'      => 1,
+	'Experience'   => 2454,
+	'Level'        => 16,
+	'PowRevision'  => 10,
+	'DefRevision'  => 15,
+	'SpdRevision'  => 5,
+	'MorRevision'  => 3,
+	'HP'           => %['base' => 100 ,'max' => 1200 ,'now' => 800],
+	'Cost'         => 150,
+	'BuildingTyep' => 7,
+	'Divine'       => '光',
+	'Growth'       => 'A',
+	'Revenue'      => 77,
+	'Deposits'     => 41,
+	'product'      => 15,
+	'Images'       => 'bg_62a',
+];
+
+//0
+tf.area[4]=%[
+	'No'           => 0,
+	'AreaName'     => 'テストエリア',
+	'GroundType'   => 1,
+	'Government'   => 'オーディン軍',
+	'PostDivision' => 1,
+	'MaxPost'      => 1,
+	'Experience'   => 2454,
+	'Level'        => 16,
+	'PowRevision'  => 10,
+	'DefRevision'  => 15,
+	'SpdRevision'  => 5,
+	'MorRevision'  => 3,
+	'HP'           => %['base' => 100 ,'max' => 1200 ,'now' => 800],
+	'Cost'         => 150,
+	'BuildingTyep' => 7,
+	'Divine'       => '光',
+	'Growth'       => 'A',
+	'Revenue'      => 77,
+	'Deposits'     => 41,
+	'product'      => 15,
+	'Images'       => 'bg_02',
+];
+
+//0
+tf.area[5]=%[
+	'No'           => 0,
+	'AreaName'     => 'テストエリア',
+	'GroundType'   => 1,
+	'Government'   => 'オーディン軍',
+	'PostDivision' => 1,
+	'MaxPost'      => 1,
+	'Experience'   => 2454,
+	'Level'        => 16,
+	'PowRevision'  => 10,
+	'DefRevision'  => 15,
+	'SpdRevision'  => 5,
+	'MorRevision'  => 3,
+	'HP'           => %['base' => 100 ,'max' => 1200 ,'now' => 800],
+	'Cost'         => 150,
+	'BuildingTyep' => 7,
+	'Divine'       => '光',
+	'Growth'       => 'A',
+	'Revenue'      => 77,
+	'Deposits'     => 41,
+	'product'      => 15,
+	'Images'       => 'bg_15',
+];
+
+[endscript]
+;━━━━━━━━━━━━━━━━━━━━━━━━;
+[return]

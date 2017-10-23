@@ -1,0 +1,567 @@
+/*------------------------------------------------------------------------
+/	指定した背景・前景レイヤのみ揺らすプラグイン
+/
+/ サークル煌明 QuakePlugin Ver.0.9X を参考に作り直してみたもの
+/
+/-----------------------------------------------------------------------*/
+
+
+@if(__SHAKEPLUGIN_OBJECT_DEFINED__==0)
+@set(__SHAKEPLUGIN_OBJECT_DEFINED__=1)
+
+class ShakePlugin extends KAGPlugin
+{
+	var window;		// Windowオブジェクト
+	var base;
+	var per;
+	var perx;
+	var layer;		// 揺らす前景レイヤ
+	var time;		// 揺れ時間
+	var interval;		// 間隔
+	var loop;		// ループを適用するか？
+	var hmax;		// 縦方向の最大振幅
+	var vmax;		// 横方向の最大振幅
+	var hmin;		// 縦方向の最小振幅
+	var vmin;		// 横方向の最小振幅
+	var random;		// ランダム揺れを適用するか？
+	var lessen;		// 減衰率
+
+	var laynum = [];
+	var pos = [];
+	var layerFore = [];
+	var layerBack = [];
+	var useLayer;
+	var targetLayer;
+	var underLayer;
+	var starttick;
+	var count;
+	var timer;
+
+	var qu = true;
+	var ql = true;
+	var grobX;		// グローバルにも落とす
+	var grobY;		// グローバルにも落とす
+	var doing = false;	// 実行中か？
+	var absolute = 110;	// 重ね合わせ
+
+
+	function ShakePlugin(window)
+	{
+		super.KAGPlugin();
+		this.window = window;
+
+		with(timer = new Timer(onTimer, ""))
+		{
+			.enabled = false;
+		}
+	}
+
+
+	function finalize()
+	{
+		stop();
+		super.finalize(...);
+	}
+
+
+	function set(elm)
+	{
+		// 属性等を設定する
+
+		layer	 = elm.layer	!== void ? elm.layer	 : 'base,0,1,2,3,4,5,6,7,8,9,10,11';
+		interval = elm.interval	!== void ? elm.interval	 : 64;
+		hmax	 = elm.hmax	!== void ? (int)elm.hmax : 0;
+		vmax	 = elm.vmax	!== void ? (int)elm.vmax : 0;
+		hmin	 = elm.hmin	!== void ? (int)elm.hmin : 0;
+		vmin	 = elm.vmin	!== void ? (int)elm.vmin : 0;
+		time	 = elm.time	!== void ? (int)elm.time : false;
+		loop	 = elm.loop	!== void ? elm.loop	 : (!time ? true : false);
+		random	 = elm.random	!== void ? elm.random	 : false;
+		lessen	 = elm.lessen	!== void ? elm.lessen	 : false;
+		elm.restore = false if elm.restore === void;	// 復帰時はtrue
+
+		base = window.fore.base;
+		targetLayer = window.fore.layers[useLayer];
+		underLayer = window.back.layers[useLayer];
+		initLayer(absolute,,,,,base.visible,,,,,targetLayer,underLayer,256);
+		targetLayer.assignImages(kag.fore.base);
+		underLayer.assignImages(kag.back.base);
+		base.imageModified = false;
+
+		splitLayer(layerFore=[], layerBack=[], layer);	// 空にして送り出す
+		doing = true;
+
+		stopAMoment(elm) if elm.restore;
+		definePosision(elm);
+
+		starttick = System.getTickCount();	// 開始時刻を設定
+		per = 1.0 if per===void;		// 初期値は最大
+		perx = true if perx===void;		// min 状態か max 状態かを調べる
+
+		with(timer)
+		{
+			.interval = interval;
+			.enabled = true;
+		}
+	}
+
+
+	function stopAMoment(elm)
+	{
+		// 一瞬止める（揺らしている間はイメージを読み込むたびに、ここを通過させる）
+		// 止める用事が終了したら quakingLayers(%[X:grobX, Y:grobY]); での復帰も忘れずに
+
+		if(!doing) return;
+
+		for(var i=0; i<layerFore.count; i++)
+		{
+			var lf = layerFore[i];
+			var lb = layerBack[i];
+
+			lf.left	= pos[i*4];
+			lf.top	= pos[i*4+1];
+			lb.left	= pos[i*4+2];
+			lb.top	= pos[i*4+3];
+		}
+	}
+
+
+	function definePosision(elm)
+	{
+		// イメージの位置を再定義
+
+		if(!doing) return;
+
+		var lf;
+		var lb;
+
+		for(var i=0; i<layerFore.count; i++)
+		{
+			lf = layerFore[i];
+			lb = layerBack[i];
+
+			if(lf==base || (lf==targetLayer || lb==targetLayer))
+			{
+				// 背景の移動は基本的に認めない方針で
+				layerFore[i] = targetLayer;
+				layerBack[i] = underLayer;
+				pos[i*4] = pos[i*4+1] = pos[i*4+2] = pos[i*4+3] = (int)0;
+			}
+			else
+			{
+				pos[i*4]   = (int)lf.left;
+				pos[i*4+1] = (int)lf.top;
+				pos[i*4+2] = (int)lb.left;
+				pos[i*4+3] = (int)lb.top;
+			}
+		}
+	}
+
+
+	function onTimer()
+	{
+		var X, Y;
+		var past = System.getTickCount()-starttick;
+
+		// 経過時間
+ 		if(!loop && past>time || !kag.sflags.systemcore.option.game.adventure || !kag.sflags.systemcore.option.game.battle)
+		//if(!loop && past>time || !sf.advEffect)
+		{
+			finish(%[layer:'all']);
+		}
+		else
+		{
+			var M = Math;
+
+			if(random)
+			{
+				// ランダム揺らし
+				X = (int)(vmin+per*(M.random()*(vmax-vmin)));
+				Y = (int)(hmin+per*(M.random()*(hmax-hmin)));
+			}
+			else
+			{
+				// 常に同じ揺れ幅
+				X = (int)(vmin+(per*(vmax-vmin)));
+				Y = (int)(hmin+(per*(hmax-hmin)));
+			}
+
+			// 揺れ方向の改変
+			if(X==0)
+			{
+				qu = true;
+				ql = !ql;
+			}
+			else if(Y==0)
+			{
+				ql = true;
+				qu = !qu;
+			}
+			else
+			{
+				if(ql) qu = !qu;
+				ql = !ql;
+			}
+
+			X = (qu ? 1 : -1) * X;
+			Y = (ql ? 1 : -1) * Y;
+			quakingLayers(%[X:X, Y:Y]);
+
+			// 減衰は考慮に入れない
+			grobX = X;
+			grobY = Y;
+		}
+	}
+
+
+	function quakingLayers(elm)
+	{
+		for(var i=0; i<layerFore.count; i++)
+		{
+			var X;
+			var Y;
+			var lf = layerFore[i];
+			var lb = layerBack[i];
+
+			if(lessen)
+			{
+				// 背景(base)以外は減衰する
+				if(lf==targetLayer || lb==underLayer)
+				{
+					X = elm.X;
+					Y = elm.Y;
+				}
+				else
+				{
+					X = (elm.X>>lessen);
+					Y = (elm.Y>>lessen);
+				}
+			}
+			else
+			{
+				// 減衰しない
+				X = elm.X;
+				Y = elm.Y;
+			}
+
+			lf.left	= pos[i*4]+X;
+			lf.top	= pos[i*4+1]+Y;
+			lb.left	= pos[i*4+2]+X;
+			lb.top	= pos[i*4+3]+Y;
+		}
+	}
+
+
+	function finish(elm)
+	{
+		var ls;
+		var tl = targetLayer;
+		var ul = underLayer;
+
+		if(elm.layer==='all')
+		{
+			ls = 'all';
+		}
+		else
+		{
+			ls = [];
+			splitLayer(ls, , elm.layer);
+			ls[ls.find(base,)] = tl if ls.find(base,)!==-1;	// 背景は tl に
+		}
+
+		stopAMoment();
+		var layers = [] = layer.split(",", ,true);	// いったん分けて
+
+		for(var i=0; i<layerFore.count; i++)
+		{
+			// 終了したレイヤはすべて元の位置に戻す
+			if((ls==='all' || ls.find(layerFore[i],)!==-1)&&i<=layerFore.count)
+			{
+				tl.visible = ul.visible = false if layerFore[i]==tl;
+				layerFore.erase(i);
+				layerBack.erase(i);
+				layers.erase(i);
+				for(var j=0;j<=3;j++)
+					pos.erase(i*4);
+				i--;
+			}
+		}
+		layer = layers.join(",",,true);		// 元に戻す
+		quakingLayers(%[X:grobX, Y:grobY]);
+
+		stop() if layerFore.count==0;
+	}
+
+
+	function stop()
+	{
+		if(doing)
+		{
+			per = void;
+			timer.enabled = false;
+			doing = false;
+			window.trigger("Shakes");
+			nulifyLayer(useLayer);
+		}
+	}
+
+
+	function onStore(f, elm)
+	{
+		// 栞を保存するとき
+
+		f["Shake"] = %[];
+		with(f["Shake"])
+		{
+			if(doing)
+			{
+				.doing		= doing;
+				.useLayer	= useLayer;
+				.layer		= layer;
+				.time		= time;
+				.interval	= interval;
+				.loop		= loop;
+				.hmax		= hmax;
+				.vmax		= vmax;
+				.hmin		= hmin;
+				.vmin		= vmin;
+				.lessen		= lessen;
+				.random		= random;
+				.per		= per;
+				.perx		= perx;
+				.grobX		= grobX;
+				.grobY		= grobY;
+				.pos = [],	.pos.assign(pos);
+				.restore = true;	// 復旧用
+			}
+		}
+	}
+
+
+	function onRestore(f, clear, elm)
+	{
+		// 栞を読み出すとき
+
+		if(f["Shake"]===void) return;
+		with(f["Shake"])
+		{
+			if(.doing)
+			{
+				useLayer	= .useLayer;
+				per		= .per;
+				perx		= .perx;
+				pos.assign(.pos);
+				set(f["Shake"]);
+				quakingLayers(%[X:.grobX, Y:.grobY]);	// 揺らし復帰
+			}
+			else stop();
+		}
+	}
+
+
+	function onCopyLayer(toback)
+	{
+		// レイヤの表←→裏の情報のコピー
+		// backlay タグやトランジションの終了時に呼ばれる
+
+		if(doing)
+		{
+			if(toback)
+			{
+				for(var i=0; i<layerFore.count; i++)
+				{
+					pos[i*4+2] = pos[i*4];
+					pos[i*4+3] = pos[i*4+1];
+				}
+			}
+			else
+			{
+				for(var i=0; i<layerFore.count; i++)
+				{
+					pos[i*4]= pos[i*4+2];
+					pos[i*4+1] = pos[i*4+3];
+				}
+			}
+		}
+	}
+
+
+	function onExchangeForeBack()
+	{
+		// 裏と表の管理情報を交換
+
+		if(doing)
+		{
+			for(var i=0; i<layerFore.count; i++)
+			{
+				layerFore[i] <-> layerBack[i];
+				pos[i*4] <-> pos[i*4+2];
+				pos[i*4+1] <-> pos[i*4+3];
+			}
+
+			targetLayer = window.fore.layers[useLayer];
+			underLayer = window.back.layers[useLayer];
+			base = window.fore.base;
+		}
+	}
+
+
+	function onTransStart()
+	{
+		// GraphicLayer をオーバーライドして、トランジション直前に呼ばれるもの。
+
+		if(!doing) return;
+		targetLayer.assignImages(kag.fore.base);
+		underLayer.assignImages(kag.back.base);
+	}
+
+
+	function initLayer(absolute, enabled, face, opacity, type, visible, left, top, width, height, foreLayer, backLayer, hitThreshold)
+	{
+		var base = kag.fore.base;
+
+		// 表と裏のレイヤの設定
+		with(foreLayer)
+		{
+			var b = backLayer;
+
+			.absolute = b.absolute = (absolute !== void ? absolute : 1000);
+			.enabled  = b.enabled  = (enabled  !== void ? enabled  : true);
+			.face	  = b.face     = (face	   !== void ? face     : dfAuto);
+			.opacity  = b.opacity  = (opacity  !== void ? opacity  : 255);
+			.type	  = b.type     = (type	   !== void ? type     : ltAlpha);
+			.visible  = b.visible  = (visible  !== void ? visible  : false);
+			.left	  = b.left     = (left	   !== void ? left     : 0);
+			.top	  = b.top      = (top	   !== void ? top      : 0);
+			.width	  = b.width    = (width    !== void ? width    : base.width);
+			.height	  = b.height   = (height   !== void ? height   : base.height);
+			.hitThreshold = b.hitThreshold = hitThreshold if hitThreshold !== void;
+		}
+	}
+
+
+	function splitLayer(fores=[], backs=[], target, page="fore")
+	{
+		var targets = [] = target.split(",", ,true);
+		var apage = page!=='fore' ? 'fore' : 'back';	// 指定ページ裏表逆
+
+		for(var i=0;i<targets.count;i++)
+		{
+			var tar = targets[i];
+			if(tar==='base')
+			{
+				fores.add(kag[page].base);
+				backs.add(kag[apage].base);
+			}
+			else if(tar[0]==='m')
+			{
+				if(tar==='message')
+				{
+					fores.add(kag[page].messages[kag.currentNum]);
+					backs.add(kag[apage].messages[kag.currentNum]);
+				}
+				else
+				{
+					fores.add(kag[page].messages[+tar.substr(7)]);
+					backs.add(kag[apage].messages[+tar.substr(7)]);
+				}
+			}
+			else if((/^[0-9]*$/.test(tar)) && tar<=kag.numCharacterLayers)
+			{
+				fores.add(kag[page].layers[tar]);
+				backs.add(kag[apage].layers[tar]);
+			}
+		}
+	}
+
+
+	function nulifyLayer(n)
+	{
+		var f = kag.fore.layers[n], b = kag.back.layers[n];
+		f.freeImage();
+		b.freeImage();
+		f.enabled = b.enabled = false;
+		f.visible = b.visible = false;
+	}
+}
+
+
+// プラグインオブジェクトを作成し、登録する
+kag.addPlugin(global.ShakePlugin_object = new ShakePlugin(kag));
+kag.tagHandlers.laycount(%[layers:kag.numCharacterLayers+1]);
+ShakePlugin_object.useLayer = kag.numCharacterLayers-1;
+
+
+/*--------------------------------------------------------------------
+/ マクロ登録
+/-------------------------------------------------------------------*/
+
+
+// 揺れを開始
+kag.tagHandlers.shakes = function(elm = %[])
+{
+	if(!global.ShakePlugin_object.doing) {
+		ShakePlugin_object.set(elm);
+	}
+	return 0;
+} incontextof kag;
+
+
+// 揺れを待つ
+kag.tagHandlers.waitshakes = function(elm = %[])
+{
+	if(global.ShakePlugin_object.doing) {
+		elm.name = "Shakes";
+		elm.onskip = "ShakePlugin_object.finish()";
+		elm.canskip =	elm.canskip!==void ? elm.canskip : false;
+		return kag.waitTrigger(elm);
+	}
+	else return 0;
+} incontextof kag;
+
+
+// 揺れを停止
+kag.tagHandlers.stopshakes = function(elm = %[])
+{
+	if(global.ShakePlugin_object.doing) {
+		elm.layer='all' if elm.layer===void;
+		ShakePlugin_object.finish(elm);
+	}
+	return 0;
+} incontextof kag;
+
+
+// 一時的に揺れを停止
+kag.tagHandlers.pauseshakes = function(elm = %[])
+{
+	if(global.ShakePlugin_object.doing) {
+		elm.restore=false;
+		ShakePlugin_object.stopAMoment(elm);
+	}
+	return 0;
+} incontextof kag;
+
+
+// 揺れを復帰
+kag.tagHandlers.recovershakes = function(elm = %[])
+{
+	if(global.ShakePlugin_object.doing) {
+		elm.X = ShakePlugin_object.grobX, elm.Y = ShakePlugin_object.grobY;
+		ShakePlugin_object.quakingLayers(elm);
+	}
+	return 0;
+} incontextof kag;
+
+
+// レイヤ位置の再取得
+kag.tagHandlers.posupdateshakes = function(elm = %[])
+{
+	if(global.ShakePlugin_object.doing) {
+		elm.restore=false;
+		ShakePlugin_object.definePosision(elm);
+	}
+	return 0;
+} incontextof kag;
+
+
+@endif

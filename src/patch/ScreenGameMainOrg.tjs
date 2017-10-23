@@ -1,0 +1,878 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenGameMainOrg
+//
+/////////////////////////////////////////////////////////////////////////
+//
+class ScreenGameMainOrg extends TFrame2
+{
+	//var selectLineIndex= 0;
+	//var selectMiniIndex= 0;
+	
+	function ScreenGameMainOrg( g_, s_ ){
+		super.TFrame2(...);
+		backGround.callbackREvent2= rightClickCallBack;
+	}
+	
+	function finalize() {
+	
+		PostReleaseScreen();
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	// init
+	//
+	function onPreLoad()
+	{
+		
+		ca.chardata_update();
+		
+		with( panel )
+		{
+			backGround.loadImages("slg_Org_bg");
+			
+			//ui
+			.uiBase= new LayerTrueBase( kag, backGround );
+			.uiBase.setLayer( 0, 540 );
+			.uiBase.loadImages("slg_top_chip01");
+			.uiBase.drawImageFile( 312,10, "slg_topicOrg" );
+			.uiBase.drawText4( 335,100, "師団を選択して編成することが出来ます。",0xff0000,14 );
+			.uiBase.drawText4( 335,116, "前列・後列にユニットを配置しよう。",0xff0000,14 );
+			
+			.uiTopInfo= new charTopStatus( kag, backGround );
+			.uiTopInfo.setLayer( 0, 0 );
+			.uiTopInfo.setCharNo(0);
+			
+			//左のパネル
+			.uiLList= new miniIconSelector( kag, backGround, this  );
+			.uiLList.setLayer( 300, 127 );
+			
+			.uiMList= new midIconSelector( kag, backGround, this );
+			.uiMList.setLayer( 400, 50 );
+			
+			.uiBTag= new LayerTrueBase( kag, .uiBase );
+			.uiBTag.setLayer( 12, 556 );
+			.uiBTag.loadImages("slg_topicOrg");
+			
+			//ドラッグスクリーン
+			.drugScreen= new TDrugMoveBase2( kag, backGround );
+			.drugScreen.setLayer( 0, 0, 970, 720 );
+			
+			.drugScreen2= new TDrugMoveBase2( kag, backGround );
+			.drugScreen2.setLayer( 0, 0, 500, 720 );
+			.drugScreen2.hold_w= true;
+			
+ 			for(var i= 0; i<60; i++ ){
+ 				.uiLList.miniIcons[i].Drop_Exec.Execute= onMiniAction_drop_callback;
+ 			}
+ 			
+ 			for(var i= 0; i<10; i++ ){
+ 				.uiLList.miniLineIcons[i].Drop_Exec.Execute= onMiniActionLines_drop_callback;
+ 			}
+ 			
+			.uiLList.setDrugs( .drugScreen, .drugScreen2 );
+			.uiMList.setDrugs( .drugScreen );
+			
+			.uiLList.selectBtn[0].callbackEvent= callback_mini_all_cancel;
+			.uiLList.selectBtn[1].callbackEvent= callback_mini_line_cancel;
+
+	 		//panel.uiMList.drawStatus();
+	 		//panel.uiLList.drawStatus();
+	 		drawStatus();
+		}
+		return true;
+	}
+	
+	function onPostRelease()
+	{
+		invalidatePanel();
+	}
+	
+	///////////////////////////////////////////////////////
+	// show
+	//
+	function onInit()
+	{
+		backGround.setLayer( 0, 0, 960, 720, 0x00000000 );
+		backGround.visible= false;
+		backGround.opacity= 0;
+	}
+	
+	function onShow( time_, en_ )
+	{
+		//init_panel();
+		//parrentSrn.enabledButton([ 1,0,0, 0,2,0, 0,0,0 ]);
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 0;
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,255)" ] );
+		
+		panel.uiBase.setPos( 0, 720 );
+		panel.uiBase.beginMove( %[ time:time_, path:"(0,540,255)", accel:-2 ] );
+		
+		panel.uiTopInfo.setPos( 0, -140 );
+		panel.uiTopInfo.beginMove( %[ time:time_, path:"(0,0,255)", accel:-2 ] );
+		
+		panel.uiLList.setPos( -302, 139 );
+		panel.uiLList.beginMove( %[ time:time_, path:"(0,139,255)", accel:-2 ] );
+		
+		panel.uiMList.setPos( 960, 100 );
+		panel.uiMList.beginMove( %[ time:time_, path:"(326,100,255)", accel:-2 ] );
+		
+		dm("onShow");
+	}
+	
+	function onShowEnd()
+	{
+		//setEnableEvent(true);
+		
+// 		panel.uiLList.setEnableEvent(true);
+// 		panel.uiMList.setEnableEvent(true);
+// 		
+// 		parrentSrn.lockButton(false);
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 255;
+		
+		//frameWork.rckicEvent= rightClickCallBack;
+		
+		dm("onShowEnd");
+	}
+	
+	function onHide( time_, en_ )
+	{
+	
+		//setEnableEvent(false);
+		
+		
+		
+		panel.uiLList.setPos( 0, 139 );
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,0)", accel:2 ] );
+		
+		panel.uiBase.beginMove( %[ time:time_, path:"(0,720,255)", accel:2 ] );
+		panel.uiTopInfo.beginMove( %[ time:time_, path:"(0,-140,255)", accel:2 ] );
+		panel.uiLList.beginMove( %[ time:time_, path:"(-302,139,255)", accel:2 ] );
+		panel.uiMList.beginMove( %[ time:time_, path:"(960,100,255)", accel:2 ] );
+		
+	}
+	
+	function onHideEnd()
+	{
+		backGround.visible= false;
+		backGround.opacity= 0;
+		
+		kag.KeyDown_CallBack= void;
+		
+		PostReleaseScreen();
+		
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		panel.uiLList.setEnableEvent(f_);
+		panel.uiMList.setEnableEvent(f_);
+		
+		backGround.setEnableEvent(f_);
+		
+		parrentSrn.lockButton(!f_);
+		
+	}
+	///////////////////////////////////////////////////////
+	// update
+	//
+	//表示更新
+	function drawStatus()
+	{
+		panel.uiLList.drawStatus();
+		panel.uiMList.drawStatus();
+		panel.uiTopInfo.drawStatus();
+	}
+	
+	///////////////////////////////////////////////////////
+	// callback
+	//
+	//ミニアイコンのラインをドロップしたとき
+	function onMiniActionLines_drop_callback( lay, src ){
+		ca.exchangeDropLine( src.lay._id, lay._id );
+ 		drawStatus();
+	}
+	
+	//ミニアイコンにドロップしたとき
+	function onMiniAction_drop_callback( lay, src )
+	{
+		var ci= lay.getWaper();
+		gt.org.selectmCharY= lay._id\6;
+		
+		if( src.lay.name=="charMiniIcon" ){
+			
+			var ci= lay.getWaper();
+			var co= src.lay.getWaper();
+			
+			ca.exchangeDrop( ci.x,ci.y, co.x,co.y );
+			
+			dm("onMiniAction_drop_callback %d.%d %d.%d".sprintf( ci.x,ci.y, co.x,co.y ));
+			
+		}else{
+			
+			var ci= lay.getWaper();
+			var cn= src.lay._data[src.lay._id];
+			
+			if(ci.n!=0) gf.get(ci.n,gf.char).troopsNo= -1;
+			
+			ca.executeDrop( ci.x,ci.y, cn );
+			
+			gf.get(src.lay._data[src.lay._id],gf.char).troopsNo= gt.org.selectmCharY;
+		}
+		
+		ca.party_status_update();
+ 		drawStatus();
+	}
+	
+	//ミニアイコンを消去
+ 	function callback_mini_cancel(lay,ev)
+ 	{
+		var ci= lay.getWaper();
+  		if( ci.n!=0 ) {
+  			gf.get(ci.n,gf.char).troopsNo= -1;
+  			ca.executeDrop( ci.x,ci.y, 0 );
+  			drawStatus();
+  		}
+  		ca.party_status_update();
+ 	}
+ 	
+	//師団解散
+ 	function callback_mini_line_cancel(lay,ev){
+ 		ca.party_line_clear(gt.org.selectmCharY);
+  		ca.party_status_update();
+  		drawStatus();
+  		return true;
+ 	}
+ 	
+	//全師団解散
+ 	function callback_mini_all_cancel(lay,ev){
+  		ca.party_lineall_clear();
+  		ca.party_status_update();
+  		drawStatus();
+  		return true;
+ 	}
+ 	
+	function rightClickCallBack(){
+		parrentSrn.opt_buttom_top(0);
+	}
+}
+
+///////////////////////////////////////////////////////
+//ラインセレクト
+class charMiniLineIcon extends TDrugEventBase2
+{
+	//var arr=void, i=0, yi=0;
+	//var ext= void;
+	
+	function charMiniLineIcon( win, par, pal ) {
+		super.TDrugEventBase2(...);
+		name= "charMiniLineIcon";
+		Drug_Exec.DrawCallback= callbackDrawEvent;
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 30,30, 0x00000000 );
+		//loadImages("slg_Org_plate_org%02d".sprintf(_id+1));
+	}
+	
+	function setData( i_, d_=void ){
+		super.setData(...);
+		//loadImages("slg_Org_plate_org%02d".sprintf(_id+1));
+		//drawStatus();
+		loadImages("slg_Org_plate_org%02d".sprintf(_id+1));
+	}
+	
+	//ドラッグ時の描写コールバック
+	function callbackDrawEvent( layer, ev ){
+		layer.setSize( 217, 30 );
+		layer.copyRect( 0, 0, this, 0, 0, width, height );
+		
+		var st= _id*6;
+		
+		for(var i= st; i<st+6; i++ ){
+			var xx= 31+((i%6)*31);
+			layer.copyRect( xx, 0, _data[i], 0, 0, _data[i].width, _data[i].height );
+		}
+		//layer_.setPos( left+2, top );
+	}
+	
+	function drawStatus()
+	{
+		//loadImages("slg_Org_plate_org%02d".sprintf(_id+1));
+		//setDropDraw();
+	}
+}
+
+///////////////////////////////////////////////////////
+//ミニキャラセレクト
+//class charMiniIcon extends TDrugEventBase
+class charMiniIcon extends TDrugEventBase2
+{
+	var arr=void;
+	
+	var xi=0, yi=0;
+	
+	var ch= void;
+	
+	function charMiniIcon( win, par, pal ) {
+		super.TDrugEventBase2(...);
+		name= "charMiniIcon";
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 30,30, 0x00000000 );
+	}
+	
+ 	function getWaper(){
+ 		var dd= %[ n:0, x:0, y:0 ];
+ 		dd.x= xi;
+ 		dd.y= yi;
+ 		dd.n= f.used.party[dd.y].division[dd.x];
+ 		return dd;
+ 	}
+ 	
+	function setData( i_, d_=void ){
+		super.setData(...);
+		//drawStatus();
+	}
+	
+	function drawStatus()
+	{
+		var cc= f.used.party[yi].division[xi];
+		
+		if( cc==0 ) {
+			ch= gf.get(0,gf.char);
+			loadImages("bc_mini1_0000");
+		} else {
+			ch= gf.get(cc,gf.char);
+			loadImages(ch.image[3].file);
+		}
+		//setDropDraw();
+		//setDropDraw();
+	}
+}
+
+///////////////////////////////////////////////////////
+//キャラセレクト
+//class charMidIcon extends TDrugEventBase
+class charMidIcon extends TDrugEventBase2
+{
+	var ch= void;
+	var tmode= false;
+	
+	function charMidIcon( win, par, pal ) {
+		super.TDrugEventBase2(...);
+		name= "charMidIcon";
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 48,64, 0x00000000 );
+	}
+	
+ 	function getWaper(){
+ 		var dd= %[ n:0, x:0, y:0 ];
+ 		dd.x= 0;
+ 		dd.y= 0;
+ 		dd.n= _id;
+ 		return dd;
+ 	}
+	
+	function setData( i_, d_=void, pt_=void ){
+		super.setData(...);
+	}
+	
+	
+	function drawStatus()
+	{
+		if( _data[_id]==0 ) visible= false;
+		else {
+			visible= true;
+			
+			ch= gf.get(_data[_id],gf.char);
+			
+			var ph= ch.HP.now/ch.HP.max;
+			
+			//if(Storages.isExistentStorage(ch.image[1].file+".png")) 
+			loadImages(ch.image[1].file);
+			
+			//ライフ
+			fillRect( 0,43, width,2, 0xffaa0000 );
+			fillRect( 0,43, width*ph,2, 0xff00f68c );
+			
+			drawText3( 2,   50, "%4d".sprintf(ch.HP.now),0xffffff, 214 );
+			
+			//if( ch.troopsNo!=-1 && !tmode ){
+			if( ch.troopsNo>=0 && !tmode ){
+				opacity= 96;
+				Drug_Exec.Enabled= false;
+			} else {
+				opacity= 255;
+				Drug_Exec.Enabled= true;
+			}
+		}
+	}
+}
+
+///////////////////////////////////////////////////////
+//
+class miniIconSelector extends LayerTrueBase
+{
+	//var Icons= [];
+	
+	var selectCat= 0;
+	
+	var miniLineIcons= [];
+	var miniIcons= [];
+	var uiChar= [];
+	
+	var ui_Cor_MiniLine;
+	var ui_Cor_Mini;
+	
+	var selectBtcancel;
+	var selectBtexec;
+	var selectBtn1;
+	var selectBtn2;
+	
+	var selectBtn= [];
+	
+	function miniIconSelector( win, par, pal ) {
+		super.LayerTrueBase(...);
+		name= "miniIconSelector";
+	}
+	
+	function finalize() {
+		
+		for(var i=0; i<miniLineIcons.count; i++) invalidate miniLineIcons[i];
+		for(var i=0; i<miniIcons.count; i++) invalidate miniIcons[i];
+		for(var i=0; i<uiChar.count; i++) invalidate uiChar[i];
+		
+		invalidate ui_Cor_MiniLine;
+		invalidate ui_Cor_Mini;
+		
+		for(var i=0; i<selectBtn.count; i++) invalidate selectBtn[i];
+		
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 302,593, 0x00000000 );
+		drawImageFile(0,0,"slg_Org_plate_org");
+		
+		for(var i= 0; i<10; i++ ){
+			var yy= 40+(i*32);
+			miniLineIcons[i]= new charMiniLineIcon( window, this );
+			miniLineIcons[i].setLayer( 18, yy );
+			miniLineIcons[i].setData(i,miniIcons);
+			//miniLineIcons[i].mode= 0;
+			miniLineIcons[i].Drug_Enter= onMiniLineAction;
+			if(f.used.party[i].status>2){
+				//miniLineIcons[i].setDropDraw();
+				miniLineIcons[i].button_Enabled(false);
+			}
+		}
+		
+		for(var i= 0; i<60; i++ ){
+			var xx= 49+(i%6)*31;
+			var yy= 40+(i\6)*32;
+			miniIcons[i]= new charMiniIcon( window, this );
+			miniIcons[i].setLayer( xx, yy );
+			miniIcons[i].setData(i,f.used.view.ppview);
+			//miniIcons[i].mode= 0;
+			miniIcons[i].Drug_Enter= onMiniAction;
+			
+			miniIcons[i].xi= i%6;
+			miniIcons[i].yi= i\6;
+			
+			if(f.used.party[i\6].status>2){
+				//miniIcons[i].setDropDraw();
+				miniIcons[i].button_Enabled(false);
+			}
+		}
+		
+		selectBtn[0]= new TButtonBase1k( window, this );
+		selectBtn[0].setLayer( 18, 10, 68, 24 );
+		selectBtn[0].loadImages("slg_Org_bt_orgdisall");
+// 		selectBtn[0].AllLockOut= true; //ロックをリリースするか
+		
+		selectBtn[1]= new TButtonBase1k( window, this );
+		selectBtn[1].setLayer( 88, 10, 68, 24 );
+		selectBtn[1].loadImages("slg_Org_bt_orgdis");
+	// 	selectBtn[1].AllLockOut= true; //ロックをリリースするか
+		
+// 		selectBtn[2]= new TButtonBase1k( window, this );
+// 		selectBtn[2].setLayer( 141, 5, 68, 24 );
+// 		selectBtn[2].loadImages("slg_Org_bt_orgexc");
+// 		
+// 		selectBtn[3]= new TButtonBase1k( window, this );
+// 		selectBtn[3].setLayer( 209, 5, 68, 24 );
+// 		selectBtn[3].loadImages("slg_Org_bt_orgskill");
+		
+		var uiw= [ 10, 10, 10, 154, 154, 154 ];
+		var uih= [ 373, 435, 497, 373, 435, 497 ];
+		for(var i= 0; i<6; i++ ){
+			uiChar[i]= new charMiniStatus( window, this );
+			uiChar[i].setLayer(uiw[i],uih[i]);
+			uiChar[i].setData(0,gf.char);
+		}
+		
+		//ターゲットアイコン
+		ui_Cor_MiniLine= new global.LayerTrueBase( window, this );
+		ui_Cor_MiniLine.setLayer( 0, 0, 278, 30, 0xff000000 );
+		ui_Cor_MiniLine.visible= false;
+		ui_Cor_MiniLine.loadImages("line_icon_tg");
+		
+		ui_Cor_Mini= new global.LayerTrueBase( window, this );
+		ui_Cor_Mini.setLayer( 0, 0, 30, 30, 0xff000000 );
+		ui_Cor_Mini.visible= false;
+		ui_Cor_Mini.loadImages("mini_icon_tg");
+		
+		drawStatus();
+		
+		//setEnableEvent( true );
+		
+ 		for(var i= 0; i<10; i++ ){
+ 			if(f.used.party[i].status>2){
+ 				miniLineIcons[i].setDropDraw();
+ 				miniLineIcons[i].button_Enabled(false);
+ 				for(var x= 0; x<6; x++ ){
+ 					miniIcons[i].setDropDraw();
+ 					miniIcons[(i*6)+x].button_Enabled(false);
+ 				}
+ 			}
+		}
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		for(var i=0; i<selectBtn.count; i++) selectBtn[i].setEnableEvent( f_, f2_ );
+		for(var i= 0; i<10; i++ ) miniLineIcons[i].setEnableEvent( f_, f2_ );
+		for(var i= 0; i<60; i++ ) miniIcons[i].setEnableEvent( f_, f2_ );
+		selectBtn[0].setEnableEvent( f_, f2_ );
+		selectBtn[1].setEnableEvent( f_, f2_ );
+// 		selectBtn[2].setEnableEvent( f_, f2_ );
+// 		selectBtn[3].setEnableEvent( f_, f2_ );
+	}
+	
+	//コールバックをセット
+	function setDrugs( f_=void, f2_=void )
+	{
+		
+		for(var i= 0; i<10; i++ ){
+			miniLineIcons[i].Drug_Exec.setDrugs( f2_ );
+ 			miniLineIcons[i].Drop_Exec.setDrugs( f2_ );
+ 			miniLineIcons[i].Drug_Exec.Enabled= true;
+ 			miniLineIcons[i].Drop_Exec.Enabled= true;
+		}
+		
+ 		for(var i= 0; i<60; i++ ){
+ 			miniIcons[i].Drug_Exec.setDrugs( f_ );
+ 			miniIcons[i].Drop_Exec.setDrugs( f_ );
+ 			miniIcons[i].Drug_Exec.Enabled= true;
+ 			miniIcons[i].Drop_Exec.Enabled= true;
+ 		}
+	}
+	
+	function drawStatus()
+	{
+	
+		for(var i= 0; i<10; i++ ){
+			f.used.party[i].HP.max= 0;
+			f.used.party[i].HP.now= 0;
+// 			for(var c= i*6; c<(i*6)+6; c++ ){
+// 				if(f.used.view.ppview[c]!=0){
+// 					f.used.party[i].HP.max+= gf.get(f.used.view.ppview[c],gf.char).HP.max;
+// 					f.used.party[i].HP.now+= gf.get(f.used.view.ppview[c],gf.char).HP.now;
+// 				}
+// 			}
+			for(var c= 0; c<6; c++ ){
+				if(f.used.party[i].division[c]!=0){
+					var cc= f.used.party[i].division[c];
+					f.used.party[i].HP.max+= gf.get(cc,gf.char).HP.max;
+					f.used.party[i].HP.now+= gf.get(cc,gf.char).HP.now;
+				}
+			}
+		}
+		
+		for(var i= 0; i<10; i++ ){
+			var ch= f.used.party[i];
+			fillRect( 237,44+(32*i), 52,17, 0xff000000 );
+			
+			
+			//if(ch.HP.now!=0) 
+			
+			drawText3( 241, 48+(32*i), "%5d".sprintf(ch.HP.now),0xffffff, 214 );
+			
+			//ライフ
+			fillRect( 235,62+(32*i), 56,2, 0xffaa0000 );
+			fillRect( 235,62+(32*i), 56*(ch.HP.now/ch.HP.max),2, 0xff00f68c );
+		}
+		
+		for(var i= 0; i<60; i++ ){
+			miniIcons[i].drawStatus();
+		}
+		
+		setBottomViewUpdate();
+	}
+	
+ 	function setBottomViewUpdate()
+ 	{
+ 		//var n= selectCat*6;
+ 		for(var i= 0; i<6; i++ ){
+ 			uiChar[i].setData(f.used.party[gt.org.selectmCharY].division[i]);
+ 			//uiChar[i].setData(f.used.view.ppview[n+i]);
+ 			//dm("setBottomViewUpdate %d=%d->%d".sprintf(n,i,f.used.view.ppview[n+i]));
+ 		}
+ 	}
+	
+	function onMiniAction(lay,ev)
+	{
+	
+		if( ev.type=="onMouseDown" && ev.button==mbLeft && gt.org.selectmCharY!=lay.yi ) {
+			//core2.setEvent_aLock_true();
+			//selectCat= lay._id\6;
+	 		//framePanel.selectLineIndex= selectCat;
+	 		gt.org.selectmCharY= lay.yi;
+	 		setBottomViewUpdate();
+	 		//core2.setEvent_aLock_false();
+		}
+		
+		if( ev.type=="onMouseUp" && ev.button==mbRight ) {
+	 		framePanel.callback_mini_cancel(...);
+		}
+		
+		var xx= lay.left;
+		var yy= lay.top;
+		
+		if( ev.type=="onMouseEnter" ){
+			if( !framePanel.panel.drugScreen.drugModeEnabled() ) {
+				framePanel.panel.uiTopInfo.setChar2(lay.ch);
+				framePanel.panel.uiTopInfo.drawStatus();
+			}
+			ui_Cor_Mini.setPos(xx,yy);
+			ui_Cor_Mini.visible= true;
+		}
+		
+		if( ev.type=="onMouseLeave" ){
+			ui_Cor_Mini.visible= false;
+		}
+	}
+	
+	function onMiniLineAction(lay,ev)
+	{
+	
+		var xx= lay.left;
+		var yy= lay.top;
+		
+// 		if( ev.type=="onClick" ) {
+// 			selectLineIndex= lay._id;
+// 			setBottomViewUpdate(selectLineIndex);
+// 			updateLineStatus();
+// 		}
+// 		
+// 		if( ev.type=="onMouseUp" && lay.Drop_StandBy ){
+// 			
+// 			var from= panel.drugScreen2.src._id*6;
+// 			var to= lay._id*6;
+// 			var ar= f.used.view.ppview;
+// 			
+// 			exchangeDropLine( from, to, ar );
+// 			
+// 			for(var i= 0; i<6; i++ ){
+// 				miniIcons[from+i].drawStatus();
+// 				miniIcons[to+i].drawStatus();
+// 			}
+// 			
+// 			selectLineIndex= lay._id;
+// 			setBottomViewUpdate(selectLineIndex);
+// 			updateLineStatus();
+// 			
+// 			drugScreen2.layer= void;
+// 			
+// 			drugScreen2.drugModeEnd();
+// 		}
+		if( ev.type=="onMouseDown" && ev.button==mbLeft && gt.org.selectmCharY!=lay._id ) {
+			//core2.setEvent_aLock_true();
+			gt.org.selectmCharY= lay._id;
+			//selectCat= lay._id;
+	 		//framePanel.selectLineIndex= selectCat;
+	 		setBottomViewUpdate();
+	 		//core2.setEvent_aLock_false();
+		}
+		
+		if( ev.type=="onMouseEnter" ){
+			ui_Cor_MiniLine.setPos(xx-18,yy);
+			ui_Cor_MiniLine.visible= true;
+			if(!lay.isMouseDrug) {
+				gt.org.selectmCharY= lay._id;
+		 		setBottomViewUpdate();
+	 		}
+		}
+		
+		if( ev.type=="onMouseLeave" ){
+			ui_Cor_MiniLine.visible= false;
+		}
+	}
+}
+
+
+///////////////////////////////////////////////////////
+//
+class midIconSelector extends LayerTrueBase
+{
+
+	var midIcons= [];
+	var ui_Cor_Mid;
+	var selectBtn2;
+	
+	var pIndex= 0;
+	
+	function midIconSelector( win, par, pal ) {
+		super.LayerTrueBase(...);
+		name= "midIconSelector";
+	}
+	
+	function finalize() {
+		for(var i=0; i<midIcons.count; i++) invalidate midIcons[i];
+		invalidate ui_Cor_Mid;
+		invalidate selectBtn2;
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 624,398+40, 0x00000000 );
+		drawImageFile(0,40,"slg_Org_plate_unitlist");
+		
+		//キャラクター
+		for(var i= 0; i<72; i++ ){
+			var xx= 24+(i%12)*50;
+			var yy= 42+(i\12)*66;
+			midIcons[i]= new charMidIcon( window, this );
+			midIcons[i].setLayer( xx, yy );
+			midIcons[i].setData(i,f.used.view.chview);
+		}
+		
+		//ターゲットアイコン
+		ui_Cor_Mid= new global.LayerTrueBase( window, this );
+		ui_Cor_Mid.setLayer( 0, 0, 48, 64, 0xff000000 );
+		ui_Cor_Mid.visible= false;
+		ui_Cor_Mid.loadImages("mid_icon_tg");
+		
+		//セレクター
+		selectBtn2= new TButtonSelect4( window, this );
+		selectBtn2.setLayer( 22, 14 );
+		selectBtn2.setButton( 104, 22, 2 );
+		selectBtn2.setButtonPos([ 0,0, 105,0 ]);
+		selectBtn2.setButtonLoad([ "slg_Org_bt_unitsol","slg_Org_bt_unitgen" ]);
+		selectBtn2.setCallBack(,opt_buttom_top);
+		selectBtn2.setEnable([ 2,1 ]);
+	// 	selectBtn2.AllLockOut= true; //ロックをリリースするか
+		
+	}
+	
+	function opt_buttom_top(v)
+	{
+		switch(v){
+			case 0:
+				selectBtn2.setEnable([ 2,1 ]);
+				pIndex= 0;
+				for(var i= 0; i<72; i++ ) midIcons[i].setData(i,f.used.view.chview);
+				drawStatus();
+				break;
+			case 1:
+				selectBtn2.setEnable([ 1,2 ]);
+				pIndex= 1;
+				for(var i= 0; i<72; i++ ) midIcons[i].setData(i,f.used.view.cmview);
+				drawStatus();
+				break;
+		}
+		return true;
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		for(var i= 0; i<72; i++ ){
+			midIcons[i].setEnableEvent( f_, f2_ );
+		}
+// 		selectBtn[0].setEnableEvent( f_, f2_ );
+// 		selectBtn[1].setEnableEvent( f_, f2_ );
+		selectBtn2.setEnableEvent( f_, f2_ );
+	}
+	
+	//
+	function setDrugs( f_=void )
+	{
+		for(var i= 0; i<72; i++ ){
+ 			midIcons[i].Drug_Enter= onMidAction;
+ 			midIcons[i].Drug_Exec.setDrugs( f_ );
+ 			midIcons[i].Drug_Exec.Enabled= true;
+		}
+	}
+	
+	function drawStatus()
+	{
+		for(var i= 0; i<72; i++ ){
+			midIcons[i].drawStatus();
+		}
+	}
+	
+	//
+// 	function btn_callback_commd()
+// 	{
+// 		pIndex= 1;
+// 		for(var i= 0; i<72; i++ ) midIcons[i].setData(i,f.used.view.cmview);
+// 		drawStatus();
+// 	}
+// 	
+// 	function btn_callback_army()
+// 	{
+// 		pIndex= 0;
+// 		for(var i= 0; i<72; i++ ) midIcons[i].setData(i,f.used.view.chview);
+// 		drawStatus();
+// 	}
+	
+	//キャラリスト
+	function onMidAction(lay,ev)
+	{
+		
+		var xx= lay.left;
+		var yy= lay.top;
+		
+		if( ev.type=="onMouseEnter" ){
+			//gt.pre.selectCharIndex= lay._id;
+			framePanel.panel.uiTopInfo.setChar2(lay.ch);
+			framePanel.panel.uiTopInfo.drawStatus();
+			ui_Cor_Mid.setPos(xx,yy);
+			ui_Cor_Mid.visible= true;
+			//core2.setEvent_aLock_false();
+		}
+		
+		if( ev.type=="onMouseLeave" ){
+			ui_Cor_Mid.visible= false;
+		}
+	}
+	
+}

@@ -1,0 +1,939 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenGameMainDir
+//
+/////////////////////////////////////////////////////////////////////////
+//
+class ScreenGameMainDir extends TFrame2
+{
+	var selectLineIndex= 0;
+	var selectMiniIndex= 0;
+	
+	function ScreenGameMainDir( g_, s_ ){
+		super.TFrame2(...);
+		//backGround.callbackREvent2= rightClickCallBack;
+	}
+	
+	function finalize() {
+	
+		PostReleaseScreen();
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	// init
+	//f.used.party
+	function onPreLoad()
+	{
+		
+		ca.chardata_update();
+		
+		with( panel )
+		{
+			backGround.loadImages("slg_Org_bg");
+ 			
+			//ui
+			.uiBase= new LayerTrueBase( kag, backGround );
+			.uiBase.setLayer( 0, 540 );
+			.uiBase.loadImages("slg_top_chip01");
+			.uiBase.drawImageFile( 312,10, "slg_topicDir" );
+			.uiBase.drawText4( 310,100, "ユニット・師団単位で選択して治療を行います",0xff0000,14 );
+			.uiBase.drawText4( 310,115, "治療にはゴールドが必要です。",0xff0000,14 );
+			.uiBase.drawText4( 310,130, "戦闘に参加しなかったユニットは自動治癒力の",0xff0000,14 );
+			.uiBase.drawText4( 310,145, "値だけ、ターン終了時にＨＰが回復します。",0xff0000,14 );
+			
+			.uiTopInfo= new charTopStatus( kag, backGround );
+			.uiTopInfo.setLayer( 0, 0 );
+			.uiTopInfo.setCharNo(0);
+			
+			.uiBTag= new LayerTrueBase( kag, .uiBase );
+			.uiBTag.setLayer( 12, 556 );
+			.uiBTag.loadImages("slg_topicOrg");
+			
+			//左のパネル
+			.uiLList= new miniIconSelector2( kag, backGround, this  );
+			.uiLList.setLayer( 300, 127 );
+			
+ 			.uiMList= new midComSelector( kag, backGround, this );
+ 			.uiMList.setLayer( 400, 50 );
+			
+ 			.uiMList2= new subSelector( kag, .uiMList, this );
+ 			//.uiMList2.setLayer( 302, 139 );
+ 			.uiMList2.setLayer( 0, 0 );
+ 			.uiMList2.visible= false;
+ 			
+ 			//.uiMList.skill_callback= .uiMList2;
+ 			
+ 			//.uiLList.mode2_callback= .uiMList2.draw_Status;
+ 			//.uiLList.info_mode= true;
+ 			
+ 			
+			//ドラッグスクリーン
+			.drugScreen= new TDrugMoveBase2( kag, backGround );
+			.drugScreen.setLayer( 0, 0, 970, 720 );
+			
+			.drugScreen2= new TDrugMoveBase2( kag, backGround );
+			.drugScreen2.setLayer( 0, 0, 500, 720 );
+			
+			
+			.uiLList.char_lifeup= set_char_lifemax;
+			.uiLList.char_linelifeup= set_charline_lifemax;
+			
+			.uiMList.selectBtn[0].callbackEvent= set_allline_lifemax;
+			.uiMList.selectBtn[1].callbackEvent= set_all_lifemax;
+			
+//  			for(var i= 0; i<60; i++ ){
+//  				.uiLList.miniIcons[i].Drop_Exec.Execute= onMiniAction_drop_callback;
+//  			}
+//  			
+//  			for(var i= 0; i<10; i++ ){
+//  				.uiLList.miniLineIcons[i].Drop_Exec.Execute= onMiniActionLines_drop_callback;
+//  			}
+ 			
+			//.uiLList.setDrugs( .drugScreen );
+ 			//.uiMList.setDrugs( .drugScreen );
+			
+//  	 		panel.uiMList.drawStatus();
+// 	 		panel.uiLList.drawStatus();
+	 		
+	 		drawStatus();
+		}
+		return true;
+	}
+	
+	function onPostRelease()
+	{
+		invalidatePanel();
+	}
+	
+	///////////////////////////////////////////////////////
+	// show
+	//
+	function onInit()
+	{
+		backGround.setLayer( 0, 0, 960, 720, 0x00000000 );
+		backGround.visible= false;
+		backGround.opacity= 0;
+	}
+	
+	function onShow( time_, en_ )
+	{
+		//init_panel();
+		//parrentSrn.enabledButton([ 1,0,0, 0,2,0, 0,0,0 ]);
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 0;
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,255)" ] );
+		
+		panel.uiBase.setPos( 0, 720 );
+		panel.uiBase.beginMove( %[ time:time_, path:"(0,540,255)", accel:-2 ] );
+		
+		panel.uiTopInfo.setPos( 0, -140 );
+		panel.uiTopInfo.beginMove( %[ time:time_, path:"(0,0,255)", accel:-2 ] );
+		
+		panel.uiLList.setPos( -302, 139 );
+		panel.uiLList.beginMove( %[ time:time_, path:"(0,139,255)", accel:-2 ] );
+		
+		panel.uiMList.setPos( 960, 139 );
+		panel.uiMList.beginMove( %[ time:time_, path:"(302,139,255)", accel:-2 ] );
+		
+		dm("onShow");
+	}
+	
+	function onShowEnd()
+	{
+// 		panel.uiLList.setEnableEvent(true);
+// 		panel.uiMList.setEnableEvent(true);
+// 		
+// 		parrentSrn.lockButton(false);
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 255;
+		
+		frameWork.rckicEvent= rightClickCallBack;
+		
+		panel.uiMList2.setEnableEvent(true);
+		
+		dm("onShowEnd");
+	}
+	
+	function onHide( time_, en_ )
+	{
+	
+		//parrentSrn.lockButton(true);
+		
+		panel.uiLList.setPos( 0, 139 );
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,0)", accel:2 ] );
+		
+		panel.uiBase.beginMove( %[ time:time_, path:"(0,720,255)", accel:2 ] );
+		panel.uiTopInfo.beginMove( %[ time:time_, path:"(0,-140,255)", accel:2 ] );
+		panel.uiLList.beginMove( %[ time:time_, path:"(-302,139,255)", accel:2 ] );
+		panel.uiMList.beginMove( %[ time:time_, path:"(960,139,255)", accel:2 ] );
+		
+	}
+	
+	function onHideEnd()
+	{
+		backGround.visible= false;
+		backGround.opacity= 0;
+		
+		kag.KeyDown_CallBack= void;
+		
+		PostReleaseScreen();
+		
+	}
+	
+	//表示更新
+	function drawStatus()
+	{
+		panel.uiLList.drawStatus();
+		panel.uiMList.drawStatus();
+		panel.uiTopInfo.drawStatus();
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		panel.uiLList.setEnableEvent(f_);
+		panel.uiMList.setEnableEvent(f_);
+		
+		backGround.setEnableEvent(f_);
+		
+		parrentSrn.lockButton(!f_);
+		
+	}
+	///////////////////////////////////////////////////////
+	// method
+	
+	///////////////////////////////////////////////////////
+	// callback
+	//
+ 	function set_char_lifemax(n){
+ 		ca.set_char_lifemax(n);
+ 		drawStatus();
+ 		parrentSrn.updateStatus();
+	}
+	
+ 	function set_charline_lifemax(n){
+ 		ca.set_char_line_lifemax(n);
+ 		drawStatus();
+ 		parrentSrn.updateStatus();
+	}
+ 	
+ 	function set_allline_lifemax(){
+ 		ca.set_char_allline_lifemax();
+ 		drawStatus();
+ 		parrentSrn.updateStatus();
+	}
+	
+	function set_all_lifemax(){
+ 		ca.set_char_all_lifemax();
+ 		drawStatus();
+ 		parrentSrn.updateStatus();
+	}
+	
+	function rightClickCallBack(){
+		parrentSrn.opt_buttom_top(0);
+	}
+	
+	function Open_Sskill_Sstatus( id_ )
+	{
+ 		panel.uiLList.info_mode= true;
+ 		panel.uiMList2.visible= true;
+ 		panel.uiMList2.draw_Status( id_ );
+ 		panel.uiLList.onMiniLineActionSelectLine( id_ );
+	}
+	
+	function Close_Sskill_Sstatus()
+	{
+ 		panel.uiLList.info_mode= false;
+ 		panel.uiMList2.visible= false;
+	}
+}
+
+///////////////////////////////////////////////////////
+//
+class midComSelector extends LayerTrueBase
+{
+
+	var RstyleIcons= [];
+	var RstatsIcons= [];
+	
+	//var ui_Cor_Mid;
+	var selectBtn= [];
+	var selectBtn2= [];
+	
+	var textLayer;
+	
+	//var skill_callback= void;
+	
+	function midComSelector( win, par, pal ) {
+		super.LayerTrueBase(...);
+		name= "midIconSelector";
+	}
+	
+	function finalize() {
+		for(var i=0; i<RstyleIcons.count; i++) invalidate RstyleIcons[i];
+		for(var i=0; i<RstatsIcons.count; i++) invalidate RstatsIcons[i];
+		
+		//invalidate ui_Cor_Mid;
+		for(var i=0; i<selectBtn.count; i++) invalidate selectBtn[i];
+		for(var i=0; i<selectBtn2.count; i++) invalidate selectBtn2[i];
+		invalidate textLayer;
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 624,398+40, 0x00000000 );
+		//drawImageFile(0,40,"slg_Org_plate_unitlist");
+		loadImages("slg_Dir_plate_directions2");
+		
+		//ドラッグアイコン
+		for(var i= 0; i<10; i++ ){
+			var yy= 40+(i*32);
+			
+			RstyleIcons[i]= new TButtonBase1s( window, this );
+			RstyleIcons[i].setData(i,f.used.party[i].order);
+			RstyleIcons[i].setLayer( 205, yy, 96, 30 );
+			RstyleIcons[i].loadImages("slg_Dir_bt_s00");
+			RstyleIcons[i].callbackEvent= set_order_style;
+			
+			RstyleIcons[i].isSelected= f.used.party[i].order.style;
+			RstyleIcons[i].setDropDraw();
+			RstyleIcons[i].button_Update();
+			
+			RstatsIcons[i]= new TButtonBase1s( window, this );
+			RstatsIcons[i].setData(i,f.used.party[i].order);
+			RstatsIcons[i].setLayer( 148, yy, 48, 30  );
+			RstatsIcons[i].loadImages("slg_Dir_bt_a00");
+			RstatsIcons[i].callbackEvent= set_order_state;
+			
+			RstatsIcons[i].isSelected= f.used.party[i].order.state;
+			RstatsIcons[i].setDropDraw();
+			RstatsIcons[i].button_Update();
+			
+		}
+		
+		//回復
+		selectBtn[0]= new TButtonBase1k( window, this );
+		selectBtn[0].setLayer( 5, 370, 62, 30 );
+		selectBtn[0].loadImages("slg_Dir_bt_recoveryOrg");
+		//selectBtn[0].callbackEvent= btn_callback_army;
+		
+		selectBtn[1]= new TButtonBase1k( window, this );
+		selectBtn[1].setLayer( 67, 370, 62, 30 );
+		selectBtn[1].loadImages("slg_Dir_bt_recoveryAll");
+		//selectBtn[1].callbackEvent= set_all_lifemax;
+		
+		//all
+		selectBtn[2]= new TButtonBase1k( window, this );
+		selectBtn[2].setLayer( 148, 360, 48, 48 );
+		selectBtn[2].setData(0);
+		selectBtn[2].loadImages("slg_Dir_bt_a05");
+		selectBtn[2].callbackEvent= set_all_order_state;
+		
+		selectBtn[3]= new TButtonBase1k( window, this );
+		selectBtn[3].setLayer( 198, 360, 48, 48 );
+		selectBtn[3].setData(1);
+		selectBtn[3].loadImages("slg_Dir_bt_a06");
+		selectBtn[3].callbackEvent= set_all_order_state;
+		
+		selectBtn[4]= new TButtonBase1k( window, this );
+		selectBtn[4].setLayer( 248, 360, 48, 48 );
+		selectBtn[4].setData(2);
+		selectBtn[4].loadImages("slg_Dir_bt_a04");
+		selectBtn[4].callbackEvent= set_all_order_state;
+		
+		//etc
+		selectBtn[5]= new TButtonBase1k( window, this );
+		selectBtn[5].setLayer( 400, 370, 96, 30 );
+		selectBtn[5].loadImages("slg_Dir_bt_d01");
+		//selectBtn[5].callbackEvent= btn_callback_commd;
+		selectBtn[5].visible= false;
+		
+		selectBtn[6]= new TButtonBase1k( window, this );
+		selectBtn[6].setLayer( 496, 370, 96, 30 );
+		selectBtn[6].loadImages("slg_Dir_bt_d02");
+		//selectBtn[6].callbackEvent= btn_callback_commd;
+		selectBtn[6].visible= false;
+		
+		textLayer= new LayerTextBase( window, this );
+		textLayer.setLayer( 0, 0, width, height );
+		
+		for(var i= 0; i<10; i++ ){
+			selectBtn2[i]= new TButtonBase1k( window, this );
+			selectBtn2[i].setLayer( 313, 40+(32*i), 80, 30 );
+			selectBtn2[i].setData(i);
+			selectBtn2[i].loadImages("slg_Dir_bt_a08");
+			selectBtn2[i].setDropDraw();
+			selectBtn2[i].callbackEvent= set_order_skillstate;
+			//textLayer.drawText2s( 330, 48+(32*i), "%s".sprintf(tx[ch.status]),txc[ch.status], 16 );
+		}
+		
+		for(var i= 0; i<10; i++ ){
+			if(f.used.party[i].status==2){
+				RstyleIcons[i].button_Enabled(true);
+				RstatsIcons[i].button_Enabled(true);
+				selectBtn2[i].button_Enabled(true);
+			}else{
+				RstyleIcons[i].button_Enabled(false);
+				RstatsIcons[i].button_Enabled(false);
+				selectBtn2[i].button_Enabled(false);
+			}
+		}
+		
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		for(var i= 0; i<10; i++ ){
+			RstyleIcons[i].setEnableEvent( f_, f2_ );
+			RstatsIcons[i].setEnableEvent( f_, f2_ );
+			selectBtn2[i].setEnableEvent( f_, f2_ );
+		}
+		
+		selectBtn[0].setEnableEvent( f_, f2_ );
+		selectBtn[1].setEnableEvent( f_, f2_ );
+		
+		selectBtn[2].setEnableEvent( f_, f2_ );
+		selectBtn[3].setEnableEvent( f_, f2_ );
+		selectBtn[4].setEnableEvent( f_, f2_ );
+		
+		selectBtn[5].setEnableEvent( f_, f2_ );
+		selectBtn[6].setEnableEvent( f_, f2_ );
+	}
+	
+	//
+	function drawStatus()
+	{
+	
+		for(var i= 0; i<10; i++ ){
+			RstyleIcons[i].button_Update();
+			RstatsIcons[i].button_Update();
+		}
+		
+		textLayer.clearText();
+		
+		var txc= [ 0x777777, 0x777777, 0xffffff, 0xff0000, 0xff0000, 0xff0000 ];
+		var txc2= [ 0x777777, 0x777777, 0xffffff, 0xffffff, 0xffffff, 0xffffff ];
+		
+		//draw_total_count();
+ 		var tc= ca.get_char_life();
+ 		
+		for(var i= 1; i<11; i++ ){
+			var ch= f.used.party[i-1];
+			textLayer.drawText3( 37, 18+(32*i), "%7d".sprintf(tc[i]),txc2[ch.status], 214 );
+		}
+		
+ 		var th= ca.get_char_totalcost();
+ 		
+		for(var i= 0; i<10; i++ ){
+			var ch= f.used.party[i];
+			textLayer.drawText3( 440, 50+(32*i), "%d".sprintf(th[i].fd),txc[ch.status], 214 );
+			textLayer.drawText3( 550, 50+(32*i), "%d".sprintf(th[i].eg),txc[ch.status], 214 );
+		}
+		
+		//ボタンを廃止
+		/*
+		for(var i= 0; i<10; i++ ){
+			var ch= f.used.party[i];
+			var tx= [ "", "準備中", "待機中", "出撃済", "出撃済" ];
+			textLayer.drawText2s( 330, 48+(32*i), "%s".sprintf(tx[ch.status]),txc[ch.status], 16 );
+			
+		}
+		*/
+		
+	}
+	
+ 	function draw_total_count(){
+ 		var th= ca.get_char_life();
+ 		
+		for(var i= 1; i<11; i++ ){
+			var ch= f.used.party[i];
+			//fillRect( 34,15+(32*i), 70,17, 0xff000000 );
+			//if(ch.HP.now!=0) 
+			textLayer.drawText2s( 37, 18+(32*i), "%7d".sprintf(th[i]),0xffffff, 214 );
+			//drawText2( 37,18+(32*i), "%07d".sprintf(0),0xffffff, 214 );
+		}
+	}
+	
+	//キャラリスト
+ 	function set_order_style(lay){
+ 		f.used.party[lay._id].order.style= lay.isSelected;
+	}
+	
+	
+ 	function set_all_order_state(lay){
+ 		for(var i= 0; i<10; i++ ){
+ 			f.used.party[i].order.state= lay._id;
+ 			RstatsIcons[i].button_Selected(lay._id);
+ 		}
+	}
+	
+ 	function set_order_state(lay){
+ 		f.used.party[lay._id].order.state= lay.isSelected;
+	}
+	
+	
+ 	function set_order_skillstate(lay){
+ 		//if( skill_callback!==void ) {
+ 			framePanel.Open_Sskill_Sstatus( lay._id );
+ 			framePanel.frameWork.rckicEvent= rightClickCallBack2;
+ 		//}
+ 		//f.used.party[lay._id].order.state= lay.isSelected;
+	}
+	
+	
+ 	function rightClickCallBack2(){
+ 		framePanel.Close_Sskill_Sstatus();
+ 		framePanel.frameWork.rckicEvent= framePanel.rightClickCallBack;
+	}
+	
+//  	function set_all_order_state(lay){
+//  		for(var i= 0; i<10; i++ ){
+//  			f.used.party[i].order.state= lay._id;
+//  		}
+// 	}
+	
+//  	function set_all_lifemax(){
+//  		ca.set_char_all_lifemax(core2.screen.gamemain.updateStatus);
+// 	}
+	
+	
+// 	function onMidAction(lay,ev)
+// 	{
+// 		
+// 		var xx= lay.left;
+// 		var yy= lay.top;
+// 		
+// 		if( ev.type=="onMouseEnter" ){
+// 			framePanel.panel.uiTopInfo.setChar(lay.ch);
+// 			ui_Cor_Mid.setPos(xx,yy);
+// 			ui_Cor_Mid.visible= true;
+// 		}
+// 		
+// 		if( ev.type=="onMouseLeave" ){
+// 			ui_Cor_Mid.visible= false;
+// 		}
+// 	}
+	
+}
+
+///////////////////////////////////////////////////////
+//
+class miniIconSelector2 extends miniIconSelector
+{
+	var char_lifeup= void;
+	var char_linelifeup= void;
+	
+	//var mode2_callback= void;
+	var info_mode= false;
+	
+	function miniIconSelector2( win, par, pal ) {
+		super.miniIconSelector(...);
+		name= "miniIconSelector2";
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		//super.setLayer( x_, y_, 302,593, 0x00000000 );
+		global.LayerTrueBase.setLayer( x_, y_, 302,593, 0x00000000 );
+		drawImageFile(0,0,"slg_Dir_plate_org2");
+		
+		for(var i= 0; i<10; i++ ){
+			var yy= 40+(i*32);
+			miniLineIcons[i]= new charMiniLineIcon( window, this );
+			miniLineIcons[i].setLayer( 18, yy );
+			miniLineIcons[i].setData(i);
+			miniLineIcons[i].Drug_Enter= onMiniLineAction;
+			
+		}
+		
+		for(var i= 0; i<60; i++ ){
+			var xx= 49+(i%6)*31;
+			var yy= 40+(i\6)*32;
+			miniIcons[i]= new charMiniIcon( window, this );
+			miniIcons[i].setLayer( xx, yy );
+			miniIcons[i].setData(i);
+			miniIcons[i].Drug_Enter= onMiniAction;
+			
+			miniIcons[i].xi= i%6;
+			miniIcons[i].yi= i\6;
+			
+			//miniIcons[i].setDropDraw();
+		}
+		
+		var uiw= [ 10, 10, 10, 154, 154, 154 ];
+		var uih= [ 373, 435, 497, 373, 435, 497 ];
+		for(var i= 0; i<6; i++ ){
+			uiChar[i]= new charMiniStatus( window, this );
+			uiChar[i].setLayer(uiw[i],uih[i]);
+			uiChar[i].setData(0,gf.char);
+		}
+		
+		//ターゲットアイコン
+		ui_Cor_MiniLine= new global.LayerTrueBase( window, this );
+		ui_Cor_MiniLine.setLayer( 0, 0, 278, 30, 0xff000000 );
+		ui_Cor_MiniLine.visible= false;
+		ui_Cor_MiniLine.loadImages("line_icon_tg");
+		
+		ui_Cor_Mini= new global.LayerTrueBase( window, this );
+		ui_Cor_Mini.setLayer( 0, 0, 30, 30, 0xff000000 );
+		ui_Cor_Mini.visible= false;
+		ui_Cor_Mini.loadImages("mini_icon_tg");
+		
+		drawStatus();
+		
+ 		for(var i= 0; i<10; i++ ){
+ 			if(f.used.party[i].status==2){
+ 				//miniLineIcons[i].button_Enabled(true);
+ 				//for(var x= 0; x<6; x++ ) miniIcons[(i*6)+x].button_Enabled(true);
+ 			}else{
+ 				miniLineIcons[i].setDropDraw();
+ 				miniLineIcons[i].button_Enabled(false);
+ 				for(var x= 0; x<6; x++ ){
+ 					miniIcons[i].setDropDraw();
+ 					miniIcons[(i*6)+x].button_Enabled(false);
+ 				}
+ 			}
+		}
+		//setEnableEvent( true );
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		for(var i= 0; i<10; i++ ) miniLineIcons[i].setEnableEvent( f_, f2_ );
+		for(var i= 0; i<60; i++ ) miniIcons[i].setEnableEvent( f_, f2_ );
+	}
+	
+	function onMiniAction(lay,ev)
+	{
+	
+		if(!info_mode) {
+		
+			if( ev.type=="onMouseDown" && ev.button==mbLeft ) {
+		 		gt.org.selectmCharY= lay.yi;
+		 		char_lifeup(f.used.party[lay.yi].division[lay.xi]);
+			}
+		
+		}
+		
+		var xx= lay.left;
+		var yy= lay.top;
+		
+		if( ev.type=="onMouseEnter" ){
+			if( !framePanel.panel.drugScreen.drugModeEnabled() ) {
+				framePanel.panel.uiTopInfo.setChar2(lay.ch);
+				framePanel.panel.uiTopInfo.drawStatus();
+			}
+			ui_Cor_Mini.setPos(xx,yy);
+			ui_Cor_Mini.visible= true;
+		}
+		
+		if( ev.type=="onMouseLeave" ){
+			ui_Cor_Mini.visible= false;
+		}
+	}
+	
+	function onMiniLineAction(lay,ev)
+	{
+		var xx= lay.left;
+		var yy= lay.top;
+		
+		if(!info_mode) {
+		
+			if( ev.type=="onMouseDown" && ev.button==mbLeft ) {
+				gt.org.selectmCharY= lay._id;
+		 		char_linelifeup(gt.org.selectmCharY);
+			}
+		
+			if( ev.type=="onMouseEnter" ){
+				ui_Cor_MiniLine.setPos(xx-18,yy);
+				ui_Cor_MiniLine.visible= true;
+				gt.org.selectmCharY= lay._id;
+				setBottomViewUpdate(gt.org.selectmCharY);
+			}
+		
+			if( ev.type=="onMouseLeave" ){
+				ui_Cor_MiniLine.visible= false;
+			}
+		
+		} else {
+		
+			if( ev.type=="onMouseEnter" ){
+				ui_Cor_MiniLine.setPos(xx-18,yy);
+				ui_Cor_MiniLine.visible= true;
+				gt.org.selectmCharY= lay._id;
+				setBottomViewUpdate(gt.org.selectmCharY);
+				//if( mode2_callback!==void ) 
+				framePanel.panel.uiMList2.draw_Status(lay._id);
+			}
+		}
+	}
+	
+	function onMiniLineActionSelectLine(id_)
+	{
+		var yy= 40+(id_*32);
+		ui_Cor_MiniLine.setPos( 0, yy );
+		ui_Cor_MiniLine.visible= true;
+		gt.org.selectmCharY= id_;
+		setBottomViewUpdate(gt.org.selectmCharY);
+	}
+}
+
+///////////////////////////////////////////////////////
+// パネルを追加
+//
+//
+//
+class subSelector extends LayerEventBase2
+{
+	var textListLayer;
+	var textLayer;
+	
+	function subSelector( win, par, pal ) {
+		super.LayerEventBase2(...);
+		name= "subSelector";
+	}
+	
+	function finalize() {
+		
+		invalidate textListLayer;
+		invalidate textLayer;
+		
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 658, 410, 0xffaa0000 );
+		loadImages("slg_Dir_plate_skill");
+		
+		textLayer= new LayerTextBase( window, this );
+		textLayer.setLayer( 448, 40, 210, 300, 0x00000000 );
+		
+		textListLayer= new LayerTextBaseEv( window, this );
+		textListLayer.setLayer( 41, 6, 396, 398 );
+		textListLayer.selected_Execute= draw_text;
+		
+		//drawStatus();
+		textListLayer.clearText();
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		textListLayer.setEnableEvent( f_, f2_ );
+	}
+	
+	//
+	function drawStatus()
+	{
+		draw_Status( 3 );
+		
+		//textListLayer.updateText();
+		textListLayer.setEnableEvent( true );
+	}
+	
+	function draw_Status( id_ )
+	{
+		
+		dm("draw_Status "+id_);
+		
+		var vs= calc.viewTacticsSkillList(f.used.party[id_].division);
+		
+		textListLayer.clearText();
+		
+		for(var i= 0; i<6; i++ ){
+		
+			var vtxt= [];
+			
+			for(var j= 0; j<6; j++ ){
+				if( vs[j][i]===void ) vtxt[j]= ""; else vtxt[j]= gf.skill[vs[j][i]].name;
+			}
+		
+			textListLayer.addText( vs[0][i], 8,   10+(20*i),     180,18, vtxt[0] );
+			textListLayer.addText( vs[1][i], 8,   134+10+(20*i), 180,18, vtxt[1] );
+			textListLayer.addText( vs[2][i], 8,   268+10+(20*i), 180,18, vtxt[2] );
+			textListLayer.addText( vs[3][i], 208, 10+(20*i),     180,18, vtxt[3] );
+			textListLayer.addText( vs[4][i], 208, 134+10+(20*i), 180,18, vtxt[4] );
+			textListLayer.addText( vs[5][i], 208, 268+10+(20*i), 180,18, vtxt[5] );
+			
+		}
+		
+		textListLayer.updateText();
+		textLayer.fill( 0x00000000 );
+		//textListLayer.setEnableEvent( true );
+	}
+	
+ 	function draw_text( id ) {
+ 		
+ 		if(id!==void)
+ 		{
+ 			if(id!=-1)
+ 			{
+		 		var wt= 14;
+ 		
+		 		var tp= gf.skill[id].comment.split(';');
+		 		var tpp= [];
+ 		
+//		 		var li= tp[0].length\wt;
+ 		
+// 		 		for(var j= 0; j<li; j++ ) {
+// 					tpp.add( tp[0].substr( wt*j, wt ) );
+// 				}
+// 				tpp.add( tp[0].substr( wt*li ) );
+// 		
+// 				for(var i= 1; i<tp.count; i++ ) {
+// 					tpp.add( tp[i] );
+// 				}
+		
+				for(var i= 0; i<tp.count; i++ ) {
+				
+					var li= tp[i].length\wt;
+				
+			 		for(var j= 0; j<li; j++ ) {
+						tpp.add( tp[i].substr( wt*j, wt ) );
+					}
+					tpp.add( tp[i].substr( wt*li ) );
+				
+				}
+		
+				textLayer.fill( 0x00000000 );
+		
+				for(var i= 0; i<tpp.count; i++ ) {
+					textLayer.drawText3( 0, 5+(18*i), tpp[i], 0xffffff, 14 );
+				}
+			} else {
+				textLayer.fill( 0x00000000 );
+			}
+		}
+	}
+	
+// 	function drawOpen( id_ )
+// 	{
+//  		info_mode= true;
+//  		visible= true;
+//  		draw_Status( id_ );
+//  		
+// 	}
+// 	
+// 	function drawClose()
+// 	{
+//  		info_mode= false;
+//  		visible= false;
+// 	}
+	
+}
+
+
+///////////////////////////////////////////////////////
+//イベントテキストリスト
+class LayerTextBaseEv extends LayerEventBase2
+{
+	
+	var isSelected= 0;
+	var textArray= [];
+	var textTarget= void;
+	
+	var selected_Execute= void; //ボタンセレクト時のイベント
+	
+	function LayerTextBaseEv( win, par, pal ) {
+		super.LayerEventBase2(...);
+	}
+	
+	function finalize() {
+		invalidate textTarget;
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	//初期設定
+// 	function setLayer( x_, y_, w_=96, h_=32, c_=1 )
+// 	{
+// 		
+// 		super.setLayer( x_, y_, w_, h_, 0xffff0000 );
+// // 		setImageSize( width, height );
+// // 		hitType= htMask;
+// // 		hitThreshold= 0;
+// // 		//focusable= false;
+// // 		
+// // 		//dm( "TButtonBase1k.setButton()" );
+// 		
+// 		setEnableEvent( true, true );
+// 	}
+	
+    
+	function addText( id_, x_=0, y_=0, w_=10, h_=10, txt_="" )
+	{
+		if( txt_===void ) txt_="";
+		
+		textArray.add( %[
+				id:id_,
+				x:x_,
+				y:y_,
+				w:w_,
+				h:h_,
+				txt:txt_
+			] );
+			
+		if( textTarget===void ) {
+			textTarget= new LayerTrueBase( window, this );
+			textTarget.setLayer( x_, y_, w_, h_, 0xffff0000 );
+			textTarget.visible= false;
+			textTarget.type= ltScreen;
+		}
+	}
+	
+	function clearText()
+	{
+		textArray.clear();
+	}
+	
+	function updateText()
+	{
+		fill( 0x00000000 );
+		for(var i= 0; i<textArray.count; i++ ) {
+			drawText3( textArray[i].x, textArray[i].y, textArray[i].txt, 0xffffff, 14 );
+		}
+		if( textTarget!==void ) textTarget.visible= false;
+	}
+	
+	////////////////////
+	//入力イベント
+	function onAction( ev )
+	{
+		
+		if( ev.type=="onMouseMove" ) {
+		
+			//dm("onMouseMove");
+			
+			for(var i= 0; i<textArray.count; i++ ) {
+				var ee= textArray[i];
+				if(
+					ee.x<ev.x &&
+					ee.x+ee.w>ev.x &&
+					ee.y<ev.y &&
+					ee.y+ee.h>ev.y &&
+					ee.txt!=""
+				) {
+					if(selected_Execute!==void) selected_Execute(ee.id);
+					textTarget.visible= true;
+					textTarget.setPos( ee.x, ee.y-4 );
+					break;
+				} else {
+				//	if(selected_Execute!==void) selected_Execute(-1);
+				//	textTarget.visible= false;
+				}
+			}
+		}
+	}
+}

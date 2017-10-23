@@ -1,0 +1,486 @@
+/////////////////////////////////////////////////////////////////////////
+//
+// コンポーネント
+//
+/////////////////////////////////////////////////////////////////////////
+//
+///////////////////////////////////////////////////////
+//ドラッグベースレイアー
+//ドラッグされた内容が反映される
+class TDrugMoveBase extends LayerTrueBase
+{
+
+	//ドラッグ対象レイア
+	var src= void;
+	
+	var lx=0, ly=0, lw=50, lh=50;
+	var sx=0, sy=0;
+	
+	var tocallbackEvent= void;
+	var callbackDrawEvent= void;
+	var callbackCancelEvent= void;
+	
+	var drugEnabled= false;
+	
+	var mode= 0;
+	
+	var hold_w= false, hold_h= false;
+	
+	function TDrugMoveBase( win, par, pal ) {
+		super.LayerTrueBase(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_=0, y_=0, w_=32, h_=32, c_=0x00000000 )
+	{
+		super.setLayer(...);
+		name= "TDrugMoveBase";
+		visible= false;
+		opacity= 128;
+		focusable= true;
+	}
+	
+	function drugMode( layer_, ev, lx_, ly_, lw_, lh_, mo_ )
+	{
+		//ドラック対象のレイア
+		src= layer_;
+		
+		//ドラッグモード
+		mode= mo_;
+		
+		//初期位置、移動範囲
+		sx=ev.x, sy=ev.y;
+		lx=lx_,ly=ly_,lw=lw_,lh=lh_;
+		
+		//ドラック対象のレイア座標をスクリーン座標に
+		var pp= _draw_image_pos_screen_(layer_);
+		
+		//ドラッグ対象レイアのコールバックを呼ぶ
+		src.callbackDrawEvent( this, ev, lx_, ly_, lw_, lh_, mo_ );
+		
+		//初期座標をセット
+		setPos( pp.left, pp.top );
+		
+		//windowのonMouseMoveにコールバックをセット
+		kag.windowMouseCallback= onAction;
+		
+		//
+		if( tocallbackEvent!==void ) tocallbackEvent.dropEnabled= true;
+		
+		drugEnabled= true;
+		
+		visible= true;
+	}
+	
+	function drugModeOff()
+	{
+		visible= false;
+		setSize( 32, 32 );
+		
+		src.visible= true;
+		src= void;
+		
+		kag.windowMouseCallback= void;
+		
+		sx= 0;
+		sy= 0;
+		
+		drugEnabled= false;
+		
+	}
+	
+// 	function drugModeEnd(){
+// 		src= void;
+// 	}
+	
+	function drugModeEnabled(){
+		return src!==void;
+	}
+	
+	///////////////////////////////////////////////////////
+	//
+	function onAction( ev )
+	{
+		if( ev.type=="onMouseUp" ) {
+			drugModeOff();
+			if( callbackCancelEvent!==void ) callbackCancelEvent(src,ev);
+		}
+		
+		if( ev.type=="onMouseMove" ) {
+			
+			var mx= ev.x-sx;
+			var my= ev.y-sy;
+			
+			if( hold_w ) mx= src.left;
+			if( hold_h ) my= src.top;
+			
+			if( ev.x>lx && ev.y>ly && ev.x<=lx+lw && ev.y<=ly+lh ){
+				setPos( mx, my );
+			} else drugModeOff();
+			
+			dm("drugMode.move(%d,%d)".sprintf(mx,my));
+		}
+	}
+}
+
+///////////////////////////////////////////////////////
+//ドラッグ専用レイアー
+//
+class TDrugEventBase extends LayerEventBase2
+{
+	
+	var Drug_Execute= void;
+	var Drug_Executes= void;
+	
+	var Drug_Enter= void;
+	
+	var Drop_StandBy= false;
+	
+	var Drug_Cancel= void;
+	
+	var mode= 0;
+	
+	var Drug_Enabled= true;
+	
+	function TDrugEventBase( win, par, pal ) {
+		super.LayerEventBase2(...);
+		name= "TDrugEventBase";
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	////////////////////
+	//入力イベント
+	function callbackDrawEvent( layer_, ev, lx_, ly_, lw_, lh_, mo_ ){
+		layer_.setSize( width, height );
+		layer_.copyRect( 0, 0, this, 0, 0, width, height );
+		layer_.setPos( left, top );
+	}
+	
+	////////////////////
+	//入力イベント
+	function onAction( ev )
+	{
+		
+		if( ev.type=="onMouseMove" && Drug_Enabled ) {
+			if( isMouseDrug && Drug_Executes!==void ){
+				releaseCapture();
+				if(Drug_Execute!==void) Drug_Execute.onDrug_Mode(ev);
+				visible= false;
+				//if(Drug_Executes!==void)
+				Drug_Executes.drugMode( this, ev, 0,0,960,720, mode );
+			}
+		}
+		
+		if( ev.type=="onMouseUp" && ev.button==mbRight ) {
+			if(Drug_Cancel!==void){
+				Drug_Cancel(this,ev,true);
+				//drugModeEnabled();
+			}
+		}
+		
+		if( ev.type=="onMouseEnter" && Drug_Executes!==void && Drug_Executes.drugEnabled ) Drop_StandBy= true;
+		if( ev.type=="onMouseLeave" ) Drop_StandBy= false;
+		
+		
+		if(Drug_Enter!==void) Drug_Enter(this,ev);
+		
+	}
+}
+
+
+///////////////////////////////////////////////////////
+//ドラッグベースレイアー
+//ドラッグされた内容が反映される
+class TDrugMoveBase2 extends LayerTrueBase
+{
+
+	//ドラッグ対象レイア
+	var src= void;
+	
+	var lx=0, ly=0, lw=50, lh=50;
+	var sx=0, sy=0;
+	
+	var tocallbackEvent= void;
+	var callbackDrawEvent= void;
+	var callbackCancelEvent= void;
+	
+	var drugEnabled= false;
+	
+// 	var mode= 0;
+	
+	var hold_w= false, hold_h= false;
+	
+	function TDrugMoveBase2( win, par, pal ) {
+		super.LayerTrueBase(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_=0, y_=0, w_=32, h_=32, c_=0x00000000 )
+	{
+		super.setLayer(...);
+		name= "TDrugMoveBase";
+		visible= false;
+		opacity= 128;
+		focusable= true;
+	}
+	
+	function drugMode( dlayer_, ev, lx_, ly_, lw_, lh_, mo_ )
+	{
+		//ドラック対象のドラッグコントロール
+		src= dlayer_;
+		
+		//ドラッグモード
+// 		mode= mo_;
+		
+		//初期位置、移動範囲
+		sx=ev.x, sy=ev.y;
+		lx=lx_,ly=ly_,lw=lw_,lh=lh_;
+		
+		//ドラック対象のレイア座標をスクリーン座標に
+		var pp= _draw_image_pos_screen_(src.lay);
+		
+		//ドラッグ対象レイアをコピー
+		if( src.DrawCallback!==void ) src.DrawCallback( this, ev );
+		else {
+			setImageSize( src.lay.width, src.lay.height );
+			setSize( src.lay.width, src.lay.height );
+			copyRect( 0, 0, src.lay, 0, 0, src.lay.width, src.lay.height );
+		}
+		
+		//setPos( src.lay.left, src.lay.top );
+		
+		//初期座標をセット
+		setPos( pp.left, pp.top );
+		
+		//windowのonMouseMoveにコールバックをセット
+		kag.windowMouseCallback= onAction;
+		
+		//
+		if( tocallbackEvent!==void ) tocallbackEvent.dropEnabled= true;
+		
+		drugEnabled= true;
+		
+		visible= true;
+	}
+	
+	function drugModeOff()
+	{
+		visible= false;
+		setSize( 32, 32 );
+		setImageSize( 32, 32 );
+		
+		src.lay.visible= true;
+		src= void;
+		
+		kag.windowMouseCallback= void;
+		
+		sx= 0;
+		sy= 0;
+		
+		drugEnabled= false;
+		
+	}
+	
+// 	function drugModeEnd(){
+// 		src= void;
+// 	}
+	
+	function drugModeEnabled(){
+		return src!==void;
+	}
+	
+	///////////////////////////////////////////////////////
+	//
+	function onAction( ev )
+	{
+		if( ev.type=="onMouseUp" ) {
+			drugModeOff();
+			if( callbackCancelEvent!==void ) callbackCancelEvent(src.lay,ev);
+		}
+		
+		if( ev.type=="onMouseMove" ) {
+			
+			var mx= ev.x-sx;
+			var my= ev.y-sy;
+			
+			if( hold_w ) mx= src.lay.left;
+			if( hold_h ) my= src.lay.top;
+			
+			if( ev.x>lx && ev.y>ly && ev.x<=lx+lw && ev.y<=ly+lh ){
+				setPos( mx, my );
+			} else drugModeOff();
+			
+			dm("drugMode.move(%d,%d)".sprintf(mx,my));
+		}
+	}
+}
+
+
+///////////////////////////////////////////////////////
+//ドラッグ
+//
+class TDrugControlBase
+{
+	var lay= void; //操作レイア
+	var druglay= void; //drugレイア TDrugMoveBase2
+	
+	var Execute= void; //
+	var Cancel= void; //
+	
+	var mode= 0; //未使用
+	
+	var Enabled= false; //ドラッグ可能か？
+	
+	var DrawCallback= void;
+	
+	function TDrugControlBase( lay_ ) {
+		lay= lay_;
+	}
+	
+	function finalize() {}
+	
+	////////////////////
+	//入力イベント
+	function setDrugs( druglay_ ){
+		druglay= druglay_;
+	}
+	
+	////////////////////
+	//入力イベント
+	function onActionCallBack( ev )
+	{
+		if( druglay!==void && lay!==void )
+		{
+			if( ev.type=="onMouseMove" && Enabled ) {
+				if( lay.isMouseDrug ){
+					lay.releaseCapture();
+					if(Execute!==void) Execute.onDrug_Mode(ev);
+					lay.visible= false;
+					//if(Drug_Executes!==void)
+					druglay.drugMode( this, ev, 0,0,960,720, mode );
+				}
+				//dm("dragon");
+			}
+			
+			if( ev.type=="onMouseUp" && ev.button==mbRight ) {
+				if(Cancel!==void){
+					Cancel(lay,ev,true);
+				}
+			}
+		}
+		//dm("TButtonBase1s.onAction=%d,%d".sprintf(Drug_Enabled,lay.isMouseDrug));
+	}
+}
+
+///////////////////////////////////////////////////////
+//ドロップ
+//
+class TDropControlBase
+{
+	var lay= void; //操作レイア
+	var druglay= void; //drugレイア TDrugMoveBase2
+	
+	var Execute= void; //ドロップされたときのイベント
+	var Enabled= false; //ドロップ可能か？
+	var StandBy= void; //ドロップされるドラッグコントロール
+	
+	function TDropControlBase( lay_ ) {
+		lay= lay_;
+	}
+	
+	function finalize() {}
+	
+	////////////////////
+	//入力イベント
+	function setDrugs( druglay_ ){
+		druglay= druglay_;
+	}
+	
+	////////////////////
+	//入力イベント
+	function onActionCallBack( ev )
+	{
+		if( druglay!==void && lay!==void )
+		{
+// 			if( ev.type=="onMouseUp" && ev.button==mbRight && Drop_StandBy!==void ) {
+// 				if(Drop_Execute!==void) Drop_Execute(lay,Drop_StandBy);
+// 				Drop_StandBy= void;
+// 			}
+			
+			if( ev.type=="onMouseUp" &&StandBy!==void ) {
+				if(Execute!==void) Execute(lay,StandBy);
+				StandBy= void;
+			}
+			
+			if( ev.type=="onMouseEnter" && druglay.drugEnabled ) StandBy= druglay.src;
+			if( ev.type=="onMouseLeave" ) StandBy= void;
+			
+			
+			//dm("drugMode.onMouseEnter(%s)".sprintf(Drop_StandBy));
+		}
+	}
+}
+
+///////////////////////////////////////////////////////
+//ドラッグ専用レイアー
+//
+class TDrugEventBase2 extends LayerEventBase2
+{
+	
+	var Drug_Exec= void;
+	var Drop_Exec= void;
+	var Drug_Enter= void;
+	
+	var Drop_Draw= false; //バックに半透明を描写するか
+	var buttom_enable= true;
+	
+	function TDrugEventBase2( win, par, pal ) {
+		super.LayerEventBase2(...);
+		Drug_Exec= new TDrugControlBase(this);
+		Drop_Exec= new TDropControlBase(this);
+		name= "TDrugEventBase2";
+	}
+	
+	function setDropDraw(f_=true){
+		Drop_Draw= f_;
+	}
+	
+	function button_Enabled( f=true ){
+		buttom_enable= f;
+		button_Update();
+	}
+	
+	function finalize(){
+		invalidate Drug_Exec;
+		invalidate Drop_Exec;
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	//画像更新
+	function button_Update()
+	{
+		if(buttom_enable) visible= true;
+		else visible= false;
+		
+		if(Drop_Draw) Drop_parentDraw();
+	}
+	
+	////////////////////
+	//入力イベント
+	function onAction( ev )
+	{
+		Drug_Exec.onActionCallBack(ev);
+		Drop_Exec.onActionCallBack(ev);
+		if(Drug_Enter!==void) Drug_Enter(this,ev);
+	}
+}

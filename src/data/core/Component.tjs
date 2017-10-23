@@ -1,0 +1,1237 @@
+/////////////////////////////////////////////////////////////////////////
+//
+// コンポーネント
+//
+/////////////////////////////////////////////////////////////////////////
+//
+///////////////////////////////////////////////////////
+//
+//
+class SliderBar extends LayerEventBase2
+{
+	
+	var value= 0.0;
+	var valueindex= 0;
+	
+	var step= 0;
+	var stepsnap= false;
+	
+	var vertical= false;
+	var wheelenable= true;
+	var wheeladd= 0.1;
+	
+	var _image= void;
+	var slidersize= 0;
+	
+	var callbackEvent= void;
+	var releaseCallbackEvent= void;
+	
+	var Scroll_Execute=void; //スライダーコールバック
+	
+	var _imageback= void;
+	
+	function SliderBar( win, par, pal ) {
+		super.LayerEventBase2(...);
+		name= "SliderBar";
+	}
+	
+	function finalize() {
+		invalidate _image;
+		if( _imageback!==void ) invalidate _imageback;
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_, w_, h_, vertical_=false, color_=0x00000000, hb_=100, scolor_=0xffffff )
+	{
+		vertical= vertical_;
+		
+		super.setLayer( x_, y_, w_, h_, color_ );
+		
+		var ww= !vertical ? hb_ : width;
+		var hh= vertical ? hb_ : height;
+		
+		_imageback= new global.LayerTrueBase( window, this );
+		_imageback.setLayer( 0, 0, width, height, 0x000000 );
+		_imageback.visible= false;
+			
+		_image= new global.LayerTrueBase( window, this );
+		_image.setLayer( 0, 0, ww, hh, scolor_ );
+		_image.visible= true;
+		
+		//if( vertical ) slidersize= height-_image.height;
+		//else slidersize= width-_image.width;
+		slidersize= vertical ? height-_image.height : width-_image.width;
+		
+		Debug.message( "SliderBar.setSlider()" );
+		
+	}
+	
+	function setOptions( elm )
+	{
+		//step= elm.step!==void ? elm.step : 0;
+		//stepsnap= elm.stepsnap!==void ? elm.stepsnap : false;
+		if( elm.step!==void ) step= elm.step;
+		if( elm.stepsnap!==void ) stepsnap= elm.stepsnap;
+		
+		if( elm.wheel!==void ) wheelenable= elm.wheel;
+		if( elm.wheeladd!==void ) wheeladd= elm.wheeladd;
+		
+		//wheelenable= elm.wheel!==void ? elm.wheel : false;
+		//wheeladd= elm.wheeladd!==void ? elm.wheeladd : 0.1;
+		
+		if( elm.cursor!==void ){
+			_image.loadImages( elm.cursor );
+			slidersize= vertical ? height-_image.height : width-_image.width;
+		}
+		
+		if( elm.slider!==void ){
+			_imageback.loadImages( elm.slider );
+			_imageback.visible= true;
+			_imageback.setSize( 0, 0 );
+		}
+		
+	}
+	
+	function loadImages( f1_, f2_=void, f3_=void )
+	{
+		if( f1_!==void ) super.loadImages( f1_ );
+		
+		if( f2_!==void ) {
+			_image.loadImages( f2_ );
+			slidersize= vertical ? height-_image.height : width-_image.width;
+		}
+		
+		if( f3_!==void ) {
+			_imageback.loadImages( f3_ );
+			_imageback.visible= true;
+			_imageback.setSize( 0, 0 );
+		}
+	}
+	
+	/*
+	function setSliderBar( file_ )
+	{
+		_image.loadImages( file_ );
+		slidersize= height-_image.height;
+	}
+	
+	function setSliderBack( file_ )
+	{
+		_imageback= new global.LayerTrueBase( window, this );
+		_imageback.setLayer( 0, 0, width, height, 0x000000 );
+		_imageback.loadImages( file_ );
+		_imageback.visible= true;
+	}
+	*/
+	
+	function setValue( v_=0.0 )
+	{
+		/*
+		valueindex= Math.round((step-1)*v_);
+		if( valueindex<0 ) valueindex= 0;
+		if( valueindex>=step-1 ) valueindex= step-1;
+		
+		if( stepsnap ) value= (1.0/step)*valueindex;
+		else value= v_;
+		*/
+		value= v_;
+		
+		if( value<0 ) value= 0.0;
+		if( value>1.0 ) value= 1.0;
+		
+		valueindex= Math.round(step*value);
+		
+		setCurPos( value );
+	}
+	
+	function setIndex( i_=0 )
+	{
+		if( i_<0 ) i_= 0;
+		if( i_>=step ) i_= step;
+		valueindex= i_;
+		setValue( valueindex/step );
+	}
+	
+	function Value2Index( v_=0 )
+	{
+		var r= Math.round(step*v_);
+		return r;
+	}
+	
+	function setCurPos( v_ ) {
+		if( vertical ) {
+			_image.setPos( 0, slidersize*v_ );
+			if( _imageback!==void ) {
+				_imageback.setSize( width, height*v_ );
+			}
+		} else {
+			_image.setPos( slidersize*v_, 0 );
+			if( _imageback!==void ) {
+				_imageback.setSize( width*v_, height );
+			}
+		}
+	}
+	
+	function setUpdateValue( v_ )
+	{
+			setValue( v_ );
+	}
+	
+	function onAction( ev )
+	{
+		if( ev.type=="onMouseDown" && ev.button==0 && isMouseEnter ) {
+			var v= (ev.x-(_image.width/2))/slidersize;
+			if( vertical ) v= (ev.y-(_image.height/2))/slidersize;
+			setValue( v );
+			if( callbackEvent!==void ) callbackEvent( value, valueindex );
+			if( Scroll_Execute!==void ) Scroll_Execute( valueindex );
+		}
+		
+		if( ev.type=="onMouseUp" && ev.button==0 && isMouseEnter ) {
+		//if( ev.type=="onMouseUp" && ev.button==0 ) {
+			if( releaseCallbackEvent!==void ) releaseCallbackEvent( value, valueindex );
+		}
+		
+		if( ev.type=="onMouseMove" && isMouseDrug ) {
+			var v= (ev.x-(_image.width/2))/slidersize;
+			if( vertical ) v= (ev.y-(_image.height/2))/slidersize;
+			setValue( v );
+			if( callbackEvent!==void ) callbackEvent( value, valueindex );
+			if( Scroll_Execute!==void ) Scroll_Execute( valueindex );
+		}
+		
+		//if( ev.type=="onMouseWheel" ) {
+		if( ev.type=="onMouseWheel" && wheelenable && isMouseEnter ) {
+			if( ev.delta>0 ) setValue( value-wheeladd );
+			else setValue( value+wheeladd );
+			if( callbackEvent!==void ) callbackEvent( value, valueindex );
+			if( Scroll_Execute!==void ) Scroll_Execute( valueindex );
+			if( releaseCallbackEvent!==void ) releaseCallbackEvent( value, valueindex );
+		}
+		
+		if( ev.type=="onKeyDown" ) {
+			templateKey( ev.key, ev.shift );
+			dm("keycallbak.onKeyDown");
+		}
+		
+		if( ev.type=="onMouseEnter" || ev.type=="onFocus" ) {
+			cursor= crHandPoint;
+		}
+		
+		if( ev.type=="onMouseLeave" || ev.type=="onBlur" ) {
+			cursor= crArrow;
+		}
+	}
+	
+	////////////////////
+	//キー入力イベント
+	function templateKey( key, shift )
+	{
+		if( key==VK_PADUP   || key==VK_UP       ) processKeyset( 0 );
+		if( key==VK_PADDOWN || key==VK_DOWN     ) processKeyset( 1 );
+		if( key==VK_LEFT    || key==VK_PADLEFT  ) processKeyset( 2 );
+		if( key==VK_RIGHT   || key==VK_PADRIGHT ) processKeyset( 3 );
+		
+		if( key==VK_PAD2 || key==VK_RETURN ) { setChecked(); setChecked_click(); }
+		//if( key==VK_PAD3 || key==VK_ESCAPE ) { setChecked(1); setChecked_click(); }
+		dm("keycallbak= "+key);
+	}
+	
+}
+
+///////////////////////////////////////////////////////
+//
+class SliderBar2 extends LayerEventBase2
+{
+	
+	var value= 0.0;
+	var valueindex= 0;
+	
+	var step= 0;
+	var stepsnap= false;
+	
+	var vertical= false;
+	var wheelenable= false;
+	var wheeladd= 0.1;
+	
+	var _image= void;
+	var slidersize= 0;
+	
+	var callbackEvent= void;
+	var releaseCallbackEvent= void;
+	
+	var _imageback= void;
+	
+	function SliderBar2( win, par, pal ) {
+		super.LayerEventBase2(...);
+	}
+	
+	function finalize() {
+		invalidate _image;
+		if( _imageback!==void ) invalidate _imageback;
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_, w_, h_, vertical_=false, hb_=10, color_=0x00000000, scolor_=0xffffff )
+	//function setLayer( x_, y_, w_, h_, vertical_=false, color_=0x00000000, hb_=100, scolor_=0xffffff )
+	{
+		step= hb_;
+		vertical= vertical_;
+		super.setLayer( x_, y_, w_, h_, color_ );
+		
+		var ww= !vertical ? 100 : width;
+		var hh= vertical ? 100 : height;
+		
+		_imageback= new global.LayerTrueBase( window, this );
+		_imageback.setLayer( 0, 0, width, height, 0x000000 );
+		_imageback.visible= false;
+			
+		_image= new global.LayerTrueBase( window, this );
+		_image.setLayer( 0, 0, ww, hh, scolor_ );
+		_image.visible= true;
+		
+		slidersize= vertical ? height-_image.height : width-_image.width;
+		
+		Debug.message( "SliderBar.setSlider()" );
+		
+	}
+	
+	function setOptions( elm )
+	{
+		if( elm.step!==void ) step= elm.step;
+		if( elm.stepsnap!==void ) stepsnap= elm.stepsnap;
+		
+		if( elm.wheel!==void ) wheelenable= elm.wheel;
+		if( elm.wheeladd!==void ) wheeladd= elm.wheeladd;
+		
+		if( elm.cursor!==void ){
+			_image.loadImages( elm.cursor );
+			slidersize= vertical ? height-_image.height : width-_image.width;
+		}
+		
+		if( elm.slider!==void ){
+			_imageback.loadImages( elm.slider );
+			_imageback.visible= true;
+			_imageback.setSize( 0, 0 );
+		}
+		
+	}
+	
+	function loadImages( f1_, f2_=void, f3_=void )
+	{
+		if( f1_!==void ) super.loadImages( f1_ );
+		
+		if( f2_!==void ) {
+			_image.loadImages( f2_ );
+			slidersize= vertical ? height-_image.height : width-_image.width;
+		}
+		
+		if( f3_!==void ) {
+			_imageback.loadImages( f3_ );
+			_imageback.visible= true;
+			_imageback.setSize( 0, 0 );
+		}
+	}
+	
+	function loadImagesHelper() {
+		hitType= htMask;
+		hitThreshold= 0;
+		focusable= true;
+    }
+	
+	function setValue( v_=0.0 )
+	{
+		value= v_;
+		
+		if( value<0 ) value= 0.0;
+		if( value>1.0 ) value= 1.0;
+		
+		setCurPos( value );
+	}
+	
+	function setIndex( i_=0 )
+	{
+		if( i_<0 ) i_= 0;
+		if( i_>=step ) i_= step;
+		valueindex= i_;
+		setValue( valueindex/step );
+	}
+	
+	function Value2Index( v_=0 )
+	{
+		var r= Math.round(step*v_);
+//		var r= step*v_;
+//		
+//		if( r<0.1 ) r= 0;
+//		//if( r>0.9 ) r= 1;
+//		r= Math.floor(r);
+		
+		return r;
+	}
+	
+	function setCurPos( v_ ) {
+		if( vertical ) {
+			_image.setPos( 0, slidersize*v_ );
+			if( _imageback!==void ) {
+				_imageback.setSize( width, height*v_ );
+			}
+		} else {
+			_image.setPos( slidersize*v_, 0 );
+			if( _imageback!==void ) {
+				_imageback.setSize( width*v_, height );
+			}
+		}
+		setLoopedBack( _image.top );
+	}
+	
+	function setLoopedBack( v_ ) {
+		var mm= imageHeight-height;
+		var mv= 1-((v_%mm)/mm);
+		setImagePos( 0, -(mm*mv) );
+	}
+	
+//	function setUpdateValue( v_ )
+//	{
+//			setValue( v_ );
+//	}
+	
+	function onAction( ev )
+	{
+		if( ev.type=="onMouseDown" && ev.button==0 && isMouseEnter ) {
+			var v= (ev.x-(_image.width/2))/slidersize;
+			if( vertical ) v= (ev.y-(_image.height/2))/slidersize;
+			var vb= valueindex;
+			setIndex(Value2Index(v));
+			if( callbackEvent!==void && vb!=valueindex ) callbackEvent( value, valueindex );
+		}
+		
+		//if( ev.type=="onMouseUp" && ev.button==0 && isMouseEnter ) {
+		if( ev.type=="onMouseUp" && ev.button==0 ) {
+			if( releaseCallbackEvent!==void ) releaseCallbackEvent( value, valueindex );
+		}
+		
+		if( ev.type=="onMouseMove" && isMouseDrug ) {
+			var v= (ev.x-(_image.width/2))/slidersize;
+			if( vertical ) v= (ev.y-(_image.height/2))/slidersize;
+			//setValue( v );
+			var vb= valueindex;
+			setIndex(Value2Index(v));
+			if( callbackEvent!==void && vb!=valueindex ) callbackEvent( value, valueindex );
+		}
+		
+		//if( ev.type=="onMouseWheel" ) {
+		if( ev.type=="onMouseWheel" && wheelenable && isMouseEnter ) {
+			if( ev.delta>0 ) setValue( value-wheeladd );
+			else setValue( value+wheeladd );
+			if( callbackEvent!==void ) callbackEvent( value, valueindex );
+			if( releaseCallbackEvent!==void ) releaseCallbackEvent( value, valueindex );
+		}
+	}
+}
+
+///////////////////////////////////////////////////////
+//
+/*
+class SliderBarStep extends LayerEventBase2
+{
+	
+	var value= 0.0;
+	var index= 0;
+	
+	var step= 0;
+	var stepUpdate= false;
+	
+	var vertical= false;
+	var wheelenable= false;
+	var wheeladd= 0.1;
+	
+	var _image= void;
+	var slidersize= 0;
+	var callbackEvent;
+	
+	var _imageback= void;
+	
+	function SliderBarStep( win, par, pal ) {
+		super.LayerEventBase2(...);
+	}
+	
+	function finalize() {
+		invalidate _image;
+		if( _imageback!==void ) invalidate _imageback;
+		super.finalize();
+	}
+	
+	function setSlider( x_, y_, w_, h_, vertical_=false, color_=0x00000000, hb_=100, scolor_=0xffffff )
+	{
+		vertical= vertical_;
+		
+		setLayer( x_, y_, w_, h_, color_ );
+		
+		var ww= !vertical ? hb_ : width;
+		var hh= vertical ? hb_ : height;
+		
+		_imageback= new global.LayerTrueBase( window, this );
+		_imageback.setLayer( 0, 0, width, height, 0x000000 );
+		_imageback.visible= false;
+			
+		_image= new global.LayerTrueBase( window, this );
+		_image.setLayer( 0, 0, ww, hh, scolor_ );
+		_image.visible= true;
+		
+		slidersize= vertical ? height-_image.height : width-_image.width;
+		
+		Debug.message( "SliderBar.setSlider()" );
+		
+	}
+	
+	function setOptions( elm )
+	{
+		//step= elm.step!==void ? elm.step : 0;
+		//stepsnap= elm.stepsnap!==void ? elm.stepsnap : false;
+		if( elm.step!==void ) step= elm.step;
+		if( elm.stepsnap!==void ) stepsnap= elm.stepsnap;
+		
+		if( elm.wheel!==void ) wheelenable= elm.wheel;
+		if( elm.wheeladd!==void ) wheeladd= elm.wheeladd;
+		
+		//wheelenable= elm.wheel!==void ? elm.wheel : false;
+		//wheeladd= elm.wheeladd!==void ? elm.wheeladd : 0.1;
+		
+		if( elm.cursor!==void ){
+			_image.loadImages( elm.cursor );
+			slidersize= vertical ? height-_image.height : width-_image.width;
+		}
+		
+		if( elm.slider!==void ){
+			_imageback.loadImages( elm.slider );
+			_imageback.visible= true;
+			_imageback.setSize( 0, 0 );
+		}
+		
+	}
+	
+	function loadImages( f1_, f2_=void, f3_=void )
+	{
+		if( f1_!==void ) super.loadImages( f1_ );
+		
+		if( f2_!==void ) {
+			_image.loadImages( f2_ );
+			slidersize= vertical ? height-_image.height : width-_image.width;
+		}
+		
+		if( f3_!==void ) {
+			_imageback.loadImages( f3_ );
+			_imageback.visible= true;
+			_imageback.setSize( 0, 0 );
+		}
+	}
+	
+	function setValue( v_=0.0 )
+	{
+		
+//		
+//		if( valueindex<0 ) valueindex= 0;
+//		if( valueindex>=step-1 ) valueindex= step-1;
+//		
+//		if( stepsnap ) value= (1.0/step)*valueindex;
+//		else value= v_;
+//		
+		
+		value= v_;
+		
+		if( value<0 ) value= 0.0;
+		if( value>1.0 ) value= 1.0;
+		
+		stepUpdate= false;
+		//var ix= Math.round((step-1)*value);
+		var ix= int(step*value);
+		if( index!=ix ) { index= ix; stepUpdate= true; }
+		
+		setCurPos( value );
+	}
+	
+	function index2Value()
+	{
+		var ix= 0;
+		if( index!=0 ) ix= (index/step)/1;
+		
+		value= ix;
+		
+		setCurPos( value );
+	}
+	
+	function setCurPos( v_ ) {
+		if( vertical ) {
+			_image.setPos( 0, slidersize*v_ );
+			if( _imageback!==void ) {
+				_imageback.setSize( width, height*v_ );
+			}
+		} else {
+			_image.setPos( slidersize*v_, 0 );
+			if( _imageback!==void ) {
+				_imageback.setSize( width*v_, height );
+			}
+		}
+	}
+	
+	function setUpdateValue( v_ )
+	{
+			setValue( v_ );
+	}
+	
+	function onAction( ev )
+	{
+		//if( ev.type=="onMouseUp" && ev.button==0 ) {
+		//	index2Value();
+		//	if( callbackEvent!==void ) callbackEvent( void, index );
+		//}
+		
+		if( ev.type=="onMouseDown" && ev.button==0 && isMouseEnter ) {
+			var v= (ev.x-(_image.width/2))/slidersize;
+			if( vertical ) v= (ev.y-(_image.height/2))/slidersize;
+			setValue( v );
+			if( callbackEvent!==void && stepUpdate ) callbackEvent( void, index );
+		}
+		
+		if( ev.type=="onMouseMove" && isMouseDrug ) {
+			var v= (ev.x-(_image.width/2))/slidersize;
+			if( vertical ) v= (ev.y-(_image.height/2))/slidersize;
+			setValue( v );
+			if( callbackEvent!==void ) callbackEvent( value, index );
+		}
+		
+		if( ev.type=="onMouseWheel" && wheelenable && isMouseEnter ) {
+			if( ev.delta>0 ) setValue( value-wheeladd );
+			else setValue( value+wheeladd );
+			if( callbackEvent!==void ) callbackEvent( void, index );
+		}
+	}
+}
+*/
+
+///////////////////////////////////////////////////////
+//
+/*
+class SliderWidthBar extends SliderHeightBar
+{
+	
+	function SliderWidthBar(win, par) {
+		super.SliderHeightBar(...);
+	}
+	
+	function finalize() {
+		super.finalize();
+	}
+	
+	function setSlider( x_, y_, w_, h_, color_=0xff000000, hb_, scolor_=0xffffff )
+	{
+		setLayer( x_, y_, w_, h_, color_ );
+		
+		_image= new global.LayerTrueBase( window, this );
+		_image.setLayer( 0, 0, hb_, h_, scolor_ );
+		_image.visible= true;
+		
+		slidersize= width-_image.width;
+		
+		Debug.message( "SliderWidthBar.setSlider()" );
+	}
+	
+	function setCurPos( v_ ) {
+		_image.setPos( slidersize*v_, 0 );
+		if( _imageback!==void ) {
+			_imageback.setSize( width*v_, height );
+		}
+	}
+	
+}
+*/
+
+///////////////////////////////////////////////////////
+//スクロールイメージ
+class TScrollImage extends LayerTrueBase
+{
+
+	var range= 0;
+	var valueX= 0.0;
+	var valueY= 0.0;
+	
+	function TScrollImage( win, par, pal ) {
+		super.LayerTrueBase(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+
+	function setScrollImage( x_=0, y_=0, w_=0, h_=0, file_=void, ww_=0, hh_=0 )
+	{
+		setLayer( x_, y_, ww_, hh_, 0xff000000 );
+		if( file_!==void ) loadImages( file_ );
+		setSize( w_, h_ );
+		
+		Debug.message( "TScrollImage.setScrollImage()" );
+	}
+	
+	function setValue( vx, vy )
+	{
+		if( vx<0.0 ) vx= 0.0;
+		if( vx>1.0 ) vx= 1.0;
+		
+		if( vy<0.0 ) vy= 0.0;
+		if( vy>1.0 ) vy= 1.0;
+		
+		valueX= vx;
+		valueY= vy;
+		
+		statsUpdate();
+	}
+	
+	function statsUpdate()
+	{
+		var xx= (width-imageWidth)*valueX;
+		var yy= (height-imageHeight)*valueY;
+		setImagePos( xx, yy );
+		update();
+	}
+
+}
+
+///////////////////////////////////////////////////////
+//スクロールイメージ
+class TScrollImage2 extends LayerEventBase2
+{
+
+	var range= 0;
+	var valueX= 0;
+	var valueY= 0;
+	var valueZ= 1.0;
+	
+	var startX= 0, endX= 0;
+	var startY= 0, endY= 0;
+	
+	var value= 0.0;
+	
+	var mvp= 2.0;
+	
+	var _buffImage;
+	var _buffImage2;
+	
+	function TScrollImage2( win, par, pal ) {
+		super.LayerEventBase2(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+
+	function setLayer( x_, y_, w_, h_, file_ )
+	{
+	
+		_buffImage= new global.Layer( window, this );
+		_buffImage.loadImages( file_ );
+		//_buffImage.setSizeToImageSize();
+		_buffImage.type = ltOpaque;
+		_buffImage.face = dfAuto;
+		
+		_buffImage2= new global.Layer( window, this );
+		_buffImage2.setImageSize( 480, 320 );
+		_buffImage2.setSizeToImageSize();
+		_buffImage2.fillRect( 0, 0, w_, h_, 0xff000000 );
+		_buffImage2.type = ltOpaque;
+		_buffImage2.face = dfAuto;
+		
+		setPos( x_, y_ );
+		setSize( w_, h_ );
+		setImageSize( w_, h_ );
+		
+		visible= true;
+		type = ltOpaque;
+		face = dfAuto;
+		focusable= true;
+		
+		fillRect( 0, 0, w_, h_, 0xff000000 );
+		
+		dm( "TScrollImage.setScrollImage2()" );
+	}
+	
+    function loadImagesHelper() {
+        setSizeToImageSize();
+    }
+	
+	function setFocusPoint( vx_, vy_ )
+	{
+		if( vx_>=imageWidth-(width\2) ) vx_= imageWidth-(width\2);
+		if( vx_<=width\2 ) vx_= width\2;
+		
+		if( vy_>=imageHeight-(height\2) ) vy_= imageHeight-(height\2);
+		if( vy_<=height\2 ) vy_= height\2;
+		
+	}
+	
+	function setViewPos( x_=void, y_=void )
+	{
+		if( x_!==void ) {
+			if( x_>_buffImage.imageWidth-width ) x_= _buffImage.imageWidth-width;
+			if( x_<0 ) x_= 0;
+			valueX= x_;
+		}
+		
+		if( y_!==void ) {
+			if( y_>_buffImage.imageHeight-height ) y_= _buffImage.imageHeight-height;
+			if( y_<0 ) y_= 0;
+			valueY= y_;
+		}
+		
+		onPaint();
+		
+		//beginMoveValue( %[ time:time_, path:sc, accel:-2 ] );
+	}
+	
+	function setValue( v=void )
+	{
+		value= v;
+		valueX= startX+(endX*value);
+		valueY= startY+(endY*value);
+		onPaint();
+		dm( "setValue= "+value );
+	}
+	
+	function move_callbak( v )
+	{
+		valueX= startX+(endX*v);
+		valueY= startY+(endY*v);
+		onPaint();
+		dm( "setValue= "+v );
+	}
+	
+	function ViewPosLimit( x_=void, y_=void )
+	{
+		if( x_!==void ) {
+			if( x_>_buffImage.imageWidth-width ) x_= _buffImage.imageWidth-width;
+			if( x_<0 ) x_= 0;
+		}
+		
+		if( y_!==void ) {
+			if( y_>_buffImage.imageHeight-height ) y_= _buffImage.imageHeight-height;
+			if( y_<0 ) y_= 0;
+		}
+		
+		return %[ x:x_, y:y_ ];
+	}
+	
+	function setViewPosMove( x_=void, y_=void )
+	{
+		//var ps_= ViewPosLimit( x_, y_ );
+		//valueX= ps_.x;
+		//valueY= ps_.y;
+		
+		
+		if( x_!==void ) {
+			valueX-= x_;
+			if( valueX>_buffImage.imageWidth-width ) valueX= _buffImage.imageWidth-width;
+			if( valueX<0 ) valueX= 0;
+		}
+		
+		if( y_!==void ) {
+			valueY-= y_;
+			if( valueY>_buffImage.imageHeight-height ) valueY= _buffImage.imageHeight-height;
+			if( valueY<0 ) valueY= 0;
+		}
+		
+		
+		onPaint();
+	}
+	
+	function onPaint()
+	{
+		//copyRect( 0, 0, _buffImage, valueX, valueY, width, height );
+
+		//stretchCopy( 0, 0, width, height, _buffImage, valueX, valueY, width, height, stNearest);
+		
+		var wx= int(width*valueZ);
+		var wy= int(height*valueZ);
+		var zx= (width-wx)/2;
+		var zy= (height-wy)/2;
+		
+		stretchCopy( zx, zy, wx, wy, _buffImage, valueX, valueY, width, height, stNearest);
+		
+		//perspectiveCopy( _buffImage, valueX, valueY, width, height,
+			//0, 0, width, 0,
+			//-300, height, width+300, height);
+			
+//		_buffImage2.perspectiveCopy( _buffImage, valueX, valueY, 480, 320,
+//			0, 0, 480, 0,
+//			-100, 320, 480+100, 320);
+			
+		//copyRect( 0, 0, _buffImage2, 0, 0, 640, 480 );
+		////stretchCopy( 0, 0, width, height, _buffImage2, 0, 0, 480, 320, stNearest);
+		
+		////stretchCopy( 0, 0, width, height, _buffImage, valueX, valueY, 480, 320, stNearest);
+			
+//			-valueX, -valueY, -valueX+width, -valueY,
+//			-valueX, -valueY+height, -valueX+width, -valueY+height);
+//			copyRect( 0,   0, _buffImage, valueX, valueY,     width,    50 );
+//			//copyRect( 0,  50, _buffImage, valueX, valueY+50,  width+50, 50 );
+//			copyRect( 0, 100, _buffImage, valueX, valueY+100, width+100, 50 );
+//			//copyRect( 0, 150, _buffImage, valueX, valueY+150, width+150, 50 );
+//			copyRect( 0, 200, _buffImage, valueX, valueY+200, width+200, 50 );
+//			//copyRect( 0, 250, _buffImage, valueX, valueY+250, width+250, 50 );
+//			copyRect( 0, 300, _buffImage, valueX, valueY+300, width+300, 50 );
+//			//copyRect( 0, 350, _buffImage, valueX, valueY+350, width+350, 50 );
+//			copyRect( 0, 400, _buffImage, valueX, valueY+400, width+400, 50 );
+			
+//			stretchCopy(   0,   0, width,    32, _buffImage, valueX, valueY,     width, 100, stNearest);
+//			stretchCopy( -20,  32, width+32, 40, _buffImage, valueX, valueY+100, width, 100, stNearest);
+//			stretchCopy( -25,  72, width+51, 51, _buffImage, valueX, valueY+200, width, 100, stNearest);
+//			stretchCopy( -32, 123, width+64, 64, _buffImage, valueX, valueY+300, width, 100, stNearest);
+//			stretchCopy( -40, 187, width+80, 80, _buffImage, valueX, valueY+400, width, 100, stNearest);
+	
+		var vv= 8;
+		var vr= 0;
+//		for( var i=0; i<30; i++) {
+//			stretchCopy( -(vr\2), vr, width+vr, vv, _buffImage,
+//				valueX, valueY+(50*i), width, 50, stNearest);
+//			vv= int(vv*1.25);
+//			vr= vv;
+//		}
+
+		var hts= 5;
+		//var ht= 0;
+		var vt= 10;
+//		for( var i=0; i<40; i++) {
+//			stretchCopy( -((vt/2)*i), ht, width+(vt*i), ht, _buffImage, valueX, valueY+ht, width, ht, stNearest);
+//			ht+= hts;
+//		}
+		
+		//for( var i=0; i<100; i++) {
+		//	var ht= 5;
+		//	stretchCopy( -((vt/2)*i), ht*i, width+(vt*i), ht, _buffImage, valueX, valueY+(ht*i), width, ht, stNearest);
+		//}
+	}
+	
+	////////////////////
+	//入力イベント
+	var mvX= 0, mvY= 0;
+	function onAction( ev )
+	{
+		if( ev.type=="onClick" ) {
+			
+//			startX= valueX;
+//			startY= valueY;
+//			
+//			endX= (ev.x-(width\2));
+//			endY= (ev.y-(height\2));
+//			
+//			beginMoveValue( %[ time:500, path:1.0, accel:-2 ] );
+			
+			dm( "actionCallBack= "+startX+":"+startY+" "+endX+":"+endY );
+		}
+		
+		if( ev.type=="onMouseUp" && ev.button==1 ) {
+			startX= valueX;
+			startY= valueY;
+			
+			endX= (ev.x-(width\2));
+			endY= (ev.y-(height\2));
+			
+			beginMoveValue( %[ time:500, path:1.0, accel:-2 ] );
+			dm( "actionCallBack.onMouseUp= %d:%d:%d".sprintf( ev.x,ev.y,ev.button ));
+		}
+		
+		if( ev.type=="onMouseDown" && ev.button==0 ) {
+		//if( ev.type=="onMouseDown" ) {
+			mvX= ev.x;
+			mvY= ev.y;
+			dm( "actionCallBack.onMouseDown= %d:%d:%d".sprintf( ev.x,ev.y,ev.button ));
+		}
+		
+		if( ev.type=="onMouseMove" && isMouseDrug ) {
+			var rx= int((ev.x-mvX)*mvp);
+			var ry= int((ev.y-mvY)*mvp);
+			setViewPosMove( rx, ry );
+			mvX= ev.x;
+			mvY= ev.y;
+			dm( "actionCallBack= "+valueX+":"+valueY );
+		}
+		
+		if( ev.type=="onFocus" ) {
+			dm("keycallbak.onFocus ");
+		}
+		
+		if( ev.type=="onBlur" ) {
+		}
+		
+		if( ev.type=="onKeyDown" ) {
+			//templateKey( ev.key, ev.shift );
+			//dm("keycallbak.onKeyDown ");
+		}
+		
+		if( ev.type=="onMouseEnter" ) {
+			focus();
+		}
+		
+		
+		if( ev.type=="onMouseWheel" ) {
+			if( ev.delta>0 ) valueZ-= 0.1;
+			if( ev.delta<0 ) valueZ+= 0.1;
+			onPaint();
+		}
+	}
+	
+
+}
+
+///////////////////////////////////////////////////////
+//list
+/*
+class TScrollHeightList extends LayerEventBase2
+{
+	//内部
+	var index= 0; //表示用インデックス
+	var viewPosTemp_y= 0; //表示用座標
+	//var select= 0;
+	
+	var viewArray= []; //表示用データ
+	var viewArrayTemp= []; //表示用データ
+	var dataArray= []; //実データ
+	
+	var listLayerArray= []; //表示レイヤー
+	
+	var viewIndex= 0; //表示レイアー個数
+	var itemMargin= 0; //表示マージン
+	
+	var callbackEvent= void; //操作イベント
+	
+	var scrollSpeed= 0;
+	
+	var moveValueObject= void;
+	
+	//外部
+	//選択関係
+	var viewIndexNum= 0; //表示インデックス
+	var viewSelectIndexEnable= []; //選択状態
+	var selectIndexNum= 0; //実データインデックス
+	
+	var sortType= void;
+	
+	var range= 0; //表示レンジ
+	var value= 0.0; //表示位置
+	
+	function TScrollHeightList( win, par ) {
+		super.LayerEventBase2(...);
+	}
+	
+	function finalize() {
+		super.finalize();
+	}
+	
+	//初期設定
+	//座標x,座標y,座標w,座標h,表示個数
+	function setScrollList( x_=0, y_=0, w_=0, h_=0, viewindex_=3 )
+	{
+		setLayer( x_, y_, w_, h_, 0x00000000 );
+		viewIndex= viewindex_;
+		Debug.message( "TScrollHeightList.setScrollList()" );
+	}
+	
+	//表示データをセット
+	//表示クラス,実データ,表示データ,マージン
+	function setListData( itype_, dataArray_, viewArray_, itemm_=3 )
+	{
+		viewArray= viewArray_;
+		dataArray= dataArray_;
+		
+		for( var i=0; i<dataArray.count; i++) {
+			viewSelectIndexEnable[i]= false;
+		}
+		
+		itemMargin= itemm_;
+		
+		for( var i=0; i<viewIndex+1; i++)
+		{
+			listLayerArray.add( new itype_( window, this ) );
+			listLayerArray[i].setListItem();
+			listLayerArray[i].selectListArray= viewSelectIndexEnable;
+		}
+		
+		Debug.message( "TScrollHeightList.setListData()" );
+	}
+	
+	//項目をソートする
+	function sortExecute( mode_, so_="-"  )
+	{
+		var ar= [];
+		
+		for( var i=0; i<viewArray.count; i++) {
+			ar[i]= sortType( mode_, i )+"?"+viewArray[i];
+			Debug.message( "TScrollHeightList.ar= "+ar[i] );
+		}
+		
+		ar.sort( so_, true );
+		
+		for( var i=0; i<viewArray.count; i++) {
+			Debug.message( "TScrollHeightList.ar2= "+ar[i] );
+		}
+		
+		for( var i=0; i<viewArray.count; i++) {
+			var tt=[]; tt.split( "?", ar[i] );
+			viewArray[i]= (int)tt[1];
+			Debug.message( "TScrollHeightList.viewArray= "+viewArray[i] );
+		}
+		invalidate ar;
+	}
+	
+	//項目を選択する
+	function setSavetempSelect( n )
+	{
+		
+		selectIndexNum= n;
+		viewIndexNum= viewArray.find(selectIndexNum);
+		
+		for(var i= 0; i<viewSelectIndexEnable.count; i++ ) {
+			viewSelectIndexEnable[i]= false;
+		}
+		viewSelectIndexEnable[selectIndexNum]= true;
+		
+		for(var i= 0; i<viewIndex+1; i++ ) {
+			if( listLayerArray[i].data.index!=selectIndexNum ) listLayerArray[i].onSelectViews();
+		}
+	}
+	
+	//リストをスクロール数値を設定
+	function setValue( v=void, index_=void )
+	{
+		var dupdate= false, vupdate= false;
+		
+		if( v!==void )
+		{
+			if( v<0.0 ) v= 0.0;
+			if( v>1.0 ) v= 1.0;
+			value= v;
+		}
+		
+		var vv= 0.0;
+		var ix= 0;
+		
+		//if( v>0.0 ) {
+			//vv= value/(1/(viewArray.count-(viewIndex)));
+			//ix= int(vv/1);
+			
+			var m= viewArray.count-viewIndex;
+			ix= int(m*value);
+			vv= (m*value)-ix;
+			
+			//vv= ((vv*10000000%10000000)/10000000);
+			
+			//座標データを更新
+			if( viewPosTemp_y!= vv )
+			{
+				viewPosTemp_y= vv;
+				vupdate= true;
+			}
+			//表示データを更新
+			if( index!==ix || v==void )
+			{
+				index= ix;
+				dupdate= true;
+			}
+		//}
+		statsUpdate( dupdate, vupdate );
+	}
+	
+	//表示を更新
+	function statsUpdate( dataupdate_, viewupdate_ )
+	{
+		//表示データを更新
+		if( dataupdate_ )
+		{
+			for( var i=0; i<viewIndex+1; i++) {
+				if( index+i>=0 && index+i<viewArray.count ) {
+					listLayerArray[i].setDataDraw( dataArray[viewArray[index+i]] );
+				}
+			}
+		}
+		
+		//表示座標を更新
+		if( viewupdate_ )
+		{
+			for( var i=0; i<viewIndex+1; i++) {
+			
+				var t= listLayerArray[i].height*i;
+				if( i>0 ) t+= itemMargin*i;
+				
+				if( index+i>=0 && index+i<viewArray.count ) {
+					listLayerArray[i].visible= true;
+					listLayerArray[i].DataDrawUpdate();
+				} else {
+					listLayerArray[i].visible= false;
+				}
+				listLayerArray[i].top= t- (listLayerArray[i].height*viewPosTemp_y);
+			}
+		}
+	}
+	
+	function onAction( ev )
+	{
+		if( ev.type=="onMouseWheel" && isMouseEnter && visible )
+		{
+			if( moveValueObject!==void && moveValueObject.moving!=true ) scrollSpeed=0;
+			//座標設定
+			//var sc= (1/(viewArray.count-1))/2;
+			if( ev.delta>0 ) scrollSpeed--; else scrollSpeed++;
+			//var sc= (1/(viewArray.count-viewIndex));
+			var m= viewArray.count-viewIndex;
+			var sc= index+scrollSpeed;
+			if( sc>m ) sc= 1.0;
+			else if( sc<0 ) sc= 0.0;
+			else sc= sc/m;
+			//var sc= 0.02;
+			//if( ev.delta>0 ) setValue( value-sc ); else setValue( value+sc );
+			//if( ev.delta>0 ) sc= -sc;
+			if( sc>0 && sc<1.0 && sc!=value ) beginMoveValue( %[ time:500, path:sc, accel:-2 ] );
+			if( callbackEvent!==void ) callbackEvent( value );
+		}
+	}
+	
+	///////////////////////////////////////////////////////
+	//
+	function beginMoveValue(elm) {
+		//var cs= value<=value+elm.path;
+		//if( moveValueObject !== void && moveValueObject.moving && moveValueObject.corse == cs) {
+		//	moveValueObject.addMove( elm.path, elm.time );
+		//} else {
+			
+			var ne= stopMoveValue();
+	
+			// path の分解
+			//var array = [].split("(), ", elm.path, , true);
+			//var t= ((value*100000)%(elm.path*100000))/100000;
+			//t= (value-t)+elm.path+elm.path;
+			//var array = [ value, value+elm.path+ne ];
+			var array = [ value, elm.path ];
+			//for(var i = array.count-1; i>=0; i--) array[i+1] = +array[i];
+			//array[0] = value;
+			//array[1] = elm.path;
+	
+			// 移動用オブジェクトの作成
+			// 直線補間
+			moveValueObject = new LinearMoverValue(this, array, +elm.time,
+				elm.accel === void ? 0 : +elm.accel, true, elm.loop );
+					
+			//window.moveCount++;
+			moveValueObject.startMove(+elm.delay);
+		//}
+	}
+
+	//function valueMoveFinalFunction() {}
+
+	function stopMoveValue() {
+		var r= 0;
+		if(moveValueObject !== void) {
+			r=moveValueObject.naerCount;
+			invalidate moveValueObject, moveValueObject= void;
+		}
+		return r;
+	}
+}
+*/

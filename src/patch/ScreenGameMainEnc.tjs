@@ -1,0 +1,595 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenGameMainOrg
+//
+/////////////////////////////////////////////////////////////////////////
+//
+class ScreenGameMainOrg extends TFrame2
+{
+// 	var miniLineIcons= [];
+// 	var miniIcons= [];
+// 	var midIcons= [];
+// 	var uiChar= [];
+	
+	var selectLineIndex= 0;
+	var selectMiniIndex= 0;
+	
+	var viewArr=[ [], [], [], [], [], [] ];
+	
+	function ScreenGameMainOrg( g_, s_ ){
+		super.TFrame2(...);
+	}
+	
+	function finalize() {
+	
+		PostReleaseScreen();
+		
+//		invalidate miniLineIcons;
+//		invalidate miniIcons;
+//		invalidate midIcons;
+//		invalidate uiChar;
+
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	// init
+	//
+	function onPreLoad()
+	{
+		
+		ca.chardata_update();
+		
+		with( panel )
+		{
+			backGround.loadImages("slg_Org_bg");
+			
+			//ui
+			.uiBase= new LayerTrueBase( kag, backGround );
+			.uiBase.setLayer( 0, 540 );
+			.uiBase.loadImages("slg_top_chip01");
+			.uiBase.drawImageFile( 312,10, "slg_topicOrg" );
+			.uiBase.drawText4( 335,100, "師団を選択して編成することが出来ます。",0xff0000,15 );
+			.uiBase.drawText4( 335,116, "前列・後列にユニットを配置しよう。",0xff0000,15 );
+			//.uiBase.drawText4( 335,145, "※出撃中の師団は編成できません。",0xff0000,15 );
+			//.uiBase.drawText4( 300,50, "まーく▼▼▲▲????????※※師団を選択して編成することが出来ます。",0xff0000,16 );
+			
+			.uiTopInfo= new charTopStatus( kag, backGround );
+			.uiTopInfo.setLayer( 0, 0 );
+			.uiTopInfo.setCharNo(0);
+			//.uiTopInfo.loadImages("slg_Org_plate_unit");
+			
+			.uiLList= new LayerTrueBase( kag, backGround );
+			.uiLList.setLayer( 0, 127 );
+			.uiLList.loadImages("slg_Org_plate_org");
+			
+			.uiMList= new LayerTrueBase( kag, backGround );
+			.uiMList.setLayer( 326, 139 );
+			.uiMList.loadImages("slg_Org_plate_unitlist");
+			
+			.uiBTag= new LayerTrueBase( kag, .uiBase );
+			.uiBTag.setLayer( 12, 556 );
+			.uiBTag.loadImages("slg_topicOrg");
+			
+			//test
+			viewArr= [ 10, 20, 21, 30, 40, 41, 50, 60, 70, 0, 0, 0,
+			           110,120,130,140,150,160,1040,180,190, 0, 0, 0,
+			           651,240,220,260,270,280,330,300,310,320,330,340,
+			           350,360,370,380,400, 0, 0, 0, 0, 0, 0, 0,
+			           470,480,490,500,510,520,530,540,550,560,570,580,
+			           590,600,610,620,630,640,650, 0, 0, 0, 0, 0];
+			
+			getViewTemp();
+			
+			var uiw= [ 10, 10, 10, 154, 154, 154 ];
+			var uih= [ 373, 435, 497, 373, 435, 497 ];
+			for(var i= 0; i<6; i++ ){
+				uiChar[i]= new charMiniStatus( kag, .uiLList );
+				uiChar[i].setLayer(uiw[i],uih[i]);
+				uiChar[i].setData(0,gf.char);
+			}
+			
+			dm("charMiniStatus");
+			
+			//ドラッグアイコン
+			for(var i= 0; i<10; i++ ){
+				var yy= 40+(i*32);
+				miniLineIcons[i]= new charMiniLineIcon( kag, .uiLList );
+				miniLineIcons[i].setLayer( 18, yy );
+				miniLineIcons[i].setData(i,miniIcons);
+				miniLineIcons[i].mode= 0;
+			}
+			
+			for(var i= 0; i<60; i++ ){
+				var xx= 49+(i%6)*31;
+				var yy= 40+(i\6)*32;
+				miniIcons[i]= new charMiniIcon( kag, .uiLList );
+				miniIcons[i].setLayer( xx, yy );
+				miniIcons[i].setData(i,f.used.view.ppview);
+				miniIcons[i].mode= 0;
+			}
+			
+			
+			for(var i= 0; i<72; i++ ){
+				var xx= 24+(i%12)*50;
+				var yy= 2+(i\12)*66;
+				midIcons[i]= new charMidIcon( kag, .uiMList );
+				midIcons[i].setLayer( xx, yy );
+				midIcons[i].setData(i,f.used.view.chview,f.used.view.ppview);
+				midIcons[i].mode= 1;
+			}
+			
+			
+			//ターゲットアイコン
+			.ui_Cor_MiniLine= new LayerTrueBase( kag, backGround );
+			.ui_Cor_MiniLine.setLayer( 0, 0, 278, 30, 0xff000000 );
+			.ui_Cor_MiniLine.visible= false;
+			.ui_Cor_MiniLine.loadImages("line_icon_tg");
+			
+			.ui_Cor_Mini= new LayerTrueBase( kag, backGround );
+			.ui_Cor_Mini.setLayer( 0, 0, 30, 30, 0xff000000 );
+			.ui_Cor_Mini.visible= false;
+			.ui_Cor_Mini.loadImages("mini_icon_tg");
+			
+			.ui_Cor_Mid= new LayerTrueBase( kag, backGround );
+			.ui_Cor_Mid.setLayer( 0, 0, 48, 64, 0xff000000 );
+			.ui_Cor_Mid.visible= false;
+			.ui_Cor_Mid.loadImages("mid_icon_tg");
+			
+			
+			//ドラッグスクリーン
+			.drugScreen= new TDrugMoveBase( kag, backGround );
+			.drugScreen.setLayer( 0, 0, 970, 720 );
+			.drugScreen.callbackCancelEvent= callback_mini_cancel;
+			
+			.drugScreen2= new TDrugMoveBase( kag, backGround );
+			.drugScreen2.setLayer( 0, 0, 500, 720 );
+			.drugScreen2.hold_w= true;
+			
+			//コールバックをセット
+			for(var i= 0; i<10; i++ ){
+				miniLineIcons[i].Drug_Enter= onMiniLineAction;
+				miniLineIcons[i].Drug_Executes= .drugScreen2;
+			}
+			
+			for(var i= 0; i<60; i++ ){
+				miniIcons[i].Drug_Enter= onMiniAction;
+				miniIcons[i].Drug_Executes= .drugScreen;
+			}
+			
+			for(var i= 0; i<72; i++ ){
+				midIcons[i].Drug_Enter= onMidAction;
+				midIcons[i].Drug_Executes= .drugScreen;
+			}
+			
+			updateLineStatus();
+			//フォーカスリスト
+			//.mainMap.setKeyset( null, null, void, void );
+			
+		}
+	}
+	
+	function onPostRelease()
+	{
+// 		invalidateLayer(miniLineIcons);
+// 		invalidateLayer(miniIcons);
+// 		invalidateLayer(midIcons);
+// 		invalidateLayer(uiChar);
+		invalidatePanel();
+	}
+	
+	///////////////////////////////////////////////////////
+	// method
+	//
+	//セーブデータを入れ替え
+	/*
+	function exchangeDrop( f_, t_ )
+	{
+		if(f_.arr[f_.xi].division[f_.yi]!=t_.arr[t_.xi].division[t_.yi]){
+			var va= f_.arr[f_.xi].division[f_.yi];
+			f_.arr[f_.xi].division[f_.yi]= t_.arr[t_.xi].division[t_.yi];
+			t_.arr[t_.xi].division[t_.yi]= va;
+		}
+		dm("exchangeDrop");
+	}
+	
+	function executeDrop( f_, t_ )
+	{
+		dm("executeDrop %d<-%d".sprintf(t_.arr[t_.xi].division[t_.yi],f_.arr[f_.xi][f_.yi]));
+		if(f_.arr[f_.xi][f_.yi]!=t_.arr[t_.xi].division[t_.yi]){
+			t_.arr[t_.xi].division[t_.yi]= f_.arr[f_.xi][f_.yi];
+		}
+	}
+	*/
+	function exchangeDrop( f_, t_ )
+	{
+		if(f_._data[f_._id]!=t_._data[t_._id]){
+			var va= f_._data[f_._id];
+			f_._data[f_._id]= t_._data[t_._id];
+			t_._data[t_._id]= va;
+		}
+		dm("exchangeDrop");
+	}
+	
+	function executeDrop( f_, t_ )
+	{
+		dm("executeDrop %d<-%d".sprintf(t_._data[t_._id],f_._data[f_._id]));
+		if(f_._data[f_._id]!=t_._data[t_._id]){
+			t_._data[t_._id]= f_._data[f_._id];
+		}
+	}
+	
+	function exchangeDropLine( f_, t_, a_ )
+	{
+		for(var i= 0; i<6; i++ ){
+			var e= a_[f_+i];
+			a_[f_+i]= a_[t_+i];
+			a_[t_+i]= e;
+		}
+		dm("exchangeDrop");
+	}
+	
+	function exchangeDropLine2( f_, t_, a_ )
+	{
+		for(var i= 0; i<6; i++ ){
+			var e= f.used.party[f_].division[i];
+			f.used.party[_f].division[i]= f.used.party[f_].division[i];
+			f.used.party[t_].division[i]= e;
+		}
+		dm("exchangeDrop");
+	}
+	
+	function getP2A(i){
+		return f.used.party[i\6].division[i%6];
+	}
+	
+	function setP2A(i,d){
+		f.used.party[i\6].division[i%6]= d;
+	}
+	
+	function getViewTemp()
+	{
+		//var yy= 0;
+//		for(var i= 0; i<10; i++ ){
+//			for(var ii= 0; ii<6; ii++ ){
+//				f.used.view.ppview[yy]= f.used.party[i].division[ii];
+//				yy++;
+//			}
+//		}
+		
+		for(var i= 0; i<60; i++ ){
+			//f.used.view.ppview[i]= getP2A(i);
+			f.used.view.ppview[i]= f.used.party[i\6].division[i%6];
+			dm("get f.used.view.ppview(%d<-%d)".sprintf(f.used.view.ppview[i],f.used.party[i\6].division[i%6]));
+		}
+		
+		//ポインタ的な
+//		for(var i= 0; i<60; i++ ){
+//			f.used.view.ppview[i]= &f.used.party[i\6].division[i%6];
+//			dm("get f.used.view.ppview(%d<-%d)".sprintf(f.used.view.ppview[i],f.used.party[i\6].division[i%6]));
+//		}
+		
+		
+		for(var i= 0; i<72; i++ ){
+			f.used.view.chview[i]= viewArr[i];
+			dm("f.used.view.chview(%d<-%d)".sprintf(f.used.view.chview[i],viewArr[i]));
+		}
+		
+		//dm("getViewTemp");
+	}
+	
+	function setViewTemp()
+	{
+		//var yy= 0;
+		for(var i= 0; i<60; i++ ){
+			//setP2A(i,f.used.view.ppview[i]);
+			f.used.party[i\6].division[i%6]= f.used.view.ppview[i];
+			dm("set f.used.view.ppview(%d->%d)".sprintf(f.used.view.ppview[i],f.used.party[i\6].division[i%6]));
+		}
+		
+//		for(var i= 0; i<72; i++ ){
+//			f.used.view.ogview[i]= viewArr[i];
+//		}
+		dm("setViewTemp");
+	}
+	
+//	function getCharTemp(n)
+//	{
+//		var yy= 0;
+//		for(var i= 0; i<60; i++ ){
+//			f.used.party[i\6].dividion[i%6]= f.used.view.ppview[i];
+//		}
+//	}
+	
+	function setBottomViewUpdate(n)
+	{
+		n*= 6;
+		for(var i= 0; i<6; i++ ){
+			uiChar[i].setData(f.used.view.ppview[n+i]);
+			dm("setBottomViewUpdate %d=%d->%d".sprintf(n,i,f.used.view.ppview[n+i]));
+		}
+	}
+	
+	function updateLineStatus(){
+	
+		for(var i= 0; i<10; i++ ){
+			f.used.party[i].HP.max= 0;
+			f.used.party[i].HP.now= 0;
+			for(var c= i*6; c<(i*6)+6; c++ ){
+				if(f.used.view.ppview[c]!=0){
+//				if(getP2A(c)!=0){
+//					f.used.party[i].HP.max+= gf.char[getP2A(c)].HP.max;
+//					f.used.party[i].HP.now+= gf.char[getP2A(c)].HP.now;
+					f.used.party[i].HP.max+= gf.get(f.used.view.ppview[c],gf.char).HP.max;
+					f.used.party[i].HP.now+= gf.get(f.used.view.ppview[c],gf.char).HP.now;
+//					getP2A(i);
+//					setP2A(i,f.used.view.ppview[i]);
+				}
+			}
+		}
+		
+		for(var i= 0; i<10; i++ ){
+			var ch= f.used.party[i];
+			panel.uiLList.fillRect( 237,44+(32*i), 52,17, 0xff000000 );
+			if(ch.HP.now!=0) panel.uiLList.drawText3( 241, 48+(32*i), "%5d".sprintf(ch.HP.now),, 214 );
+			//ライフ
+			panel.uiLList.fillRect( 235,62+(32*i), 56,2, 0xffaa0000 );
+			panel.uiLList.fillRect( 235,62+(32*i), 56*(ch.HP.now/ch.HP.max),2, 0xff00f68c );
+		}
+		
+		setViewTemp();
+	}
+	
+	///////////////////////////////////////////////////////
+	// callback
+	//
+	//ライン入れ替え用
+	function onMiniLineAction(lay,ev)
+	{
+	
+		var xx= lay.parent.left+lay.left;
+		var yy= lay.parent.top+lay.top;
+		
+		if( ev.type=="onClick" ) {
+			selectLineIndex= lay._id;
+			setBottomViewUpdate(selectLineIndex);
+			updateLineStatus();
+		}
+		
+		if( ev.type=="onMouseUp" && lay.Drop_StandBy ){
+		
+			//dm("onMouseUp %s->%s".sprintf(panel.drugScreen.layer2, lay));
+			//panel.drugScreen2.drugEnabled= false;
+			
+			//exchangeDropLine( panel.drugScreen2.src._id, lay._id );
+			//lay.drawStatus();
+			
+			var from= panel.drugScreen2.src._id*6;
+			var to= lay._id*6;
+			var ar= f.used.view.ppview;
+			
+			exchangeDropLine( from, to, ar );
+			
+			for(var i= 0; i<6; i++ ){
+				miniIcons[from+i].drawStatus();
+				miniIcons[to+i].drawStatus();
+			}
+			
+			selectLineIndex= lay._id;
+			setBottomViewUpdate(selectLineIndex);
+			updateLineStatus();
+			
+//			if( panel.drugScreen.mode==0 ){
+//				//exchangeDrop( panel.drugScreen.layer, lay );
+//				//panel.drugScreen.layer.drawStatus();
+//				//lay.drawStatus();
+//			} else {
+//				//executeDrop( panel.drugScreen.layer, lay );
+//				//lay.drawStatus();
+//			}
+			
+			panel.drugScreen2.layer= void;
+			
+		}
+		
+		
+		if( ev.type=="onMouseEnter" ){
+			panel.ui_Cor_MiniLine.setPos(xx-2,yy);
+			panel.ui_Cor_MiniLine.visible= true;
+		}
+		
+		if( ev.type=="onMouseLeave" ){
+			panel.ui_Cor_MiniLine.visible= false;
+		}
+	}
+	
+	function onMiniAction(lay,ev)
+	{
+//		if( ev.type=="onMouseEnter" || ev.type=="onMouseLeave" || ev.type=="onClick" ) {
+//			if(Drug_Enter!==void) Drug_Enter(this,ev);
+//		}
+
+		//if( ev.type=="onMouseUp" && panel.drugScreen.drugEnabled ){
+		if( ev.type=="onMouseUp" && lay.Drop_StandBy ){
+		//if( ev.type=="onMouseUp" ){
+			//dm("onMouseUp %s->%s".sprintf(panel.drugScreen.layer, lay));
+			//panel.drugScreen.drugEnabled= false;
+			
+			//if( ev.x<300 ){
+			
+			
+			
+			selectLineIndex= lay._id\6;
+			
+			if( panel.drugScreen.mode==0 ){
+				
+				exchangeDrop( panel.drugScreen.src, lay );
+				panel.drugScreen.src.drawStatus();
+				lay.drawStatus();
+				
+			} else {
+				
+				if(f.used.view.ppview[lay._id]!=0) callback_mini_cancel(lay,ev,true);
+				
+				executeDrop( panel.drugScreen.src, lay );
+				
+				var idd= panel.drugScreen.src._id;
+				var dataa= panel.drugScreen.src._data;
+				
+				gf.char[dataa[idd]].troopsNo= selectLineIndex;
+				
+				dm("ci %d,%d,%d<-%d=%d".sprintf(idd,
+					dataa[idd],
+					gf.get(dataa[idd],gf.char).index,
+					gf.get(dataa[idd],gf.char).troopsNo,
+					selectLineIndex));
+				
+				panel.drugScreen.src.drawStatus();
+				lay.drawStatus();
+			}
+			
+			panel.drugScreen.src= void;
+			
+			setBottomViewUpdate(selectLineIndex);
+			updateLineStatus();
+			
+			
+//			} else {
+//				gf.char[f.used.view.ppview[panel.drugScreen.src._id]].troopsNo= -1;
+//				panel.drugScreen.src.drawStatus();
+//			}
+			
+		}
+		
+		var xx= lay.parent.left+lay.left;
+		var yy= lay.parent.top+lay.top;
+		
+		if( ev.type=="onMouseEnter" ){
+			if( !lay.Drop_StandBy ) panel.uiTopInfo.setChar2(lay.ch);
+			panel.ui_Cor_Mini.setPos(xx,yy);
+			panel.ui_Cor_Mini.visible= true;
+		}
+		
+		if( ev.type=="onMouseLeave" ){
+			panel.ui_Cor_Mini.visible= false;
+		}
+	}
+	
+	//キャラリスト
+	function onMidAction(lay,ev)
+	{
+		if( ev.type=="onClick" ) {
+		}
+		var xx= lay.parent.left+lay.left;
+		var yy= lay.parent.top+lay.top;
+		
+		if( ev.type=="onMouseEnter" ){
+			panel.uiTopInfo.setChar2(lay.ch);
+			panel.ui_Cor_Mid.setPos(xx,yy);
+			panel.ui_Cor_Mid.visible= true;
+		}
+		
+		if( ev.type=="onMouseLeave" ){
+			panel.ui_Cor_Mid.visible= false;
+		}
+	}
+	
+	function callback_mini_cancel(src,ev,f_=false)
+	{
+		
+		if( ev.x>302 || f_ ) {
+			gf.char[f.used.view.ppview[src._id]].troopsNo= -1;
+			f.used.view.ppview[src._id]= 0;
+			
+			for(var i= 0; i<midIcons.count; i++ ) midIcons[i].drawStatus();
+			src.drawStatus();
+			
+			dm("callback_mini_cancel");
+		}
+	}
+	
+//	function onDrug_Mode( ev )
+//	{
+//	}
+	
+	function rightClickCallBack()
+	{
+		//HideScreen( 200 );
+	}
+	///////////////////////////////////////////////////////
+	// show
+	//
+	function onInit()
+	{
+		backGround.setLayer( 0, 0, 960, 720, 0x00000000 );
+		backGround.visible= false;
+		backGround.opacity= 0;
+	}
+	
+	function onShow( time_, en_ )
+	{
+		//init_panel();
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 0;
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,255)" ] );
+		
+		panel.uiBase.setPos( 0, 720 );
+		panel.uiBase.beginMove( %[ time:time_, path:"(0,540,255)", accel:-2 ] );
+		
+		panel.uiTopInfo.setPos( 0, -140 );
+		panel.uiTopInfo.beginMove( %[ time:time_, path:"(0,0,255)", accel:-2 ] );
+		
+		panel.uiLList.setPos( -302, 139 );
+		panel.uiLList.beginMove( %[ time:time_, path:"(0,139,255)", accel:-2 ] );
+		
+		panel.uiMList.setPos( 960, 139 );
+		panel.uiMList.beginMove( %[ time:time_, path:"(326,139,255)", accel:-2 ] );
+		
+		dm("onShow");
+	}
+	
+	function onShowEnd()
+	{
+	
+		//panel.uiComm.enabledEvent= true;
+		for(var i= 0; i<10; i++ ) miniLineIcons[i].enabledEvent= true;
+		for(var i= 0; i<60; i++ ) miniIcons[i].enabledEvent= true;
+		for(var i= 0; i<72; i++ ) midIcons[i].enabledEvent= true;
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 255;
+		
+		frameWork.rckicEvent= rightClickCallBack;
+		
+		dm("onShowEnd");
+	}
+	
+	function onHide( time_, en_ )
+	{
+		setViewTemp();
+		
+		panel.uiLList.setPos( 0, 139 );
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,0)", accel:2 ] );
+		
+		panel.uiBase.beginMove( %[ time:time_, path:"(0,720,255)", accel:2 ] );
+		panel.uiTopInfo.beginMove( %[ time:time_, path:"(0,-140,255)", accel:2 ] );
+		panel.uiLList.beginMove( %[ time:time_, path:"(-302,139,255)", accel:2 ] );
+		panel.uiMList.beginMove( %[ time:time_, path:"(960,139,255)", accel:2 ] );
+		
+	}
+	
+	function onHideEnd()
+	{
+		backGround.visible= false;
+		backGround.opacity= 0;
+		
+		kag.KeyDown_CallBack= void;
+		
+		PostReleaseScreen();
+	}
+}

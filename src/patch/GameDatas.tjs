@@ -1,0 +1,1073 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	Unit
+//
+/////////////////////////////////////////////////////////////////////////
+Scripts.execStorage("DataUnit.tjs");
+Scripts.execStorage("CalcUnit.tjs");
+Scripts.execStorage("LiteralUnit.tjs");
+
+class GameDatas
+{
+	//
+	var kag;
+	var work;
+	
+	var data= %[];
+	
+	var arrayLoadTemp= [];
+	
+	//var listdata= %[];
+	
+	//var pItemCount //;
+	
+	var saveddata;
+	
+	var saveDataTemp= []; //セーブデータテンポラリー
+	//var selectSavedatas= 1;
+	//var selectSavedatasView= 1;
+	
+	var saveAddress= [];
+	
+	var dataLoaded= false;
+	
+	var base;
+	var calc;
+	
+	var logOut;
+	
+	var lineIndex= 0;
+	var lineData= void;
+	var lineDataReturn= void;
+	
+	
+	function GameDatas( w_ )
+	{
+		work= w_;
+		kag= work.window;
+		
+		base= new DataUnit( this );
+		calc= new CalcUnit( this );
+		
+		logOut= new ScreenDrawUtil();
+		
+		data.setGetDataArray= void;
+		data.get= _getArrayDataBackend2;
+		data.get2= _getArrayDataBackend3;
+		
+		//システムデータ初期設定
+		if( kag.sflags.systemcore===void ) {
+			kag.sflags.systemcore= %[];
+			//base.setSystemCoreBase( kag.sflags.systemcore );
+			kag.sflags.systemcore= base.setSystemCoreBase();
+		}
+		
+		//プレイ時間
+		if( kag.sflags.systemcore.UserPlayTime===void ) {
+			kag.sflags.systemcore.UserPlayTime= [];
+			for(var i= 0; i<101; i++ ) {
+				kag.sflags.systemcore.UserPlayTime[i]= 0;
+			}
+		}
+		
+		saveDataTemp= [];
+		//saveDataTemp[i]= base.setSaveDataTempBase(i);
+		for(var i= 0; i<101; i++ ) {
+			saveDataTemp[i]= setSaveDataTempBase(i);
+		}
+		
+		//セーブ用にユーザーデータを設定
+		f.data= %[];
+		
+		//f.data.map= [];
+		data.map= [];
+		
+		//f.data.char= [];
+		data.char= [];
+		
+		//f.data.item= [];
+		//data.item= [];
+		
+		//f.data.skill= [];
+		data.skill= [];
+		
+		//f.data.enemy= [];
+		data.enemy= [];
+		
+		data.list= %[];
+		data.list.map= [];
+		data.list.item= [];
+		//data.list.enemy= [];
+		data.list.nameset= [];
+		
+		//resetUserData();
+		
+		data.temporary= base.setGameCoreTempBase();
+		global.gt = data.temporary;
+		
+		kag.core2_saveEvent= core2_saveEvent_callback;
+		kag.core2_loadEvent= core2_loadEvent_callback;
+		kag.core2_loadEvent2= core2_loadEvent_callback2;
+		
+		//core2_reloadalldatas_callback();
+	}
+	
+	function finalize()
+	{
+		invalidate base;
+		//invalidate calc;
+		invalidate data;
+	}
+	
+	////////////////////
+	// kagからのコールバック
+	function core2_saveEvent_callback(f_){
+
+// 		tf.rvision=306;
+// 		if( tf.rvision != 306 ){
+// 			//--------------------------------------------
+// 			//▲リビジョン307以後の処理
+// 			//(Dictionary.assignStruct incontextof kag.pflags)(kag.flags);
+// 			
+// 			//セーブデータを作成
+// 			f_.data= %[] if f_.data===void;
+// 			base.setSaveData2( f_.data, data );
+// 			//▲ここまで
+// 			//--------------------------------------------
+// 		}else{
+// 			//▲リビジョン306以前の処理
+// 			(Dictionary.assignStruct incontextof kag.pflags)(kag.flags);
+// 			
+// 			kag.pflags.data= %[] if kag.pflags.data===void;
+// 			base.setSaveData2( kag.pflags.data, data );
+// 			//▲ここまで
+// 			//--------------------------------------------
+// 		}
+// 		var cc= a_.count;
+// 		for(var i= 10; i<cc; i++ ){
+// 			a_.erase(10);
+// 		}
+
+		f_.data= %[] if f_.data===void;
+		base.setSaveData2( f_.data, data );
+
+	}
+	
+	function core2_loadEvent_callback(f_)
+	{
+	
+ 		core2_reloadalldatas_callback();
+ 		
+  		base.setSaveData2( data, f_.data );
+  		delete f_.data;
+ 		
+  		//足りないプロトタイプを作成
+//  		base.setGameCoreBase( kag.pflags.used );
+//  		
+//  		//partyの参照をリストア
+//  		//setArr2Indexs_restor();
+//  
+
+// 		tf.rvision=306;
+// 		if( tf.rvision != 306 ){
+// 			//--------------------------------------------
+// 			//▲リビジョン307以後の処理
+// 			//セーブデータからリストア
+// 			base.setSaveData2( data, f_.data );
+// 			delete f_.data;
+// //			kag.pflags.data= void;
+// 			
+// 			//足りないプロトタイプを作成
+// 			base.setGameCoreBase( f.used );
+// 			
+// 			//partyの参照をリストア
+// 			setArr2Indexs_restor();
+// 			
+// 			//ボリューム情報をセット
+// 			core2.screen.config.opt_update_status_set();
+// 			//▲ここまで
+// 		}else{
+// 			//--------------------------------------------
+// 			//▲リビジョン306以前の処理
+// 			base.setSaveData2( data, kag.pflags.data );
+// 			base.setGameCoreBase( f.used );
+// 			//▲ここまで
+// 			//--------------------------------------------
+// 		}
+
+		//}
+		//setSaveData( core2.games.data, kag.pflags.data );pos2vecp
+	}
+	
+	function core2_loadEvent_callback2(f_)
+	{
+		
+ 		//足りないプロトタイプを作成
+ 		base.setGameCoreBase( f.used );
+ 		
+ 		//partyの参照をリストア
+ 		setArr2Indexs_restor();
+ 		
+   		//ボリューム情報をセット
+  		core2.screen.config.opt_update_status_set();
+ 		
+	}
+	
+	function core2_reloadalldatas_callback()
+	{
+		data.map= gameLoadDatasZ( "mapdata" );
+		data.char= gameLoadDatasZ( "charadata" );
+		data.enemy= gameLoadDatasZ( "partyenemy" );
+		data.list.item= gameLoadDatasZ( "itemlist" );
+		data.list.map= gameLoadDatasZ( "mapitemlist" );
+		data.list.nameset= gameLoadDatasZ( "nameset" );
+		data.skill= gameLoadDatasZ( "skilldata" );
+		data.mapRevise= gameLoadDatasZ( "maprevise" );
+		dm('all.datas.loaded..');
+		
+		chardata_backup(data.char);
+		dm('all.datas.init..');
+	}
+	
+ 	function chardata_backup(cch){
+ 		
+ 		for(var i= 0; i<cch.count; i++ ) {
+ 			var ch= cch[i];
+	  		ch.parbackup.pow= ch.pow;
+	  		ch.parbackup.def= ch.def;
+	  		ch.parbackup.spd= ch.spd;
+	  		ch.parbackup.mor= ch.mor;
+	  		ch.parbackup.divine= ch.divine;
+	  		ch.parbackup.special= ch.special;
+	  		/*
+	  		dm('chardata_backup '+i+' '+ch.parbackup.pow+'= '+ch.pow);
+	  		dm('chardata_backup '+i+' '+ch.parbackup.def+'= '+ch.def);
+	  		dm('chardata_backup '+i+' '+ch.parbackup.spd+'= '+ch.spd);
+	  		dm('chardata_backup '+i+' '+ch.parbackup.mor+'= '+ch.mor);
+	  		dm('chardata_backup '+i+' '+ch.parbackup.divine+'= '+ch.divine);
+	  		dm('chardata_backup '+i+' '+ch.parbackup.special+'= '+ch.special);
+	  		*/
+ 		}
+ 	}
+	
+	////////////////////
+	//
+ 	function loadBookMarkFromFileTemp(fn)
+ 	{
+ 		try
+ 		{
+ 			if(!Storages.isExistentStorage(fn)) return false; //ファイルがない
+ 			var modestr= "o" + kag.calcThumbnailSize().size;
+ 			var data = Scripts.evalStorage(fn, modestr);
+			return data;
+ 		}
+ 		catch(e)
+ 		{
+ 			System.inform("栞を読み込めないか、栞が"
+ 				"壊れているか、あるいは他の形式の栞データ"
+ 				"です(" + e.message + ")", "エラー");
+ 			return void;
+ 		}
+ 		
+ 	}
+ 	
+	//セーブデータテンポラリー
+	function setSaveDataTempAdd(i)
+	{
+		var ks= kag.sflags.systemcore.save.saveex[i];
+ 		
+ 		ks.clear= f.used.stat.clearcount;
+ 		ks.story= f.used.stat.story;
+ 		ks.trun= f.used.time.turn+1;
+ 		ks.day= f.used.time.turn%2;
+ 		ks.diff= _DIFF_TEXTNAME[f.used.difficulty];
+ 		ks.terr= f.used.mapf.territory.count;
+ 		ks.cost1= f.used.stat.food.now;
+ 		ks.cost2= f.used.stat.resource.now;
+ 		ks.cost3= f.used.stat.energy.now;
+ 		ks.cost4= f.used.stat.gold.now;
+ 		
+ 		/*
+ 		ks[0]= f.used.stat.clearcount;
+ 		ks[1]= f.used.stat.story;
+ 		ks[2]= f.used.time.turn+1;
+ 		ks[3]= f.used.time.turn%2;
+ 		ks[4]= _DIFF_TEXTNAME[f.used.difficulty];
+ 		ks[5]= f.used.mapf.territory.count;
+ 		ks.cost1= f.used.stat.food.now;
+ 		ks.cost2= f.used.stat.resource.now;
+ 		ks.cost3= f.used.stat.energy.now;
+ 		ks.cost4= f.used.stat.gold.now;
+ 		
+				d.save.saveex.add(%[
+					clear:0,
+					story:0,
+					trun:0,
+					day:0,
+					diff:"",
+					terr:0,
+					cost1:0,
+					cost2:0,
+					cost3:0,
+					cost4:0
+				]);
+				*/
+	}
+	
+	//セーブデータテンポラリー
+	function setSaveDataTempBase( i, reset=false )
+	{
+		var d= %[];
+		
+		with(d)
+		{
+				var r=Storages.isExistentStorage( kag.getBookMarkFileNameAtNum(i) );
+				if( kag.getBookMarkDate(i)=='' ) r= false;
+				.enable= true;
+				.exist= r;
+				.index= i;
+				
+				if( .exist && !reset ) {
+					.file= kag.getBookMarkFileNameAtNum(i);
+					.names= kag.getBookMarkPageName(i);
+					.date= kag.getBookMarkDate(i);
+					.playtime= core2.getPlayTimeString(kag.sflags.systemcore.UserPlayTime[i]);
+					
+					var ks= kag.sflags.systemcore.save.saveex[i];
+					
+ 					.clear= ks.clear;
+ 					.story= ks.story;
+ 					.trun= ks.trun;
+ 					.day= ks.day;
+ 					.diff= ks.diff;
+ 					.terr= ks.terr;
+ 					.cost1= ks.cost1;
+ 					.cost2= ks.cost2;
+ 					.cost3= ks.cost3;
+ 					.cost4= ks.cost4;
+				} else {
+				
+					.file= void;
+					.names= "セーブデータがありません。";
+					.date= "0000/00/00 00:00";
+					.playtime= "000:00:00";
+ 					.clear= 0;
+ 					.story= 0;
+ 					.trun= 0;
+ 					.day= 0;
+ 					.diff= "";
+ 					.terr= 0;
+ 					.cost1= 0;
+ 					.cost2= 0;
+ 					.cost3= 0;
+ 					.cost4= 0;
+				}
+		}
+		return d;
+	}
+	////////////////////
+	//
+	/*
+	function setCharUpdater(){
+		
+		for(var i= 0; i<data.char.count; i++ ) {
+			if(data.char[i]!==void){
+				var c= data.char[i];
+				
+				dm("c.HP.base=%d, c.level=%d".sprintf(c.HP.base, c.level));
+				c.HP.max= ca.HPcalc( c.HP.base, c.level );
+			}
+		}
+	}
+	*/
+	
+	//partyに参照をセット
+	function setArr2Indexs(a_, b_, s_=0, c_=void) {
+		
+		if(c_===void) c_= b_.count-s_;
+		
+		//10版以降を消去
+		var cc= a_.count;
+		for(var i= 10; i<cc; i++ ){
+			a_.erase(10);
+		}
+		
+		//参照をコピー
+		//var ii= 10;
+		for(var i= s_; i<s_+c_; i++ ){
+			a_.add(b_[i]);
+			//a_[ii]= b_[i];
+			//ii++;
+		}
+		
+		//参照をバックアップ
+		f.used.partyin= s_;
+		f.used.partycount= c_;
+	}
+	
+	//partyをリストア
+	function setArr2Indexs_restor() {
+		if( f.used.partycount!==void && f.used.partyin!==void ) {
+			setArr2Indexs( f.used.party, gf.enemy, f.used.partyin, f.used.partycount );
+		}
+	}
+	
+	////////////////////
+	// 定数要素配列= _getLiteral( index, 定数配列 );
+	//
+	function _getArrayDataBackend( i_, val_=void )
+	{
+		if(val_===void) val_= data.setGetDataArray;
+		
+		var hc= val_.count;
+		var r= -1;
+		
+		//成形
+		for( var i=0; i<hc; i++ ){
+			if(val_[i].index==i_){
+				r= i;
+				break;
+			}
+		}
+		
+		return r;
+	}
+	
+	function _getArrayDataBackend2( i_, val_=void )
+	{
+		if(val_===void) val_= data.setGetDataArray;
+		
+		var hc= val_.count;
+		var r= -1;
+		
+		//成形
+		for( var i=0; i<hc; i++ ){
+			if(val_[i].index==i_){
+				r= i;
+				break;
+			}
+		}
+		
+		if(r>-1) return val_[r];
+		else return void;
+	}
+	
+	function _getArrayDataBackend3( i_, val_=void )
+	{
+		if(val_===void) val_= data.setGetDataArray;
+		
+		var hc= val_.count;
+		var r= -1;
+		
+		//成形
+		for( var i=0; i<hc; i++ ){
+			if(val_[i].index==i_){
+				r= i;
+				break;
+			}
+		}
+		
+		if(r>-1) return r;
+		else return void;
+	}
+	
+	function _setArrayDataFindBackend(d)
+	{
+		d.find2= function(i_){
+			var r= -1;
+			
+			//成形
+			for( var i=0; i<count; i++ ){
+				if(this[i].index==i_){
+					r= i;
+					break;
+				}
+			}
+			
+			return r;
+		};
+		
+		d.get= function(i_){
+			var r= -1;
+			
+			//成形
+			for( var i=0; i<count; i++ ){
+				if(this[i].index==i_){
+					r= i;
+					break;
+				}
+			}
+			
+			if(r>-1) return this[r];
+			else return void;
+		};
+	}
+	
+	////////////////////
+	//ユーザーデータのリセット
+	function resetUserData()
+	{
+		f.used= base.setGameCoreBase();
+		data.temporary= base.setGameCoreTempBase();
+		//calc.start_game_set_datas();
+	}
+	
+	
+	function updateSaveDatas()
+	{
+		saveDataTemp.clear();
+		for(var i= 0; i<101; i++ ) {
+			saveDataTemp[i]= setSaveDataTempBase(i);
+		}
+	}
+	
+	function gameLoadDatas( f_ )
+	{
+		(Dictionary.clear incontextof data)();
+		dataLoaded= loadDatas( data, f+'.txt' );
+	}
+	
+	function gameLoadDatasf( f_ )
+	{
+		var dt= void;
+		var fn= f_+'.txt';
+		if(Storages.isExistentStorage(fn)){
+			dt= Scripts.evalStorage(fn);
+			dm("gameLoadDatasf(%s)= %d".sprintf(fn,dt.count));
+		}
+		//_setArrayDataFindBackend(dt);
+		return dt;
+	}
+	
+	function gameLoadDatasZ( f_ )
+	{
+		var dt= void;
+		var fn= f_+'.dat';
+		if(Storages.isExistentStorage(fn)){
+			dt= Scripts.evalStorage(fn);
+			dm("gameLoadDatasf(%s)= %d".sprintf(fn,dt.count));
+		}
+		//_setArrayDataFindBackend(dt);
+		return dt;
+	}
+	
+	function Csvloader( f_, c_, md_="arr", ev_=void )
+	{
+		logOut.add("started %s mode=%s".sprintf(f_,md_));
+		
+		var md= md_=="dic" ? false : true ;
+		
+		var la= [];
+		
+		la.load( f_ );
+		
+		var tagIndex= void;
+		
+		//if(md) var dt= [];
+		//else var dt= %[];
+		var dt= [];
+		
+		//dm
+		for( var i=0; i<la.count; i++)
+		{
+			var indexC= 0;
+			var columns= [];
+			columns.split( ",", la[i] );
+			
+			var readf= true;
+			
+			if( columns[0]===void || columns[0]=="" || columns[0].indexOf('#')!=-1 ) readf= false;
+			
+			if( columns[0]=="@" && tagIndex===void ){ tagIndex= columns; readf= false; }
+			
+			//if( columns[0]=='@' ){ tagIndex.assign(columns); readf= false; }
+			
+			if( readf ) {
+			
+				var d= c_();
+				d.index= 0;
+				
+				for( var it=0; it<tagIndex.count; it++)
+				{
+					if( tagIndex[it]!="" && columns[it]!="" && columns[it]!==void )
+					{
+						columns[it]= columns[it].trim();
+						
+						//変数を文字列、数値に変換
+						var dmt= "";
+						var res;
+						if(/[^0-9\-\+]/.test(columns[it])){
+							res= columns[it];
+							dmt= "string";
+						} else {
+							res= str2num(columns[it]);
+							dmt= "int";
+						}
+						
+						//IDを設定
+						if( tagIndex[it]=="@" )
+						{
+							//Index
+							d["index"]= res;
+							//dm( "dt."+tagIndex[it]+"= "+d[tagIndex[it]] );
+							dm( "dt.index%s= %d".sprintf( tagIndex[it], d["index"] ));
+						} else {
+						
+							//ドットで分割して項目を設定
+							//5段まで
+							var tt= [];
+							tt.split( ".", tagIndex[it] );
+							
+							switch(tt.count){
+								case 1:
+									d[tt[0]]= res;
+									dm( "dt.%s= %s(%s)".sprintf(tt[0],d[tt[0]],dmt) );
+									break;
+								case 2:
+									d[tt[0]][tt[1]]= res;
+									dm( "dt.%s.%s= %s(%s)".sprintf(tt[0],tt[1],d[tt[0]][tt[1]],dmt) );
+									break;
+								case 3:
+									d[tt[0]][tt[1]][tt[2]]= res;
+									dm( "dt.%s.%s.%s= %s(%s)".sprintf(tt[0],tt[1],tt[2],d[tt[0]][tt[1]][tt[2]],dmt) );
+									break;
+								case 4:
+									d[tt[0]][tt[1]][tt[2]][tt[3]]= res;
+									dm( "dt.%s.%s.%s.%s= %s(%s)".sprintf(tt[0],tt[1],tt[2],tt[3],d[tt[0]][tt[1]][tt[2]][tt[3]],dmt));
+									break;
+								case 5:
+									d[tt[0]][tt[1]][tt[2]][tt[3]][tt[4]]= res;
+									dm( "dt.%s.%s.%s.%s= %s(%s)".sprintf(tt[0],tt[1],tt[2],tt[3],tt[4],d[tt[0]][tt[1]][tt[2]][tt[3]][tt[4]],dmt));
+									break;
+							}
+						}
+					}
+				}
+				//dt[columns[0]]= d;
+				dt.add(d);
+			}
+		}
+		logOut.add( "end %s count=%d".sprintf(f_,dt.count) );
+		return dt;
+	}
+	
+	/*
+	function Csvloader_task( i, la, md_="arr", ev_=void )
+	{
+		//dm
+//		for( var i=0; i<la.count; i++)
+//		{
+			var columns= [];
+			columns.split( ",", la[i] );
+			
+			var readf= true;
+			
+			if( columns[0]==void || columns[0]=="" || columns[0].indexOf("#")!=-1 ) readf= false;
+			
+			if( columns[0]=="@" && tagIndex==void ){ tagIndex= columns; readf= false; }
+			
+			if( readf ) {
+			
+				var d= c_();
+				d.index= "";
+				
+				for( var it=0; it<tagIndex.count; it++)
+				{
+					if( tagIndex[it]!="" && columns[it]!="" && columns[it]!==void )
+					{
+						columns[it]= columns[it].trim();
+						
+						//変数を文字列、数値に変換
+						var dmt= "";
+						var res;
+						if(/[^0-9\-\+]/.test(columns[it])){
+							res= columns[it];
+							dmt= "string";
+						} else {
+							res= str2num(columns[it]);
+							dmt= "int";
+						}
+						
+						//IDを設定
+						if( tagIndex[it]=="@" )
+						{
+							//Index
+							d["index"]= res;
+							//dm( "dt."+tagIndex[it]+"= "+d[tagIndex[it]] );
+							dm( "dt.index%s= %d".sprintf( tagIndex[it], d["index"] ));
+						} else {
+						
+							//ドットで分割して項目を設定
+							//5段まで
+							var tt= [];
+							tt.split( ".", tagIndex[it] );
+							
+							switch(tt.count){
+								case 1:
+									d[tt[0]]= res;
+									dm( "dt.%s= %s(%s)".sprintf(tt[0],d[tt[0]],dmt) );
+									break;
+								case 2:
+									d[tt[0]][tt[1]]= res;
+									dm( "dt.%s.%s= %s(%s)".sprintf(tt[0],tt[1],d[tt[0]][tt[1]],dmt) );
+									break;
+								case 3:
+									d[tt[0]][tt[1]][tt[2]]= res;
+									dm( "dt.%s.%s.%s= %s(%s)".sprintf(tt[0],tt[1],tt[2],d[tt[0]][tt[1]][tt[2]],dmt) );
+									break;
+								case 4:
+									d[tt[0]][tt[1]][tt[2]][tt[3]]= res;
+									dm( "dt.%s.%s.%s.%s= %s(%s)".sprintf(tt[0],tt[1],tt[2],tt[3],d[tt[0]][tt[1]][tt[2]][tt[3]],dmt));
+									break;
+								case 5:
+									d[tt[0]][tt[1]][tt[2]][tt[3]][tt[4]]= res;
+									dm( "dt.%s.%s.%s.%s= %s(%s)".sprintf(tt[0],tt[1],tt[2],tt[3],tt[4],d[tt[0]][tt[1]][tt[2]][tt[3]][tt[4]],dmt));
+									break;
+							}
+						}
+					}
+				}
+				//dt[columns[0]]= d;
+				dt.add(d);
+			}
+//		}
+	}
+	*/
+	
+	
+	
+	
+	
+	function Csvloader2( f_, c_, md_="arr", ev_=void )
+	{
+		logOut.add("started %s mode=%s".sprintf(f_,md_));
+		
+		var md= md_=="dic" ? false : true ;
+		
+		lineData= [];
+		
+		lineData.load( f_ );
+		
+		if(md) var lineDataReturn= [];
+		else var lineDataReturn= %[];
+		
+		lineIndex= -1;
+		
+		convEvecute_next();
+	}
+	
+	function convEvecute()
+	{
+		//終了
+		if( lineIndex>=linedata.count ){
+			logOut.add( "end %s mode=%s".sprintf(f_,md_) );
+			return true;
+		}
+		
+		var tagIndex= void;
+		var columns= [];
+		columns.split( ",", linedata[i] );
+		
+		if( columns[0]=="@" ){
+			tagIndex= columns;
+			return convEvecute_next();
+		}
+		
+		if( i>0 && columns[0].indexOf("#")==-1 ) return convEvecute_next();
+		
+		
+		//if( columns[0]=="@" ) tagIndex= columns;
+		//else {
+			//if( i>0 && columns[0].indexOf("#")==-1 )
+			//{
+				var d= c_();
+				d.index= "";
+				
+				for( var it=0; it<tagIndex.count; it++)
+				{
+					if( tagIndex[it]!="" && columns[it]!="" && columns[it]!==void )
+					{
+						columns[it]= columns[it].trim();
+						
+						//変数を文字列、数値に変換
+						var res;
+						if(/[^0-9\-\+]/.test(columns[it])){
+							res= columns[it];
+							dm( "dt.string= %s".sprintf(res) );
+						} else {
+							res= str2num(columns[it]);
+							dm( "dt.int= %d".sprintf(res) );
+						}
+						
+						//IDを設定
+						if( tagIndex[it]=="@" )
+						{
+							//Index
+							d["index"]= res;
+							dm( "dt."+tagIndex[it]+"= "+d[tagIndex[it]] );
+						} else {
+						
+							//ドットで分割して項目を設定
+							//5段まで
+							var tt= [];
+							tt.split( ".", tagIndex[it] );
+							
+							switch(tt.count){
+								case 1:
+									d[tt[0]]= res;
+									dm( "dt.%s= %s".sprintf(tt[0],d[tt[0]]) );
+									break;
+								case 2:
+									d[tt[0]][tt[1]]= res;
+									dm( "dt.%s.%s= %s".sprintf(tt[0],tt[1],d[tt[0]][tt[1]]) );
+									break;
+								case 3:
+									d[tt[0]][tt[1]][tt[2]]= res;
+									dm( "dt.%s.%s.%s= %s".sprintf(tt[0],tt[1],tt[2],d[tt[0]][tt[1]][tt[2]]) );
+									break;
+								case 4:
+									d[tt[0]][tt[1]][tt[2]][tt[3]]= res;
+									dm( "dt.%s.%s.%s.%s= %s".sprintf(tt[0],tt[1],tt[2],tt[3],d[tt[0]][tt[1]][tt[2]][tt[3]]));
+									break;
+								case 5:
+									d[tt[0]][tt[1]][tt[2]][tt[3]][tt[4]]= res;
+									dm( "dt.%s.%s.%s.%s= %s".sprintf(tt[0],tt[1],tt[2],tt[3],tt[4],d[tt[0]][tt[1]][tt[2]][tt[3]][tt[4]]));
+									break;
+							}
+						}
+					}
+				}
+				lineDataReturn[columns[0]]= d;
+			//}
+		//}
+		logOut.addPoint();
+		//work.events.add( logOut.addPointS );
+		return convEvecute_next();
+	}
+	
+	function convEvecute_next()
+	{
+		lineIndex++;
+		work.events.add( convEvecute );
+		return true;
+	}
+
+//	function setCsvloader( f_, c_, md_="arr", ev_=void )
+//	{
+//		var dt= Csvloader(...);
+//		
+//		var fn_= Storages.chopStorageExt(Storages.getPlacedPath(f_))+".txt";
+//		if( md_ ) dt.saveStruct(fn_);
+//		else (Dictionary.saveStruct incontextof dt)(fn_);
+//	}
+	
+	function Csvsever( f_, g_ )
+	{
+		var fn= System.exePath+ '/data/gamesystem/datas/'+f_+'.txt';
+		(Dictionary.saveStruct incontextof g_)(fn);
+	}
+	
+	function Csvseverf( f_, g_ )
+	{
+		var fn= System.exePath+ '/data/gamesystem/datas/'+f_+'.txt';
+		g_.saveStruct(fn);
+		//(Dictionary.saveStruct incontextof g_)(fn);
+	}
+	
+	function CsvseverZ( f_, g_ )
+	{
+		var fn= System.exePath+ '/data/gamesystem/datas/'+f_+'.dat';
+		//g_.save(fn,"z");
+		g_.saveStruct(fn,"z");
+		//(Dictionary.saveStruct incontextof g_)(fn);
+	}
+	
+	
+	function drawLineText( layer_, arr_, x_, y_, w_, h_ )
+	{
+		layer_.fillRect( x_, y_, w_, h_, 0xff000000 );
+		
+		for( var i=0; i<arr_.count; i++)
+		{
+			layer_.drawText( x_, y_+(i*30), arr_[i], 0xffffff );
+		}
+	}
+	
+	
+	function executeArrayLoad( dl_=false, x_=0, y_=0, w_=32, lay_=void )
+	{
+		var v= new KPlanProgressBarDraw( lay_ );
+		
+		for( var i=0; i<arrayLoadTemp.count; i++)
+		{
+			lay_.drawText( x_, y_+(i*30), arrayLoadTemp[i], 0xffffff );
+			v.setImage( x_, y_+20+(i*30), w_, 5, 0xffffffffff, 0xff99999999, lay );
+			setCsvloader( arrayLoadTemp[i], gf.se.setCharBase, "arr", v.setValue );
+		}
+	}
+	
+	
+	function loadDatas( a_, f_ )
+	{
+		if(Storages.isExistentStorage(f_))
+		{
+			a_ = Scripts.evalStorage(f_);
+			return true;
+		}
+		else return false;
+	}
+	
+	function loadDatasExecute()
+	{
+		if( !dataLoaded ) core2.screen.conv.onShow();
+		else core2.screen.title.onShow( 1000 );
+	}
+	
+	
+	function initData()
+	{
+		for( var i=0; i<15; i++) {
+			pChar.add( se.setCharBase() );
+		}
+		
+		for( var i=0; i<6; i++) {
+			pParty.add(i);
+		}
+	}
+	
+	function getDicElementImpl(dic, ei = 1)
+	{
+		var arr = new Array();
+		arr.assign(dic);
+		var lp = arr.count \ 2;
+		for (var i = 0; i < lp; i++) {
+			arr.erase(i + ei);
+		}
+		return arr;
+	}
+	
+	function ItemSetter( columns, lineNo ) {
+		if( 1>lineNo )
+		{
+			ids= columns[0];
+			
+			pItem[ ids ]=new ItemBase();
+			
+			pItem[ ids ].id= columns[1];
+			pItem[ ids ].Name= columns[2];
+			pItem[ ids ].Type= columns[3];
+			pItem[ ids ].Price= columns[4];
+			pItem[ ids ].Comment= columns[5];
+			
+			pItem[ ids ].CountBox= 1;
+			pItem[ ids ].CountBank= 1;
+		}
+		
+		Debug.message( "ItemSetter.id= "+ columns[0] +":name= "+ columns[1] );
+	}
+	
+	
+	function setDayTrunTime( n, t, z )
+	{
+		f.used.time.turn= t;
+		f.used.time.time= n;
+		f.used.time.zone= z;
+	}
+	
+	function setDayTimeAdd( n )
+	{
+		var z= false;
+		
+		f.used.time.time+= n;
+		if(f.used.time.time>23) {
+			f.used.time.time= 0;
+			f.used.time.turn++;
+			f.used.time.zone= int(f.used.time.turn%8);
+			z= true;
+		}
+		return z= %[ time:true, zone:z ];
+	}
+	
+	function setTrunTimeAdd( n )
+	{
+		f.used.time.turn+= n;
+		f.used.time.time= 0;
+	}
+	
+	function setTimeNextAdd( n )
+	{
+		var z= false;
+		
+		if(f.used.time.time<12) f.used.time.time=12;
+		else {
+			f.used.time.time=0;
+			f.used.time.turn++;
+			f.used.time.zone= int(f.used.time.turn%8);
+			z= true;
+		}
+		return z= %[ time:true, zone:z ];
+	}
+	
+	function getDayTimeSun()
+	{
+		var r= false;
+		if( f.used.time.time>6 && f.used.time.time<18 ) r= true;
+		return r;
+	}
+	
+	function multiValDec( val_, m=0 )
+	{
+		m*= 3;
+		var md= [ 0x0000000000000001,  1, 64,
+				  0x000000000000000f,  4, 16,
+				  0x00000000000000ff,  8,  8,
+				  0x000000000000ffff, 16,  4 ];
+//		var md= [ 0x0000000000000001,  1, 64,
+//				  0x000000000000000f,  4, 16,
+//				  0x00000000000000ff,  8,  8,
+//				  0x000000000000ffff, 16,  4 ];
+		var r= [];
+		
+		for( var i=0; i<md[m+2]; i++ )
+		{
+			r.add( val_ && md[m] );
+			md[m]= md[m]<<md[m+1];
+		}
+		
+		return r;
+	}
+	
+	function multiValEnc( val_, m=0 )
+	{
+		m*= 3;
+		var md= [ 0x0000000000000001,  1, 64,
+				  0x000000000000000f,  4, 16,
+				  0x00000000000000ff,  8,  8,
+				  0x000000000000ffff, 16,  4 ];
+		var r= 0;
+		
+		//for( var i=0; i<val_.count; i++ )
+		for( var i=val_.count-1; i>=0; i-- )
+		{
+			r= val_[i]<<md[m+1];
+		}
+		
+		return r;
+	}
+	
+	
+	//0x00で掛かれたテキストをデコード
+	function booleanValDec(tt_="")
+	{
+		var mt= [];
+		
+		//if(tt_!==void && tt_!=""){
+			tt_= tt_.substring(2,tt_.length);
+			for(var i= 0; i<tt_.length; i++ ){
+				mt[i]= str2num(tt_.substring(i,1));
+			}
+		//}
+		return mt;
+	}
+	
+}

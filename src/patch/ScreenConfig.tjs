@@ -1,0 +1,782 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenConfig
+//
+/////////////////////////////////////////////////////////////////////////
+//
+// トラジッション中にオフスクリーンバッファをロード
+//
+
+class ScreenConfig extends TFrame2
+{
+	var configmode= 0;
+	
+	function ScreenConfig( g_ ) {
+		super.TFrame2(...);
+		//backGround.callbackREvent2= rightClickCallBack;
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	// init
+	//
+	function init_panel()
+	{
+		with( panel )
+		{
+			backGround.loadImages("sys_cfg_bg2.png");
+			
+			////////////////////
+			//トップボタン
+			//基本＆音声
+			.sbuttom0= new TButtonSelect4( kag, backGround );
+			.sbuttom0.setLayer( 245, 15 );
+			.sbuttom0.setButton( 48, 48, 2 );
+			.sbuttom0.setButtonPos([ 0,0, 50,0 ]);
+			.sbuttom0.setButtonLoad([ "sys_cfg_bt_mcnf","sys_cfg_bt_msound" ]);
+			.sbuttom0.setCallBack(,opt_config_top);
+			.sbuttom0.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			.sbuttom0.AllLockOut= false;
+			
+			.sbuttom0a= new TButtonSelect4( kag, backGround );
+			.sbuttom0a.setLayer( 345, 15 );
+			.sbuttom0a.setButton( 48, 48, 4 );
+			.sbuttom0a.setButtonPos([ 0,0, 50,0, 110,0, 170,0 ]);
+			.sbuttom0a.setButtonLoad([ "sys_cfg_bt_mtitle","sys_cfg_bt_mexit","sys_cfg_bt_mreset","sys_cfg_bt_return" ]);
+			.sbuttom0a.setCallBack(,opt_config_top2);
+			.sbuttom0a.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			.sbuttom0a.setButtomSelectMode= [ 1,1,1,1 ];
+			.sbuttom0a.AllLockOut= false;
+			
+			////////////////////
+			//基本設定
+			.option0= new LayerTrueBase( kag, backGround, panel ); .option0.setLayer( 20, 78, 450, 662 );
+			.option0.loadImages("sys_cfg_chip01.png");
+			.option0.setPos( -440, 78 );
+			.option0.visible= true;
+			.option0.opacity= 255;
+			
+			//画面解像度
+			.buttom0= new TButtonSelect4( kag, .option0 ); .buttom0.setLayer( 227, 50 );
+			.buttom0.setButton( 96, 24, 2 ); .buttom0.setButtonPos([ 0,0, 98,0 ]);
+			.buttom0.setButtonLoad([ "sys_cfg_bt_kgkA","sys_cfg_bt_kgkB" ]);
+			.buttom0.checked_Execute= opt_window_fullscreen;
+			.buttom0.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			//.buttom0.AllLockOut= true; //ロックをリリースするか
+			
+			//ADV演出
+			.buttom1= new TButtonSelect4( kag, .option0 ); .buttom1.setLayer( 227, 80 );
+			.buttom1.setButton( 96, 24, 2 ); .buttom1.setButtonPos([ 98,0, 0,0 ]);
+			.buttom1.setButtonLoad([ "sys_cfg_bt_keB","sys_cfg_bt_keA" ]);
+			.buttom1.checked_Execute= function( v ) {
+					kag.sflags.systemcore.option.game.adventure= v;
+				};
+			.buttom1.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			
+			//バトル設定
+			.buttom2= new TButtonSelect4( kag, .option0 ); .buttom2.setLayer( 227, 110 );
+			.buttom2.setButton( 96, 24, 2 ); .buttom2.setButtonPos([ 98,0, 0,0 ]);
+			.buttom2.setButtonLoad([ "sys_cfg_bt_keB","sys_cfg_bt_keA" ]);
+			.buttom2.checked_Execute= function( v ) {
+					kag.sflags.systemcore.option.game.battle= v;
+				};
+				
+			.buttom2.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			
+			//表示速度
+			.slider0= new SliderBar( kag, .option0 ); .slider0.setLayer( 211, 184, 219, 16, false );
+			.slider0.wheeladd= 0.05;
+			.slider0.loadImages( ,"sys_cfg_seekbar","sys_cfg_seekbar_rad" );
+			//.slider0.visible= true;
+			.slider0.callbackEvent= function( v ) {
+					kag.sflags.systemcore.option.text.speed= v;
+					kag.userChSpeed= int(50*kag.sflags.systemcore.option.text.speed);
+				};
+			
+			//オート速度
+			.slider1= new SliderBar( kag, .option0 ); .slider1.setLayer( 211, 214, 219, 16, false );
+			.slider1.wheeladd= 0.05;
+			.slider1.loadImages( ,"sys_cfg_seekbar","sys_cfg_seekbar_rad" );
+			//.slider1.visible= true;
+			.slider1.callbackEvent= function( v ) {
+				kag.sflags.systemcore.option.text.autospeed= v;
+				kag.autoModePageWait= int(4900*kag.sflags.systemcore.option.text.autospeed)+100;
+			};
+			
+			//スキップ
+			.buttom3= new TButtonSelect4( kag, .option0 ); .buttom3.setLayer( 227, 246, 194, 24 );
+			.buttom3.setButton( 96, 24, 2 ); .buttom3.setButtonPos([ 98,0, 0,0 ]);
+			.buttom3.setButtonLoad([ "sys_cfg_bt_tsB","sys_cfg_bt_tsA" ]);
+			.buttom3.checked_Execute= function( v ) {
+					kag.sflags.systemcore.option.text.skip= v;
+					return true;
+				};
+			.buttom3.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			
+			//オート設定
+			.buttom8= new TButtonSelect4( kag, .option0 ); .buttom8.setLayer( 227, 282, 194, 24 );
+			.buttom8.setButton( 96, 24, 2 ); .buttom8.setButtonPos([ 98,0, 0,0 ]);
+			.buttom8.setButtonLoad([ "sys_cfg_bt_tcB","sys_cfg_bt_tcA" ]);
+			.buttom8.checked_Execute= function( v ) {
+					kag.sflags.systemcore.option.text.selectskip= v;
+					return true;
+				};
+			.buttom8.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			
+			//ウインドウ透明度
+			.slider2= new SliderBar( kag, .option0, panel ); .slider2.setLayer( 211, 322, 219, 16, false );
+			.slider2.setOptions( %[ wheel:true, wheeladd:0.05 ] );
+			.slider2.callbackEvent= function( v ) {
+					core2.screen.config.panel.slider2view.opacity= 255*v;
+					kag.sflags.systemcore.option.text.windowopacity= v;
+					kag.fore.messages[0].opacity= 255*kag.sflags.systemcore.option.text.windowopacity;
+					kag.back.messages[0].opacity= 255*kag.sflags.systemcore.option.text.windowopacity;
+				};
+			.slider2.setOptions( %[ cursor:"sys_cfg_seekbar", slider:"sys_cfg_seekbar_rad" ] );
+			.slider2.visible= true;
+			
+			//ウインドウサムネイル
+			.slider2view= new LayerTrueBase( kag, .option0 ); .slider2view.setLayer( 181, 391, 239, 41, 0x00000000 );
+			.slider2view.loadImages( "sys_cfg_chip_win" );
+			.slider2view.visible= true;
+			.slider2view.opacity= 0;
+			
+			.slider2text= new LayerTrueBase( kag, .option0 ); .slider2text.setLayer( 200, 400, 239, 41, 0x00000000 );
+			.slider2text.visible= true;
+			
+			//フォント設定
+			.buttom4= new TButtonBase1k( kag, .option0 ); .buttom4.setLayer( 227, 441, 96, 24 );
+			.buttom4.loadImages( "sys_cfg_bt_font" );
+			.buttom4.callbackEvent= function( v ) {
+					kag.onChChangeFontMenuItem();
+					core2.screen.config.opt_fontset_view(core2.screen.config.panel.slider2text);
+					return true;
+				};
+			.buttom4.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			
+				
+			//シーンジャンプ
+			//一度見たシーン
+// 			.buttom5= new TButtonSelect4( kag, .option0 ); .buttom5.setLayer( 227, 513, 194, 24 );
+// 			.buttom5.setButton( 96, 24, 2 ); .buttom5.setButtonPos([ 98,0, 0,0 ]);
+// 			.buttom5.setButtonLoad([ "sys_cfg_bt_csB","sys_cfg_bt_csA" ]);
+// 			.buttom5.checked_Execute= function( v ) { kag.sflags.systemcore.option.jump.mode1= v; };
+// 			.buttom5.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			.buttom5= new TButtonBase1s( kag, .option0 ); .buttom5.setLayer( 227, 513, 24, 24, 2 );
+			.buttom5.loadImages("sys_cfg_bt_toggle");
+			.buttom5.callbackEvent= function( v ) { kag.sflags.systemcore.option.jump.mode1= v.isSelected; };
+			.buttom5.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			
+			//エッチシーン
+// 			.buttom6= new TButtonSelect4( kag, .option0 ); .buttom6.setLayer( 227, 543, 194, 24 );
+// 			.buttom6.setButton( 96, 24, 2 ); .buttom6.setButtonPos([ 98,0, 0,0 ]);
+// 			.buttom6.setButtonLoad([ "sys_cfg_bt_csB","sys_cfg_bt_csA" ]);
+// 			.buttom6.checked_Execute= function( v ) { kag.sflags.systemcore.option.jump.mode2= v; };
+// 			.buttom6.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			.buttom6= new TButtonBase1s( kag, .option0 ); .buttom6.setLayer( 227, 543, 24, 24, 2 );
+			.buttom6.loadImages("sys_cfg_bt_toggle");
+			.buttom6.callbackEvent= function( v ) { kag.sflags.systemcore.option.jump.mode2= v.isSelected; };
+			.buttom6.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			
+			//すべてのシーン
+// 			.buttom7= new TButtonSelect4( kag, .option0 ); .buttom7.setLayer( 227, 573, 194, 24 );
+// 			.buttom7.setButton( 96, 24, 2 ); .buttom7.setButtonPos([ 98,0, 0,0 ]);
+// 			.buttom7.setButtonLoad([ "sys_cfg_bt_csB","sys_cfg_bt_csA" ]);
+// 			.buttom7.checked_Execute= function( v ) { kag.sflags.systemcore.option.jump.mode3= v; };
+// 			.buttom7.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			.buttom7= new TButtonBase1s( kag, .option0 ); .buttom7.setLayer( 227, 573, 24, 24, 2 );
+			.buttom7.loadImages("sys_cfg_bt_toggle");
+			.buttom7.callbackEvent= function( v ) { kag.sflags.systemcore.option.jump.mode3= v.isSelected; };
+			.buttom7.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			
+			////////////////////
+			//音声１
+			.option1= new LayerTrueBase( kag, backGround, panel ); .option1.setLayer( 960, 78, 450, 662 );
+			.option1.loadImages("sys_cfg_chip02.png");
+			.option1.setPos( 960, 78 );
+			.option1.visible= false;
+			.option1.opacity= 0;
+			
+			//改行時の音声設定
+			.v1buttom0= new TButtonSelect4( kag, .option1 ); .v1buttom0.setLayer( 227, 50, 194, 24 );
+			.v1buttom0.setButton( 96, 24, 2 ); .v1buttom0.setButtonPos([ 98,0, 0,0 ]);
+			.v1buttom0.checked_Execute= function( v ) {
+					kag.sflags.systemcore.option.voice.messcut= v;
+					return true;
+				};
+			.v1buttom0.setButtonLoad([ "sys_cfg_bt_mbB","sys_cfg_bt_mbA" ]);
+			.v1buttom0.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			
+			//バックグラウンドボイス設定
+			.v1buttom1= new TButtonSelect4( kag, .option1 ); .v1buttom1.setLayer( 227, 110, 194, 24 );
+			.v1buttom1.setButton( 96, 24, 2 ); .v1buttom1.setButtonPos([ 98,0, 0,0 ]);
+			.v1buttom1.checked_Execute= function( v ) {
+					kag.sflags.systemcore.option.voice.background= v;
+					return true;
+				};
+			.v1buttom1.setButtonLoad([ "sys_cfg_bt_bbB","sys_cfg_bt_bbA" ]);
+			.v1buttom1.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			
+			//音量設定
+			for(var i= 0; i<6; i++ ) {
+				var s= "v1slider%02d".sprintf(i);
+				panel[s]= new SliderBar( kag, .option1 );
+				panel[s].setLayer( 211, 208+(30*i), 219, 16, false );
+				panel[s].setOptions( %[ cursor:"sys_cfg_seekbar", slider:"sys_cfg_seekbar_rad" ] );
+			}
+			
+			for(var i= 1; i<6; i++ ) {
+				var s= "v1buttoms%02d".sprintf(i);
+				panel[s]= new TButtonBase1s( kag, .option1 );
+				panel[s].setLayer( 175, 202+(30*i), 24, 24, 2 );
+				panel[s].callbackEvent= opt_musicmute_set;
+				panel[s].loadImages("sys_cfg_bt_sm2");
+				panel[s]._id= i;
+			}
+			
+			panel["v1slider00"].callbackEvent= function( v ){
+				kag.sflags.systemcore.option.volume.movie= v;
+				core2.screen.config.opt_update_status_set();
+			};
+			
+			panel["v1slider00"].releaseCallbackEvent= function( v ){
+				userfunctions.setSeVolume( kag.sflags.systemcore.option.volume.movie, 5, _SE02_VOLUME_MAX );
+				kag.se[5].stop();
+				kag.se[5].play(%[ storage:"movieVolume_td10" ]);
+				dm("playTestSound= %s:v=%d,v2=%d".sprintf( "movieVolume_td10", kag.se[5].volume,kag.se[5].volume2));
+			};
+			
+			panel["v1slider01"].callbackEvent= function( v ){
+				kag.sflags.systemcore.option.volume.bgm= v;
+				core2.screen.config.opt_update_status_set();
+			};
+			
+			panel["v1slider02"].callbackEvent= function( v ){
+				kag.sflags.systemcore.option.volume.system= v;
+				core2.screen.config.opt_update_status_set();
+			};
+			
+			panel["v1slider02"].releaseCallbackEvent= function( v ){
+				kag.se[0].stop();
+				kag.se[0].play(%[ storage:"A1_12225s" ]);
+				dm("playTestSound= %s:v=%d,v2=%d".sprintf( "A1_12225s", kag.se[0].volume,kag.se[0].volume2));
+			};
+			
+			panel["v1slider03"].callbackEvent= function( v ){
+				kag.sflags.systemcore.option.volume.fx= v;
+				core2.screen.config.opt_update_status_set();
+			};
+			
+			panel["v1slider03"].releaseCallbackEvent= function( v ){
+				kag.se[3].stop();
+				kag.se[4].stop();
+				kag.se[3].play(%[ storage:"A1_08146" ]);
+				dm("playTestSound= %s:v=%d,v2=%d".sprintf( "A1_08146", kag.se[3].volume,kag.se[3].volume2));
+			};
+			
+			panel["v1slider04"].callbackEvent= function( v ){
+				kag.sflags.systemcore.option.volume.atom= v;
+				core2.screen.config.opt_update_status_set();
+			};
+			
+			panel["v1slider04"].releaseCallbackEvent= function( v ){
+				kag.se[2].stop();
+				if( userfunctions.voiceListChar[18]!="" ){
+					kag.se[2].play(%[ storage:userfunctions.voiceListChar[18] ]);
+				}
+			};
+				
+			panel["v1slider05"].callbackEvent= function( v ){ kag.sflags.systemcore.option.volume.voice= v; };
+			
+			panel["v1slider05"].releaseCallbackEvent= function( v ){
+				kag.se[1].stop();
+				if( userfunctions.voiceListChar[19]!="" ){
+					userfunctions.playVoice( userfunctions.voiceListChar[19] );
+				}
+			};
+			
+			////////////////////
+			//音声２
+			.option2= new LayerTrueBase( kag, backGround, panel ); .option2.setLayer( 960, 78, 450, 662 );
+			.option2.loadImages("sys_cfg_chip03.png");
+			.option2.setPos( 960, 78 );
+			.option2.visible= false;
+			.option2.opacity= 0;
+			
+			//キャラごとの設定
+			for(var i= 0; i<18; i++ ) {
+				var s= "v2slider%02d".sprintf(i);
+				panel[s]= new SliderBar( kag, .option2 );
+				panel[s].setLayer( 224, 17+(32*i), 219, 16, false );
+				panel[s].id= i;
+				panel[s].setOptions( %[ wheel:true, wheeladd:0.1 ] );
+				panel[s].callbackEvent= function( v ) { kag.sflags.systemcore.option.volume.char[id].value= v; };
+				panel[s].setOptions( %[ cursor:"sys_cfg_seekbar", slider:"sys_cfg_seekbar_rad" ] );
+				
+				panel[s].releaseCallbackEvent= function( v ){
+					kag.se[1].stop();
+					if( userfunctions.voiceListChar[id]!="" ){
+						userfunctions.playVoice( userfunctions.voiceListChar[id] );
+					}
+				};
+				
+				s= "v2buttoms%02d".sprintf(i);
+				panel[s]= new TButtonBase1s( kag, .option2 );
+				panel[s].setLayer( 187, 12+(32*i), 24, 24, 2 );
+				panel[s]._id= i;
+				panel[s].callbackEvent= function( v ) {
+						kag.sflags.systemcore.option.volume.char[_id].mute= v.isSelected;
+					};
+				panel[s].loadImages("sys_cfg_bt_sm2");
+				
+			}
+			
+			//ミュートリセット
+			.v2buttom0= new TButtonBase1k( kag, .option2 );
+			.v2buttom0.setLayer( 187, 588, 96, 24 );
+			.v2buttom0.callbackEvent= opt_voicemute_allreset;
+			.v2buttom0.loadImages("sys_cfg_bt_smc");
+			.v2buttom0.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			
+			.option0.absolute= 10;
+			.option1.absolute= 20;
+			.option2.absolute= 20;
+		
+		}
+	}
+	
+	function init_panel2()
+	{
+		with( panel )
+		{
+			////////////////////
+			//音声１
+			.option1.loadImages("sys_cfg_chip02.png");
+			
+			//改行時の音声設定
+			.v1buttom0.setButtonLoad([ "sys_cfg_bt_mbA","sys_cfg_bt_mbB" ]);
+			
+			//バックグラウンドボイス設定
+			.v1buttom1.setButtonLoad([ "sys_cfg_bt_bbA","sys_cfg_bt_bbB" ]);
+			
+			//音量設定
+			for(var i= 0; i<6; i++ ) {
+				var s= "v1slider%02d".sprintf(i);
+				panel[s].setOptions( %[ cursor:"sys_cfg_seekbar", slider:"sys_cfg_seekbar_rad" ] );
+				
+				s= "v1buttoms%02d".sprintf(i);
+				panel[s].loadImages("sys_cfg_bt_sp");
+			}
+			
+			////////////////////
+			//音声２
+			.option2.loadImages("sys_cfg_chip03.png");
+			
+			//キャラごとの設定
+			for(var i= 0; i<18; i++ ) {
+				var s= "v2slider%02d".sprintf(i);
+				panel[s].setOptions( %[ cursor:"sys_cfg_seekbar", slider:"sys_cfg_seekbar_rad" ] );
+				
+				s= "v2buttoms%02d".sprintf(i);
+				panel[s].loadImages("sys_cfg_bt_sp");
+			}
+			
+			//ミュートリセット
+			.v2buttom0.loadImages("sys_cfg_bt_smc");
+			
+		
+		}
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		
+		panel.sbuttom0.setEnableEvent(f_);
+		panel.sbuttom0a.setEnableEvent(f_);
+		
+		panel.buttom0.setEnableEvent(f_);
+		panel.buttom1.setEnableEvent(f_);
+		panel.buttom2.setEnableEvent(f_);
+		panel.buttom3.setEnableEvent(f_);
+		panel.buttom4.setEnableEvent(f_);
+		panel.buttom5.setEnableEvent(f_);
+		panel.buttom6.setEnableEvent(f_);
+		panel.buttom7.setEnableEvent(f_);
+		panel.buttom8.setEnableEvent(f_);
+		
+		panel.slider0.setEnableEvent(f_);
+		panel.slider1.setEnableEvent(f_);
+		panel.slider2.setEnableEvent(f_);
+		
+		panel.v1buttom0.setEnableEvent(f_);
+		panel.v1buttom1.setEnableEvent(f_);
+		
+		for(var i= 0; i<6; i++ ) {
+			panel["v1slider%02d".sprintf(i)].setEnableEvent(f_);
+		}
+		for(var i= 1; i<6; i++ ) {
+			panel["v1buttoms%02d".sprintf(i)].setEnableEvent(f_);
+		}
+		
+		for(var i= 0; i<18; i++ ) {
+			panel["v2slider%02d".sprintf(i)].setEnableEvent(f_);
+			panel["v2buttoms%02d".sprintf(i)].setEnableEvent(f_);
+		}
+		
+		panel.v2buttom0.setEnableEvent(f_);
+		
+		backGround.setEnableEvent(f_);
+		
+	}
+	///////////////////////////////////////////////////////
+	// method
+	//
+	function opt_update_status( v )
+	{
+		var ks= kag.sflags.systemcore.option;
+		
+		with( kag.sflags.systemcore.option )
+		{
+			panel.buttom0.setChecked( kag.fullScreen );
+			panel.buttom1.setChecked( ks.game.adventure );
+			panel.buttom2.setChecked( ks.game.battle );
+			
+			panel.slider0.setValue( ks.text.speed );
+			panel.slider1.setValue( ks.text.autospeed );
+			
+			panel.buttom3.setChecked( ks.text.skip );
+			panel.buttom8.setChecked( ks.text.selectskip );
+			
+			panel.slider2.setValue( .text.windowopacity );
+			panel.slider2view.opacity= 255*.text.windowopacity;
+			
+			panel.buttom5.button_Selected( .jump.mode1 );
+			panel.buttom6.button_Selected( .jump.mode2 );
+			panel.buttom7.button_Selected( .jump.mode3 );
+			
+			panel.v1buttom0.setChecked( .voice.messcut );
+			panel.v1buttom1.setChecked( .voice.background );
+			
+			panel.v1slider00.setValue( .volume.movie );
+			panel.v1slider01.setValue( .volume.bgm );
+			panel.v1slider02.setValue( .volume.system );
+			panel.v1slider03.setValue( .volume.fx );
+			panel.v1slider04.setValue( .volume.atom );
+			panel.v1slider05.setValue( .volume.voice );
+			
+			//panel["v1buttoms00"].button_Selected( .volume.moviemute );
+			panel["v1buttoms01"].button_Selected( .volume.bgmmute );
+			panel["v1buttoms02"].button_Selected( .volume.systemmute );
+			panel["v1buttoms03"].button_Selected( .volume.fxmute );
+			panel["v1buttoms04"].button_Selected( .volume.atommute );
+			panel["v1buttoms05"].button_Selected( .volume.voicemute );
+			
+			//
+			for(var i= 0; i<18; i++ ) {
+				var s= "v2slider%02d".sprintf(i);
+				panel[s].setValue( .volume.char[i].value );
+				
+				s= "v2buttoms%02d".sprintf(i);
+				panel[s].button_Selected( .volume.char[i].mute );
+			}
+		}
+	}
+	
+	function opt_update_status_set()
+	{
+		userfunctions.setMovieVolume( kag.sflags.systemcore.option.volume.movie, 0, _MOVIE_VOLUME_MAX );
+		userfunctions.setBgmVolume( kag.sflags.systemcore.option.volume.bgm, 0, _BGM_VOLUME_MAX );
+		userfunctions.setSeVolume( kag.sflags.systemcore.option.volume.system, 0, _SYSTEM_VOLUME_MAX );
+		userfunctions.setSeVolume( kag.sflags.systemcore.option.volume.fx, 3, _SE02_VOLUME_MAX );
+		userfunctions.setSeVolume( kag.sflags.systemcore.option.volume.fx, 4, _SE02_VOLUME_MAX );
+		userfunctions.setSeVolume( kag.sflags.systemcore.option.volume.atom, 2, _SE01_VOLUME_MAX );
+		
+		userfunctions.setBgmMute(kag.sflags.systemcore.option.volume.bgmmute);
+		userfunctions.setSeVolumeMute( 0, kag.sflags.systemcore.option.volume.systemmute );
+		userfunctions.setSeVolumeMute( 3, kag.sflags.systemcore.option.volume.fxmute );
+		userfunctions.setSeVolumeMute( 4, kag.sflags.systemcore.option.volume.fxmute );
+		userfunctions.setSeVolumeMute( 5, kag.sflags.systemcore.option.volume.fxmute );
+		userfunctions.setSeVolumeMute( 2, kag.sflags.systemcore.option.volume.atommute );
+		userfunctions.setSeVolumeMute( 1, kag.sflags.systemcore.option.volume.voicemute );
+		
+		kag.fore.messages[0].opacity= 255*kag.sflags.systemcore.option.text.windowopacity;
+		kag.back.messages[0].opacity= 255*kag.sflags.systemcore.option.text.windowopacity;
+	}
+	
+	///////////////////////////////////////////////////////
+	// callbak
+	//
+	function opt_config_top(v)
+	{
+		switch(v)
+		{
+			case 0: opt_config_cfg(); break;
+			case 1: opt_config_sound(); break;
+		}
+	}
+	
+	function opt_config_top2(v)
+	{
+		switch(v)
+		{
+			case 0: opt_config_title(); break;
+			case 1: kag.shutdown(); break;
+			//case 1: kag.closeByScript(%[ ask:true ]); break;
+			case 2: opt_config_reset(); break;
+			case 3: rightClickCallBack(); break;
+		}
+	}
+	
+	function opt_config_cfg()
+	{
+	
+		configmode= 1;
+		
+		panel.option0.visible= true;
+		panel.option1.visible= true;
+		panel.option2.visible= true;
+		
+		panel.option0.setPos( -440, 78 );
+		panel.option1.setPos(  20, 78 );
+		panel.option2.setPos( 480, 78 );
+		
+		panel.option0.opacity= 0;
+		panel.option1.opacity= 255;
+		panel.option2.opacity= 255;
+		
+		panel.option0.absolute= 20;
+		panel.option1.absolute= 10;
+		panel.option2.absolute= 10;
+		
+		panel.option0.beginMove( %[ time:300, path:"(  20,78,255)", accel:-2 ] );
+		panel.option1.beginMove( %[ time:300, path:"(-440,78,0  )", accel:2  ] );
+		panel.option2.beginMove( %[ time:300, path:"( 940,78,0  )", accel:2  ] );
+		
+		//panel.option0.moveFinalCallback= opt_config_cfg_end;
+		panel.option0.moveFinalCallback= function( v ) {
+				core2.screen.config.panel.option1.visible= false;
+				core2.screen.config.panel.option2.visible= false;
+				//core2.setEvent_aLock_false();
+			};
+	}
+	
+	function opt_config_sound()
+	{
+		configmode= 1;
+		
+		panel.option0.visible= true;
+		panel.option1.visible= true;
+		panel.option2.visible= true;
+		
+		panel.option0.setPos(  20, 78 );
+		panel.option1.setPos(-440, 78 );
+		panel.option2.setPos( 940, 78 );
+		
+		panel.option0.opacity= 255;
+		panel.option1.opacity= 0;
+		panel.option2.opacity= 0;
+		
+		panel.option0.absolute= 10;
+		panel.option1.absolute= 20;
+		panel.option2.absolute= 20;
+		
+		panel.option0.beginMove( %[ time:300, path:"(-440,78,0  )", accel:2  ] );
+		panel.option1.beginMove( %[ time:300, path:"(  20,78,255)", accel:-2 ] );
+		panel.option2.beginMove( %[ time:300, path:"( 480,78,255)", accel:-2 ] );
+		
+		panel.option0.moveFinalCallback= function( v ) {
+				core2.screen.config.panel.option0.visible= false;
+				//core2.setEvent_aLock_false();
+			};
+	}
+	
+	function opt_config_title() {
+		var rst= frameWork.screenControls.getCall();
+		if( rst!="ScreenKag" ) {
+			var prompt = "タイトルに戻りますか？";
+			var result = askYesNoD( prompt,opt_config_title,opt_config_titleback );
+			if( result ) {
+				askYesNoD_reset();
+				HideScreen( 300 );
+			}
+		} else {
+			HideScreen( 300 );
+		}
+	}
+	
+	function opt_config_titleback() {
+		//kag.conductor.clearCallStack();
+		//kag.process( "ScreenTitle.ks" );
+		core2.kagBackStart( 300, "ScreenTitle.ks" );
+	}
+	
+	function opt_config_reset() {
+		var prompt = "初期設定に戻しますか？";
+		var result = askYesNoD( prompt,opt_config_reset );
+		if( result ) {
+		
+			askYesNoD_reset();
+			
+			frameWork.games.base.setSystemCoreBase( kag.sflags.systemcore );
+			opt_update_status();
+			opt_update_status_set();
+			kag.userChSpeed= int(50*kag.sflags.systemcore.option.text.speed);
+			kag.autoModePageWait= int(4900*kag.sflags.systemcore.option.text.autospeed)+100;
+			
+		}
+	}
+	
+	function opt_window_fullscreen( v ) {
+		switch(v){
+			case 0: kag.onWindowedMenuItemClick(kag); break;
+			case 1: kag.onFullScreenMenuItemClick(kag); break;
+		}
+		//core2.setEvent_aLock_false();
+	}
+	
+	function opt_window_opacity( v ) {
+		panel.slider2view.opacity= 255*v;
+	}
+	
+	function opt_musicmute_set( v ) {
+		switch(v._id){
+			case 0: kag.sflags.systemcore.option.volume.moviemute= v.isSelected; break;
+			case 1:
+				kag.sflags.systemcore.option.volume.bgmmute= v.isSelected;
+				break;
+			case 2:
+				kag.sflags.systemcore.option.volume.systemmute= v.isSelected;
+				break;
+			case 3:
+				kag.sflags.systemcore.option.volume.fxmute= v.isSelected;
+				break;
+			case 4:
+				kag.sflags.systemcore.option.volume.atommute= v.isSelected;
+				break;
+			case 5:
+				kag.sflags.systemcore.option.volume.voicemute= v.isSelected;
+				break;
+		}
+		
+		opt_update_status_set();
+		//core2.setEvent_aLock_false();
+	}
+	
+	function opt_voicemute_allreset() {
+		for(var i= 0; i<18; i++ ) {
+			var s= "v2buttoms%02d".sprintf(i);
+			panel[s].button_Selected(0);
+			kag.sflags.systemcore.option.volume.char[i].mute = 0;
+		}
+		//core2.setEvent_aLock_false();
+	}
+	
+	function opt_fontset_view(l) {
+		l.fillRect( 0,0, l.width,l.height, 0x00000000 );
+		l.font.face= kag.chDefaultFace;
+		
+		var sz= 20;
+		var tx= 0;
+		var txt= "文字サンプル０１２３";
+		for(var i= 0; i<txt.length; i++ ) {
+			_text_draw_super2_( l, (sz*i), 0, txt[i], 0xffffff, sz,
+				%[ outline:1, outlinecolor:0x000000,
+				gradcolor1:0xffffff, gradcolor2:0xffffff
+				] );
+		}
+	}
+	
+	function rightClickCallBack()
+	{
+		HideScreen( 200 );
+		return true;
+	}
+	
+	///////////////////////////////////////////////////////
+	// show
+	//
+	function onInit()
+	{
+		backGround.setLayer( 0, 0, 960, 720, 0xff000000 );
+		backGround.visible= false;
+	}
+	
+	function onShow( time_, en_ )
+	{
+	
+		init_panel();
+		
+		configmode= 0;
+//		panel.sbuttom0.updateButtonSelect(configmode);
+		//panel.sbuttom0.setChecked(configmode);
+		panel.sbuttom0.setEnable([2,1]);
+		
+		panel.option0.moveFinalCallback= void;
+		panel.option1.moveFinalCallback= void;
+		panel.option2.moveFinalCallback= void;
+		
+		//表示データ更新
+		opt_update_status();
+		
+		backGround.visible= true;
+		backGround.opacity= 0;
+		
+		panel.option0.visible= true;
+		panel.option1.visible= false;
+		panel.option2.visible= false;
+		
+		panel.option0.setPos( -440, 78 );
+		panel.option0.opacity= 255;
+		
+		opt_fontset_view(panel.slider2text);
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,255)" ] );
+		
+		opt_config_top(0);
+		
+	}
+	
+	function onShowEnd() {
+		frameWork.rckicEvent= rightClickCallBack;
+	}
+	
+	function onHide( time_, en_ ) {
+		
+		kag.se[1].stop();
+		kag.se[2].stop();
+		kag.se[3].stop();
+		kag.se[4].stop();
+		kag.se[5].stop();
+		opt_update_status_set();
+		userfunctions.setSeVolume( kag.sflags.systemcore.option.volume.fx, 5, _SE02_VOLUME_MAX );
+		
+		kag.saveSystemVariables();
+		
+		panel.option0.setPos(  20, 78 );
+		panel.option1.setPos(  20, 78 );
+		panel.option2.setPos( 480, 78 );
+		
+		panel.option0.beginMove( %[ time:time_, path:"(-440,78,255)", accel:2  ] );
+		panel.option1.beginMove( %[ time:time_, path:"(-440,78,255)", accel:2 ] );
+		panel.option2.beginMove( %[ time:time_, path:"( 940,78,255)", accel:2 ] );
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,0)" ] );
+	}
+	
+	function onHideEnd()
+	{
+		panel.option0.visible= false;
+		panel.option1.visible= false;
+		panel.option2.visible= false;
+		
+		backGround.visible= false;
+		backGround.opacity= 0;
+		
+		invalidatePanel();
+	}
+	
+}

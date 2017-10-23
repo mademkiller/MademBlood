@@ -1,0 +1,160 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	EventLayer
+//
+/////////////////////////////////////////////////////////////////////////
+//
+class LinearMover2 extends LinearMover
+{
+	// 直線補間
+	var loop= false;
+	var callback= void;
+	
+	function LinearMover2(layer, path, time, accel, finalfunction, lp=false )
+	{
+		loop= lp;
+		super.LinearMover(...);
+	}
+	
+	function finalize() { super.finalize(...); }
+	
+	function handler(tick)
+	{
+		// 移動中に呼ばれる
+		if(nextStop || !(layer isvalid)) { stopMove();  return; }
+		if(first) startTick = tick, first = false;
+		tick -= startTick;
+		if(tick >= totalTime)
+		{
+			if(loop) {
+				first = true;
+			} else {
+				nextStop = true;
+				var idx = int(pointCount*3);
+				var p = path;
+				layer.setPos(p[idx], p[idx+1]);
+				layer.opacity = p[idx+2];
+				return;
+			}
+		}
+		
+		if(accel < 0)
+		{
+			// 上弦 ( 最初が動きが早く、徐々に遅くなる )
+			tick = 1.0 - tick / totalTime;
+			tick = Math.pow(tick, -accel);
+			tick = int ( (1.0 - tick) * totalTime );
+		}
+		else if(accel > 0)
+		{
+			// 下弦 ( 最初は動きが遅く、徐々に早くなる )
+			tick = tick / totalTime;
+			tick = Math.pow(tick, accel);
+			tick = int ( tick * totalTime );
+		}
+		
+		if(callback!==void) callback(tick/totalTime);
+		move(tick);
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////
+//正規化数値用
+class LinearMoverValue extends LinearMover
+{
+	// 直線補間
+	var loop= false; //ループするか？
+	var callback= void; //終了時のコールバック
+	
+	var naerCount= 0;
+	var stop_naerCount= false;
+	
+	function LinearMoverValue(layer, path, time, accel, finalfunction=void, lp=false, ss_=false )
+	{
+		this.loop= lp;
+		this.layer = layer;
+		this.path = path;
+		this.time = time;
+		this.accel = accel;
+		this.finalFunction = finalfunction;
+		this.stop_naerCount= ss_;
+		
+		totalTime = pointCount = time;
+		
+	}
+	
+	function finalize() { super.finalize(...); }
+	
+	function stopMove()
+	{
+		var ret= 0;
+		// 移動を終わる
+		if(moving)
+		{
+			// 最終位置に移動
+			if(layer isvalid)
+			{
+				if( !stop_naerCount ) {
+					var p = path;
+					layer(p[1]);
+					naerCount= p[1];
+				}
+			}
+			System.removeContinuousHandler(handler);
+			moving = false;
+			finalFunction();
+			Debug.message( "LinearMoverValue.stopMove= "+moving );
+		}
+	}
+	
+	function handler(tick)
+	{
+		// 移動中に呼ばれる
+		if(nextStop || !(layer isvalid)) { stopMove();  return; }
+		if(first) startTick = tick, first = false;
+		tick -= startTick;
+		if(tick >= totalTime)
+		{
+			if(loop) {
+				first = true;
+			} else {
+				nextStop = true;
+				var p = path;
+				layer(p[1]);
+				return;
+			}
+		}
+	
+		if(accel < 0)
+		{
+			// 上弦 ( 最初が動きが早く、徐々に遅くなる )
+			tick = 1.0 - tick / totalTime;
+			tick = Math.pow(tick, -accel);
+			tick = int ( (1.0 - tick) * totalTime );
+		}
+		else if(accel > 0)
+		{
+			// 下弦 ( 最初は動きが遅く、徐々に早くなる )
+			tick = tick / totalTime;
+			tick = Math.pow(tick, accel);
+			tick = int ( tick * totalTime );
+		}
+		
+		if(callback!==void) callback(tick/totalTime);
+		move(tick);
+	}
+	
+	function move(tick)
+	{
+		var ratio = tick % totalTime / totalTime;
+		var p = path;
+		
+		var sx = p[0];
+		var ex = p[1];
+		
+		var l = (ex-sx)*ratio + sx;
+		naerCount= p[1]-l;
+		
+		layer(l);
+	}
+}

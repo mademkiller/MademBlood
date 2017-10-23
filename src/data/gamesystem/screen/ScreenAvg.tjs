@@ -1,0 +1,738 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenAvg
+//
+// Tform2から派生してないのでscreenのカウントに入らず。
+//
+/////////////////////////////////////////////////////////////////////////
+//
+//ミラーバッファ
+class TBackLayer extends LayerTextBase
+{
+	
+	function TBackLayer( win, par, pal ) {
+		super.TButtonBase2(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	function snap2Image(l_)
+	{
+		setPos( l_.left, l_.top );
+		setSize( l_.width, l_.height );
+		setSizeToImageSize();
+		fillRect( 0,0, width, height, 0x00000000 );
+		piledCopy( 0,0, l_, 0,0, l_.width, l_.height );
+	}
+}
+
+///////////////////////////////////////////////////////
+//ポップアップボタン
+class TButtonPopup2 extends TButtonBase2
+{
+	
+	function TButtonPopup2( win, par, pal ) {
+		super.TButtonBase2(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	//マウスイベント
+	function button_Update( c_=false ) {
+	
+		if( isSelected ) {
+			//playse( soundfile.enter );
+			_imageSelect.visible= true;
+			_imageSelect.opacity= selectMax;
+			var p= "(0,0,%d),(0,0,%d)".sprintf( selectMin, selectMax );
+			_imageSelect.beginMove( %[ time:selectTime, path:p, loop:true ] );
+			
+			var p= "( %d, 0, 255 )".sprintf( left );
+			beginMove( %[ time:100, path:p, loop:false ] );
+			//playse( soundfile.leave );
+			
+		} else {
+			_imageSelect.stopMove();
+			_imageSelect.visible= false;
+			
+			stopMove();
+			top=30;
+		}
+		
+		if( isChecked ) {
+			//playse( soundfile.leave );
+		}
+	}
+}
+
+///////////////////////////////////////////////////////
+//ポップアップボタン
+class TButtonPopup4 extends TButtonBase1k
+{
+	
+	function TButtonPopup4( win, par, pal ) {
+		super.TButtonBase1k(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	//
+	function button_Update( c_=false ) {
+	
+		if( isSelected ) {
+			//playse( soundfile.enter );
+			_imageSelect.visible= true;
+			_imageSelect.opacity= selectMax;
+			var p= "(0,0,%d),(0,0,%d)".sprintf( selectMin, selectMax );
+			_imageSelect.beginMove( %[ time:selectTime, path:p, loop:true ] );
+			
+			var p= "( %d, 0, 255 )".sprintf( left );
+			beginMove( %[ time:100, path:p, loop:false ] );
+			//playse( soundfile.leave );
+			
+		} else {
+			_imageSelect.stopMove();
+			_imageSelect.visible= false;
+			
+			stopMove();
+			top=30;
+		}
+		
+		if( isChecked ) {
+			//playse( soundfile.leave );
+		}
+	}
+}
+
+///////////////////////////////////////////////////////
+// kagのレイヤを親にもつセレクトボタン
+//
+/*
+class TButtonSelect4avg extends TButtonSelect4
+{
+	var show_slide= false;
+	
+	var onActionDoubleCall= void;
+	
+	function TButtonSelect4avg( win, par, pal ) {
+		//selected_Execute= active_screen_callback;
+		super.TButtonSelect4(...);
+		buttomDoubleChecked= true;
+	}
+	
+	function finalize() {
+		super.finalize();
+	}
+	
+	function setLayer( x_, y_, w_, h_, color_=0x00000000 )
+	{
+		super.setLayer(...);
+		//focusable= false;
+	}
+	
+	////////////////////
+	//入力イベント
+//	function actionCallBack( elm )
+//	{
+//		if( enabledEvent && !enabledEventLock ) {
+//			onAction( elm );
+//			//if(onActionDoubleCall!==void) onActionDoubleCall.onAction( elm );
+//			//dm( "actionCallBack= "+enabledEvent );
+//		}
+//		//dm( "actionCallBack= "+enabledEvent );
+//	}
+	
+	function onAction( ev )
+	{
+		if( ev.type=="onMouseDown" && isMouseEnter ) {
+			setChecked( , true );
+		}
+		
+
+		
+		if( ev.type=="onMouseEnter" ) {
+			onSlide(ev);
+			cursor= crHandPoint;
+		}
+		
+		if( ev.type=="onMouseLeave" ) {
+			onSlideOff(ev);
+			cursor= crArrow;
+		}
+	}
+	
+	
+	function onSlide()
+	{
+		if( !show_slide )
+		{
+		}
+	}
+	
+	function onSlideOff()
+	{
+		
+		if( show_slide )
+		{
+			buttom_Reset();
+		}
+	}
+	
+	
+	function onAction( ev )
+	{
+		
+		if( ev.type=="onMouseEnter" ) {
+			onSlide(ev);
+			cursor= crHandPoint;
+		}
+		
+		if( ev.type=="onMouseLeave" ) {
+			onSlideOff(ev);
+			cursor= crArrow;
+		}
+	}
+	
+
+}
+*/
+///////////////////////////////////////////////////////
+// kagのレイヤを親にもつセレクトボタン
+//
+class TButtonSelect2avg extends TButtonSelect2
+{
+	//var active_screen_callback= void;
+	var top_b= 0;
+	var show_slide= false;
+	var show_slide_lock= false;
+	
+	var onActionDoubleCall= void;
+	
+	
+	function TButtonSelect2avg( win, par, pal ) {
+		//selected_Execute= active_screen_callback;
+		super.TButtonSelect2(...);
+		buttomDoubleChecked= true;
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_, w_, h_, color_=0x00000000 )
+	{
+		super.setLayer(...);
+		top_b= y_;
+		//一時的にフォーカスを受けないようにする
+		focusable= false;
+	}
+	
+	////////////////////
+	//入力イベント
+	function actionCallBack( elm )
+	{
+		if( enabledEvent && !enabledEventLock ) {
+			onAction( elm );
+			//if(onActionDoubleCall!==void) onActionDoubleCall.onAction( elm );
+			//dm( "actionCallBack= "+enabledEvent );
+		}
+		//dm( "actionCallBack= "+enabledEvent );
+	}
+	
+	function onAction( ev )
+	{
+		if( ev.type=="onClick" && isMouseEnter ) {
+			setChecked( , true );
+			//onSlideOff();
+		}
+		
+		if( ev.type=="onMouseMove" ) {
+			var r= -1;
+			cursor= crArrow;
+			if(onActionDoubleCall!==void) onActionDoubleCall.cursor= crArrow;
+			for( var i=0; i<buttomSelectArray.count; i++) {
+				if( buttomSelectArray[i].isEnter( ev.x, ev.y ) ) {
+					r= i;
+					cursor= crHandPoint;
+					if(onActionDoubleCall!==void) onActionDoubleCall.cursor= crHandPoint;
+				}
+			}
+			if( r!=buttomSelected && r!=-1 ) {
+				setSelected( r );
+				if(onActionDoubleCall!==void) onActionDoubleCall.setSelected( r );
+			}
+		}
+		
+		/*
+		if( ev.type=="onFocus" ) {
+			onSlide();
+		}
+		
+		if( ev.type=="onBlur" ) {
+			onSlideOff();
+		}
+		*/
+		
+		if( ev.type=="onKeyDown" ) {
+			//if( !focused ) onFocus();
+			//onSlide();
+			//onAction( %[ type:"onFocus" ] );
+			//if( show_slide ) templateKey( ev.key, ev.shift );
+			//focusNext();
+			dm("keycallbak.onKeyDown.avg ");
+		}
+		
+		if( ev.type=="onMouseEnter" ) {
+			onSlide();
+			if(onActionDoubleCall!==void) onActionDoubleCall.onSlide();
+			//dm("UI_ON");
+		}
+		
+		if( ev.type=="onMouseLeave" ) {
+			onSlideOff();
+			if(onActionDoubleCall!==void) onActionDoubleCall.onSlideOff();
+			//dm("UI_OFF");
+		}
+		
+		//if(DoubleCall!==void) DoubleCall(ev)
+	}
+	
+	function onSlide()
+	{
+		if( !show_slide )
+		{
+			show_slide= true;
+			for( var i=0; i<buttomSelectArray.count; i++) {
+				buttomSelectArray[i].top= 30;
+			}
+			top= top_b-30;
+			setImagePos( -width, 0 );
+			setSelected(-1);
+			dm("UI_ON");
+		}
+	}
+	
+	function onSlideOff()
+	{
+		if( show_slide )
+		{
+			setImagePos( 0, 0 );
+			for( var i=0; i<buttomSelectArray.count; i++) {
+				buttomSelectArray[i].stopMove();
+				buttomSelectArray[i]._imageSelect.stopMove();
+				buttomSelectArray[i]._imageSelect.visible= false;
+				buttomSelectArray[i].top= 0;
+			}
+			top= top_b;
+			//setSelected(,,false);
+			//setSelected(-1);
+			show_slide= false;
+			dm("UI_OFF");
+		}
+	}
+	
+	function onSlideLock()
+	{
+		if(!show_slide_lock){
+		
+			show_slide_lock= true;
+			
+			enabledEventLock= true;
+			
+			setImagePos( 0, 0 );
+			for( var i=0; i<buttomSelectArray.count; i++) {
+				buttomSelectArray[i].stopMove();
+				buttomSelectArray[i]._imageSelect.stopMove();
+				buttomSelectArray[i]._imageSelect.visible= false;
+				buttomSelectArray[i].top= 0;
+			}
+			top= top_b;
+			
+			dm("UI_LOCK= "+show_slide);
+		}
+	}
+	
+	function onSlideRecall()
+	{
+		//if(show_slide_lock){
+			
+			if( show_slide )
+			{
+				for( var i=0; i<buttomSelectArray.count; i++) {
+					buttomSelectArray[i].top= 30;
+				}
+				top= top_b-30;
+				setImagePos( -width, 0 );
+				//setSelected(,true);
+			}
+			enabledEventLock= false;
+			
+			show_slide_lock= false;
+			
+			dm("UI_RECALL= "+show_slide);
+		//}
+	}
+	////////////////////
+	//キー入力イベント
+	function templateKey( key, shift )
+	{
+	
+		if( key==VK_PADUP   || key==VK_UP       ) {
+			//onMouseLeave();
+			focus();
+		}
+		
+		if( key==VK_PADDOWN || key==VK_DOWN     ) {
+			//onSlideOff();
+			focusPrev();
+			
+			dm("kag.activeScreen_event_lock= "+kag.activeScreen_event_lock);
+			dm("prevFocusable= "+prevFocusable);
+			dm("nextFocusable= "+nextFocusable);
+		}
+		
+//		if( key==VK_PADDOWN || key==VK_DOWN     ) if( !processKeyset( 1 ) ) {
+//			onMouseEnter();
+//			//if( buttomSelected<buttomSelectArray.count-1 ) setSelected( buttomSelected+1 );
+//			//if( selected_execute ) setChecked();
+//		}
+		
+		if( key==VK_LEFT    || key==VK_PADLEFT  ) if( !processKeyset( 2 ) ) {
+			focus();
+			if( 0<buttomSelected ) setSelected( buttomSelected-1 );
+			if( selected_execute ) setChecked();
+		}
+		
+		if( key==VK_RIGHT   || key==VK_PADRIGHT ) if( !processKeyset( 3 ) ) {
+			focus();
+			if( buttomSelected<buttomSelectArray.count-1 ) setSelected( buttomSelected+1 );
+			if( selected_execute ) setChecked();
+		}
+		
+		if( key==VK_PAD2 || key==VK_RETURN ) { setChecked( void, true ); }
+		if( key==VK_PAD3 || key==VK_ESCAPE ) { setSelected( cancel_number ); setChecked( void, true ); }
+		
+		dm("keycallbak= "+key+":"+prevFocusable);
+	}
+}
+
+///////////////////////////////////////////////////////
+//
+class ScreenAvg
+{
+	var panel= %[];
+	var back_opa= 0;
+	var back_x= 0, back_y= 0;
+	
+	var callback_lock_auto= false;
+	var callback_lock_skip= false;
+	
+	var select_index= -1;
+	
+	//ボタンの有効無効
+	//var setEnableBtns= [ 1,1,1,1,1, 1,1,1,1 ];
+	
+	//var callback_lock_autoskip_down= false;
+	
+	function ScreenAvg( n_, x_, y_) {
+		init_panel( n_, x_, y_ );
+		core2.onTransEvent= onTransEventAvg;
+	}
+	
+	function finalize() {
+	
+		panel.icon_base_select_fore.stopMove();
+		panel.icon_base_select_back.stopMove();
+		
+		invalidate panel.icon_base_select_fore;
+		invalidate panel.icon_base_select_back;
+		invalidate panel.icon_base_info_fore;
+		invalidate panel.icon_base_info_back;
+	}
+	
+	///////////////////////////////////////////////////////
+	// init
+	//
+	function init_panel( n_, x_, y_ )
+	{
+		back_x= x_;
+		back_y= y_;
+		
+		panel.icon_base_select_fore= new TButtonSelect2avg( kag, kag.fore.messages[n_] );
+		init_panel_set( panel.icon_base_select_fore, back_x, back_y );
+		
+		panel.icon_base_select_fore.visible= true;
+		panel.icon_base_select_fore.enabledEvent= true;
+		
+		
+		panel.icon_base_select_back= new TButtonSelect2avg( kag, kag.back.messages[n_] );
+		init_panel_set( panel.icon_base_select_back, back_x, back_y );
+		
+		panel.icon_base_select_back.visible= true;
+		panel.icon_base_select_back.enabledEvent= true;
+		
+		//お互いに状況を共有
+		panel.icon_base_select_fore.onActionDoubleCall= panel.icon_base_select_back;
+		panel.icon_base_select_back.onActionDoubleCall= panel.icon_base_select_fore;
+		
+		
+		//右上インフォメーション
+		panel.icon_base_info_fore= new LayerTrueBase( kag, kag.fore.base );
+		panel.icon_base_info_back= new LayerTrueBase( kag, kag.back.base );
+		
+		panel.icon_base_info_fore.setLayer( 650, 20, 383, 35, 0x00000000 );
+		panel.icon_base_info_back.setLayer( 650, 20, 383, 35, 0x00000000 );	
+		
+		panel.icon_base_info_fore.visible= false;
+		panel.icon_base_info_back.visible= false;
+		
+		//panel.icon_base_info_fore.soundfile= %[ enter:"", leave:"", select:"A1_12219s", click:"A1_12217s" ];
+		//panel.icon_base_info_back.soundfile= %[ enter:"", leave:"", select:"A1_12219s", click:"A1_12217s" ];
+		
+		//panel.icon_base_select_fore.joinFocusChain= true;
+		//panel.icon_base_select_back.joinFocusChain= true;
+		
+		panel.icon_base_select_fore.setEachEvent(gt.setEnableBtns);
+		panel.icon_base_select_back.setEachEvent(gt.setEnableBtns);
+		
+	}
+	
+	function init_panel_set( g_, x_, y_ )
+	{
+		g_.setLayer( x_, y_, 510, 70 );
+		g_.checked_Execute= icon_base_select_callback;
+		//g_.active_screen_callback= setScreenActive;
+		
+		g_.setButton( 48, 70, 8, TButtonPopup2 );
+		g_.buttomSelectArray[0].setPos(   0, 0 );
+		g_.buttomSelectArray[1].setPos(  50, 0 );
+		g_.buttomSelectArray[2].setPos( 100, 0 );
+		g_.buttomSelectArray[3].setPos( 150, 0 );
+//		g_.buttomSelectArray[4].setPos( 220, 0 );
+		g_.buttomSelectArray[4].setPos( 220, 0 );
+		g_.buttomSelectArray[5].setPos( 270, 0 );
+		g_.buttomSelectArray[6].setPos( 320, 0 );
+		g_.buttomSelectArray[7].setPos( 370, 0 );
+		
+// 		g_.buttomSelectArray[0].loadImages( "sys_wnd_bt_auto2" );
+// 		g_.buttomSelectArray[1].loadImages( "sys_wnd_bt_skip2" );
+// 		g_.buttomSelectArray[2].loadImages( "sys_wnd_bt_log2" );
+// 		g_.buttomSelectArray[3].loadImages( "sys_wnd_bt_cfg2" );
+// 		g_.buttomSelectArray[4].loadImages( "sys_wnd_bt_sta2" );
+// 		
+// 		g_.buttomSelectArray[5].loadImages( "sys_wnd_bt_load2" );
+// 		g_.buttomSelectArray[6].loadImages( "sys_wnd_bt_save2" );
+// 		g_.buttomSelectArray[7].loadImages( "sys_wnd_bt_loadQ2" );
+// 		g_.buttomSelectArray[8].loadImages( "sys_wnd_bt_saveQ2" );
+
+ 		g_.buttomSelectArray[0].loadImages( "sys_wnd_bt_auto2" );
+ 		g_.buttomSelectArray[1].loadImages( "sys_wnd_bt_skip2" );
+ 		g_.buttomSelectArray[2].loadImages( "sys_wnd_bt_log2" );
+ 		g_.buttomSelectArray[3].loadImages( "sys_wnd_bt_cfg2" );
+ 		 		
+ 		g_.buttomSelectArray[4].loadImages( "sys_wnd_bt_load2" );
+ 		g_.buttomSelectArray[5].loadImages( "sys_wnd_bt_save2" );
+ 		g_.buttomSelectArray[6].loadImages( "sys_wnd_bt_loadQ2" );
+ 		g_.buttomSelectArray[7].loadImages( "sys_wnd_bt_saveQ2" );
+
+	}
+	
+	//
+	///////////////////////////////////////////////////////
+	// method
+	//
+//	function callback_quickload()
+//	{
+//		var prompt = "クイックロードしますか？";
+//		var result = askYesNoD( prompt,callback_quickload );
+//		if( result ) {
+//			askYesNoD_reset();
+//			//core2.loadBackStart( 0, "slg_Org_bg" );
+//			core2.loadBackStart(0);
+//			core2.startPlayTime(0);
+//		}
+//	}
+	
+// 	function callback_quickload1()
+// 	{
+// 		core2.loadBackStart(0);
+// 		core2.startPlayTime(0);
+// 	}
+	
+	//ボタンの有効無効
+	function setEnableButtons( bt_=[ 1,1,1,1,1, 1,1,1,1 ] )
+	{
+		gt.setEnableBtns= bt_;
+		panel.icon_base_select_fore.setEachEvent(gt.setEnableBtns);
+		panel.icon_base_select_back.setEachEvent(gt.setEnableBtns);
+	}
+	
+//	function callback_quicksave()
+//	{
+//		var prompt = "クイックセーブしますか？";
+//		var result = askYesNoD( prompt, callback_quicksave );
+//		if( result ) {
+//			askYesNoD_reset();
+//			core2.setPlayTime(0);
+//			kag.saveBookMark( 0, false );
+//		}
+//	}
+	
+	//////////
+	//右上インフォメーション
+	function callback_quicksaveload(f)
+	{
+	
+		panel.icon_base_info_fore.loadImages(f);
+		panel.icon_base_info_back.loadImages(f);
+		
+		panel.icon_base_info_fore.opacity= 255;
+		panel.icon_base_info_fore.visible= true;
+		panel.icon_base_info_back.opacity= 255;
+		panel.icon_base_info_back.visible= true;
+		
+		panel.icon_base_info_fore.beginMove( %[ time:3000, path:"( 700, 20, 0 )" ] );
+		panel.icon_base_info_fore.moveFinalCallback= function(){ visible= false; };
+		
+		panel.icon_base_info_back.beginMove( %[ time:3000, path:"( 700, 20, 0 )" ] );
+		panel.icon_base_info_back.moveFinalCallback= function(){ visible= false; };
+		
+	}
+	
+//	function callback_quicksave2_end() {
+//		panel.snsp_base.visible= false;
+//	}
+	
+	//背景のトラジッションに合わせる
+	function onTransEventAvg() {}
+	
+	
+	//////////
+	//スキップ
+	function callback_lock_buttom_skip() {
+	
+		if( !callback_lock_skip && kag.conductor.status>0 ) {
+		
+			if( callback_lock_auto ) callback_recall_buttom_auto();
+		
+			callback_lock_skip= true;
+		
+			panel.icon_base_select_fore.onSlideLock();
+			panel.icon_base_select_back.onSlideLock();
+		
+			kag.se[1].stop();
+		
+		}
+		return callback_lock_skip;
+	}
+	
+	function callback_recall_buttom_skip()
+	{
+		callback_lock_skip= false;
+		
+		panel.icon_base_select_fore.onSlideRecall();
+		panel.icon_base_select_back.onSlideRecall();
+	}
+	
+	//////////
+	//オート
+	function callback_lock_buttom_auto() {
+	
+		//if( !callback_lock_skip && kag.conductor.status>0 ) {
+		if( !callback_lock_skip ) {
+		
+			//if( callback_lock_skip ) callback_recall_buttom_skip();
+		
+			callback_lock_auto= true;
+		
+			panel.icon_base_select_fore.onSlideLock();
+			panel.icon_base_select_back.onSlideLock();
+		
+			panel.icon_base_select_fore.beginMove( %[ time:200, path:"( %d, %d, 255 )".sprintf(back_x,back_y+50) ] );
+			panel.icon_base_select_back.beginMove( %[ time:200, path:"( %d, %d, 255 )".sprintf(back_x,back_y+50) ] );
+		
+		}
+		return callback_lock_auto;
+	}
+	
+	function callback_recall_buttom_auto() {
+	
+		callback_lock_auto= false;
+		
+		panel.icon_base_select_fore.stopMove();
+		panel.icon_base_select_back.stopMove();
+		
+		panel.icon_base_select_fore.setPos(back_x,back_y);
+		panel.icon_base_select_back.setPos(back_x,back_y);
+		
+		panel.icon_base_select_fore.onSlideRecall();
+		panel.icon_base_select_back.onSlideRecall();
+	}
+	
+	///////////////////////////////////////////////////////
+	// callbak
+	//
+	function icon_base_select_callback( n )
+	{
+	
+			switch( n )
+			{
+				case -1:
+					break;
+				case 0:
+					if( callback_lock_buttom_auto() ) kag.enterAutoMode();
+					break;
+				case 1:
+					//if( callback_lock_buttom_skip() ) kag.skipToStop();
+					if( callback_lock_buttom_skip() ) kag.onSkipToNextStopMenuItemClick();
+					//kag.onSkipToNextStopMenuItemClick();
+					break;
+				case 2:
+					kag.onShowHistoryMenuItemClick();
+					break;
+				case 3:
+					if(kag.autoMode) kag.cancelAutoMode();
+					core2.screen.config.ShowScreen( 300 );
+					break;
+// 				case 4:
+// 					break;
+					
+				case 4:
+					core2.screen.save.saveModeSet= false;
+					core2.screen.save.ShowScreen( 300 );
+					break;
+				case 5:
+					core2.screen.save.saveModeSet= true;
+					core2.screen.save.ShowScreen( 300 );
+					break;
+				case 6:
+					//callback_quickload1();
+					core2.loadExecuteEventQuick_new();
+					//callback_quicksaveload("win_plate_Ql");
+					break;
+				case 7:
+					core2.saveExecuteEventQuick_new();
+					core2.callback_quicksaveload("win_plate_Qs");
+					//callback_quicksaveload("win_plate_Qs");
+					break;
+			}
+		
+	}
+	
+	//スキップオートモード終了時のコールバック
+	function onAutoSkipCallback(){
+		if( callback_lock_skip ) callback_recall_buttom_skip();
+		//callback_recall_buttom_skip();
+		if( callback_lock_auto ) callback_recall_buttom_auto();
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////
+//

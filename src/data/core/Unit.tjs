@@ -1,0 +1,1031 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	Unit
+//
+/////////////////////////////////////////////////////////////////////////
+
+function _GETSJUMP(n_,s_="") //0:通常シーン 1:Hシーン
+{
+	var ret= false;
+	switch(n_) {
+	
+		//通常シーン
+		case 0:
+			if(sf.systemcore.option.jump.mode1) {
+				for(var i=0; i<sf.trail_.count; i++) {
+					var sp= sf.trail_[i].split('_');
+					if(sp[0]==s_) { ret= true; break; }
+				}
+			}
+			break;
+			
+		//エッチシーン
+		case 1:
+			if(sf.systemcore.option.jump.mode2) ret= true;
+			break;
+	}
+	if(sf.systemcore.option.jump.mode3) ret= true;
+	return ret;
+}
+	
+/////////////////////////////////////////////////////////////////////////
+//拡張文字描写
+/*
+function _text_draw_super_( lay, x_=0, y_=0, text_, color_=0xffffff, size_=16, mp=%[] )
+{
+	var width= lay.width;
+	var height= int(size_+(size_/2));
+	
+	var outline= mp.outline!==void ? mp.outline : 0;
+	var outlinecolor= mp.outlinecolor!==void ? mp.outlinecolor : 0x999999;
+	var shadow= mp.shadow!==void ? mp.shadow : 0;
+	var shadowopacity= mp.shadowopacity!==void ? mp.shadowopacity : 256;
+	var shadowblur= mp.shadowblur!==void ? mp.shadowblur : 0;
+	var gradcolor1= mp.gradcolor1!==void ? mp.gradcolor1 : 0x000000;
+	var gradcolor2= mp.gradcolor2!==void ? mp.gradcolor2 : 0x000000;
+	
+	var t= new global.Layer( lay.window, lay );
+	t.setImageSize( width, height );
+	t.setSizeToImageSize();
+	t.fillRect( 0, 0, width, height, 0x00000000 );
+	t.drawText( x_, int(size_/2), text_, 0xffffff );
+	//t.drawText( 0, 0, text_, 0xffffff );
+	
+	var s= new global.Layer( lay.window, t );
+	s.setImageSize( width, height );
+	s.setSizeToImageSize();
+	
+	var w= new global.Layer( lay.window, t );
+	w.setImageSize( width, height );
+	w.setSizeToImageSize();
+	
+	
+	//縁取り
+	if( outline>0 )
+	{
+		s.fillRect( 0, 0, width, height, 0x00000000 );
+		s.copyRect(  0,  0, t, 0, 0, width, height );
+		
+		w.fillRect( 0, 0, width, height, 0x00000000 );
+		for(var i=0; i<outline; i++)
+		{
+			//w.operateRect( -1, 0,  s, 0, 0, width, height );
+			//w.operateRect(  1, 0,  s, 0, 0, width, height );
+			//w.operateRect(  0, -1, s, 0, 0, width, height );
+			//w.operateRect(  0,  1, s, 0, 0, width, height );
+			
+			w.operateRect( -1, -1, s, 0, 0, width, height );
+			w.operateRect(  1, -1, s, 0, 0, width, height );
+			w.operateRect( -1,  1, s, 0, 0, width, height );
+			w.operateRect(  1,  1, s, 0, 0, width, height );
+			
+			s.copyRect(  0,  0, w, 0, 0, width, height );
+		}
+		
+		w.face= dfOpaque;
+		w.holdAlpha= true;
+		w.fillRect( 0, 0, width, height, outlinecolor );
+		//w.convertType(ltAddAlpha);
+	}
+	
+	//影
+	if( shadow>0 )
+	{
+		s.face= dfOpaque;
+		s.holdAlpha= true;
+		s.fillRect( 0, 0, width, height, 0x000000 );
+		//s.face= ltAddAlpha;
+		if( shadowblur>0 ) s.doBoxBlur( shadowblur, shadowblur );
+		//s.convertType(ltAddAlpha);
+	}
+	
+	
+	//グラデ
+	t.face= dfOpaque;
+	t.holdAlpha= true;
+	
+	if ( gradcolor1!=gradcolor2 ) {
+		var g1R = (gradcolor1 \ 0x10000) & 0xFF;
+		var g1G = (gradcolor1 \ 0x00100) & 0xFF;
+		var g1B = (gradcolor1 \ 0x00001) & 0xFF;
+		var g2R = (gradcolor2 \ 0x10000) & 0xFF;
+		var g2G = (gradcolor2 \ 0x00100) & 0xFF;
+		var g2B = (gradcolor2 \ 0x00001) & 0xFF;
+		
+		for (var yy=0; yy<height; yy++) {
+			var gR= yy * (g2R - g1R) \ height + g1R;
+			var gG= yy * (g2G - g1G) \ height + g1G;
+			var gB= yy * (g2B - g1B) \ height + g1B;
+			var col = (gR * 0x10000) + (gG * 0x100) + gB;
+			t.colorRect(0, yy, width, 1, col );
+		}
+	} else {
+		t.colorRect(0, 0, width, height, color_ );
+	}
+	//t.type= ltAlpha;
+	//t.face= dfAlpha;
+	//t.convertType(ltAddAlpha);
+	
+	//コンポジット
+	if( shadow>0 ) lay.operateRect( shadow, y_+shadow-size_, s, 0, 0, width, height, omAuto, shadowopacity );
+	if( outline>0 ) lay.operateRect(  0, y_-size_, w, 0, 0, width, height );
+	lay.operateRect(  0, y_-size_, t, 0, 0, width, height );
+	
+	invalidate w;
+	invalidate s;
+	invalidate t;
+}
+*/
+/////////////////////////////////////////////////////////////////////////
+//拡張文字描写
+function _text_draw_super_( lay, x_=0, y_=0, text_, color_=0xffffff, size_=16, mp=%[] )
+{
+	
+	var outline= mp.outline!==void ? mp.outline : 0;
+	var outlinecolor= mp.outlinecolor!==void ? mp.outlinecolor : 0x999999;
+	var shadow= mp.shadow!==void ? mp.shadow : 0;
+	var shadowopacity= mp.shadowopacity!==void ? mp.shadowopacity : 256;
+	var shadowblur= mp.shadowblur!==void ? mp.shadowblur : 0;
+	var gradcolor1= mp.gradcolor1!==void ? mp.gradcolor1 : 0x000000;
+	var gradcolor2= mp.gradcolor2!==void ? mp.gradcolor2 : 0x000000;
+	
+	var t= new global.Layer( lay.window, lay );
+	
+	var width= lay.font.getTextWidth(text_)+outline+shadow+shadowblur+1;
+	//var height= lay.font.getTextHeight(text_)+outline+shadow+shadowblur;
+	var height= (size_%100)+outline+shadow+shadowblur+1;
+	
+	t.setImageSize( width, height );
+	t.setSizeToImageSize();
+	t.fillRect( 0, 0, width, height, 0x00000000 );
+	t.drawText( 0, (size_%100)-13, text_, 0xffffff );
+	
+	var s= new global.Layer( lay.window, t );
+	s.setImageSize( width, height );
+	s.setSizeToImageSize();
+	
+	var w= new global.Layer( lay.window, t );
+	w.setImageSize( width, height );
+	w.setSizeToImageSize();
+	
+	//縁取り
+	if( outline>0 )
+	{
+		s.fillRect( 0, 0, width, height, 0x00000000 );
+		s.copyRect(  0,  0, t, 0, 0, width, height );
+		
+		w.fillRect( 0, 0, width, height, 0x00000000 );
+		w.operateRect( 0, 0, s, 0, 0, width, height );
+		
+		for(var i=0; i<outline; i++)
+		{
+			//w.operateRect( -1, 0,  s, 0, 0, width, height );
+			//w.operateRect(  1, 0,  s, 0, 0, width, height );
+			//w.operateRect(  0, -1, s, 0, 0, width, height );
+			//w.operateRect(  0,  1, s, 0, 0, width, height );
+			
+//			w.operateRect( -1, -1, s, 0, 0, width, height );
+//			w.operateRect(  1, -1, s, 0, 0, width, height );
+//			w.operateRect( -1,  1, s, 0, 0, width, height );
+//			w.operateRect(  1,  1, s, 0, 0, width, height );
+			
+			//w.operateRect( 0, 0, s, 0, 0, width, height );
+			w.operateRect( 2, 0, s, 0, 0, width, height );
+			w.operateRect( 0, 2, s, 0, 0, width, height );
+			w.operateRect( 2, 2, s, 0, 0, width, height );
+			
+			s.copyRect(  0,  0, w, 0, 0, width, height );
+		}
+		
+		w.face= dfOpaque;
+		w.holdAlpha= true;
+		w.fillRect( 0, 0, width, height, outlinecolor );
+		//w.convertType(ltAddAlpha);
+	}
+	
+	//影
+	if( shadow>0 )
+	{
+		s.face= dfOpaque;
+		s.holdAlpha= true;
+		s.fillRect( 0, 0, width, height, 0x000000 );
+		//s.face= ltAddAlpha;
+		if( shadowblur>0 ) s.doBoxBlur( shadowblur, shadowblur );
+		//s.convertType(ltAddAlpha);
+	}
+	
+	
+	//グラデ
+	t.face= dfOpaque;
+	t.holdAlpha= true;
+	
+	if ( gradcolor1!=gradcolor2 ) {
+		var g1R = (gradcolor1 \ 0x10000) & 0xFF;
+		var g1G = (gradcolor1 \ 0x00100) & 0xFF;
+		var g1B = (gradcolor1 \ 0x00001) & 0xFF;
+		var g2R = (gradcolor2 \ 0x10000) & 0xFF;
+		var g2G = (gradcolor2 \ 0x00100) & 0xFF;
+		var g2B = (gradcolor2 \ 0x00001) & 0xFF;
+		
+		for (var yy=0; yy<height; yy++) {
+			var gR= yy * (g2R - g1R) \ height + g1R;
+			var gG= yy * (g2G - g1G) \ height + g1G;
+			var gB= yy * (g2B - g1B) \ height + g1B;
+			var col = (gR * 0x10000) + (gG * 0x100) + gB;
+			t.colorRect(0, yy, width, 1, col );
+		}
+	} else {
+		t.colorRect(0, 0, width, height, color_ );
+	}
+	//t.type= ltAlpha;
+	//t.face= dfAlpha;
+	//t.convertType(ltAddAlpha);
+	
+	//コンポジット
+	//if( shadow>0 ) lay.operateRect( shadow, y_+shadow-size_, s, 0, 0, width, height, omAuto, shadowopacity );
+	//if( outline>0 ) lay.operateRect(  0, y_-size_, w, 0, 0, width, height );
+	//lay.operateRect(  0, y_-size_, t, 0, 0, width, height );
+	//lay.operateRect(  0, y_-size_, t, 0, 0, width, height );
+	if( shadow>0 ) lay.operateRect( x_+shadow+outline, y_+shadow+outline, s, 0, 0, width, height, omAuto, shadowopacity );
+	if( outline>0 ) lay.operateRect(  x_, y_, w, 0, 0, width, height );
+	lay.operateRect(  x_+outline, y_+outline, t, 0, 0, width, height );
+	
+	invalidate w;
+	invalidate s;
+	invalidate t;
+}
+/*
+function _image_draw_super_( lay, outline_=0, outlinecolor_=0x999999 )
+{
+	
+	var outline= outline_;
+	var outlinecolor= outlinecolor_;
+	
+	var t= new global.Layer( lay.window, lay );
+	
+	var width= lay.width;
+	var height= lay.height;
+	
+	t.setImageSize( width, height );
+	t.setSizeToImageSize();
+	t.copyRect(0,0,lay);
+	
+	var s= new global.Layer( lay.window, t );
+	s.setImageSize( width, height );
+	s.setSizeToImageSize();
+	
+	var w= new global.Layer( lay.window, t );
+	w.setImageSize( width, height );
+	w.setSizeToImageSize();
+	
+	//縁取り
+	if( outline>0 )
+	{
+		s.fillRect( 0, 0, width, height, 0x00000000 );
+		s.copyRect(  0,  0, t, 0, 0, width, height );
+		
+		w.fillRect( 0, 0, width, height, 0x00000000 );
+		for(var i=0; i<outline; i++)
+		{
+			
+			//w.operateRect( 0, 0, s, 0, 0, width, height );
+			w.operateRect( 2, 0, s, 0, 0, width, height );
+			w.operateRect( 0, 2, s, 0, 0, width, height );
+			w.operateRect( 2, 2, s, 0, 0, width, height );
+			
+			s.copyRect(  0,  0, w, 0, 0, width, height );
+		}
+		
+		w.face= dfOpaque;
+		w.holdAlpha= true;
+		w.fillRect( 0, 0, width, height, outlinecolor );
+	}
+	
+	lay.fillRect 0, 0, width, height, 0x00000000 );
+	if( outline>0 ) lay.operateRect(  x_, y_, w, 0, 0, width, height );
+	lay.operateRect(  x_+outline, y_+outline, t, 0, 0, width, height );
+	
+	invalidate w;
+	invalidate t;
+}
+*/
+/////////////////////////////////////////////////////////////////////////
+//拡張文字描写 MessageLayer用
+function _text_draw_super2_( lay, x_=0, y_=0, text_, color_=0xffffff, size_=16, mp=%[] )
+{
+	var width= lay.font.getTextWidth(text_)+10;
+	var height= lay.height;
+	
+	var outline= mp.outline!==void ? mp.outline : 0;
+	var outlinecolor= mp.outlinecolor!==void ? mp.outlinecolor : 0x999999;
+	var shadow= mp.shadow!==void ? mp.shadow : 0;
+	var shadowopacity= mp.shadowopacity!==void ? mp.shadowopacity : 256;
+	var shadowblur= mp.shadowblur!==void ? mp.shadowblur : 0;
+	var gradcolor1= mp.gradcolor1!==void ? mp.gradcolor1 : 0x000000;
+	var gradcolor2= mp.gradcolor2!==void ? mp.gradcolor2 : 0x000000;
+	
+	var t= new global.Layer( lay.window, lay );
+	t.setImageSize( width, height );
+	t.setSizeToImageSize();
+	t.fillRect( 0, 0, width, height, 0x00000000 );
+	t.font.face= lay.font.face;
+	//t.font.height= lay.font.height;
+	t.font.height= size_;
+	t.drawText( 2, 2, text_, color_, 255, true );
+	
+	var s= new global.Layer( t.window, t );
+	s.setImageSize( width, height );
+	s.setSizeToImageSize();
+	
+	var w= new global.Layer( t.window, t );
+	w.setImageSize( width, height );
+	w.setSizeToImageSize();
+	
+	
+	//縁取り
+	if( outline>0 )
+	{
+		s.fillRect( 0, 0, width, height, 0x00000000 );
+		s.copyRect(  0,  0, t, 0, 0, width, height );
+		
+		w.fillRect( 0, 0, width, height, 0x00000000 );
+		for(var i=0; i<outline; i++)
+		{
+			w.operateRect( -1, 0,  s, 0, 0, width, height );
+			w.operateRect(  1, 0,  s, 0, 0, width, height );
+			w.operateRect(  0, -1, s, 0, 0, width, height );
+			w.operateRect(  0,  1, s, 0, 0, width, height );
+			
+			w.operateRect( -1, -1, s, 0, 0, width, height );
+			w.operateRect(  1, -1, s, 0, 0, width, height );
+			w.operateRect( -1,  1, s, 0, 0, width, height );
+			w.operateRect(  1,  1, s, 0, 0, width, height );
+			
+			s.copyRect(  0,  0, w, 0, 0, width, height );
+		}
+		
+		w.face= dfOpaque;
+		w.holdAlpha= true;
+		w.fillRect( 0, 0, width, height, outlinecolor );
+	}
+	
+	//影
+	if( shadow>0 )
+	{
+		s.face= dfOpaque;
+		s.holdAlpha= true;
+		s.fillRect( 0, 0, width, height, 0x000000 );
+		if( shadowblur>0 ) s.doBoxBlur( shadowblur, shadowblur );
+	}
+	
+	
+	//グラデ
+	t.face= dfOpaque;
+	t.holdAlpha= true;
+	
+	if ( gradcolor1!=gradcolor2 ) {
+		var g1R = (gradcolor1 \ 0x10000) & 0xFF;
+		var g1G = (gradcolor1 \ 0x00100) & 0xFF;
+		var g1B = (gradcolor1 \ 0x00001) & 0xFF;
+		var g2R = (gradcolor2 \ 0x10000) & 0xFF;
+		var g2G = (gradcolor2 \ 0x00100) & 0xFF;
+		var g2B = (gradcolor2 \ 0x00001) & 0xFF;
+		
+		for (var yy=0; yy<height; yy++) {
+			var gR= yy * (g2R - g1R) \ height + g1R;
+			var gG= yy * (g2G - g1G) \ height + g1G;
+			var gB= yy * (g2B - g1B) \ height + g1B;
+			var col = (gR * 0x10000) + (gG * 0x100) + gB;
+			t.colorRect(0, yy, width, 1, col );
+		}
+	} else {
+		t.colorRect(0, 0, width, height, color_ );
+	}
+	
+	//コンポジット
+	if( shadow>0 ) lay.operateRect( shadow+x_, shadow+y_, s, 0, 0, width, height, omAuto, shadowopacity );
+	if( outline>0 ) lay.operateRect(  x_, y_, w, 0, 0, width, height );
+	lay.operateRect(  x_, y_, t, 0, 0, width, height );
+	
+	invalidate w;
+	invalidate s;
+	invalidate t;
+}
+
+/////////////////////////////////////////////////////////////////////////
+// class
+
+//絶対座標を計算
+function _draw_image_pos_screen_( lay_ )
+{
+	var xx= lay_.left, yy= lay_.top;
+	var pp= lay_.parent;
+	
+	for(var i=0; i<60; i++){
+		xx+= pp.left;
+		yy+= pp.top;
+		pp= pp.parent;
+		if(pp===null) break;
+	}
+	
+	return %[ left:xx, top:yy ];
+}
+
+function _draw_image_file_( lay_, x_, y_, file_, v_=1.0, mo_=omAuto, x2_=0, y2_=0, w_=void, h_=void )
+	{
+		var s= new global.Layer( kag, kag.fore.base );
+		s.loadImages( file_ );
+		s.setSizeToImageSize();
+		
+		var ww= s.width, hh= s.height;
+		
+		if( w_!==void ) ww= w_;
+		if( h_!==void ) hh= h_;
+		
+		//copyRect( x_, y_, s, x2_, y2_, ww, hh );
+		lay_.operateRect( x_, y_, s, x2_, y2_, ww, hh, mo_, 255*v_ );
+		
+		invalidate s;
+	}
+	
+function _draw_image_file_stretch_( lay_, dleft, dtop, dwidth, dheight, file_ )
+{
+	var s= new global.Layer( kag, kag.fore.base );
+	s.loadImages( file_ );
+	s.setSizeToImageSize();
+	
+	lay_.stretchCopy( dleft, dtop, dwidth, dheight, s, s.left, s.top, s.width, s.height, stFastLinear );
+	
+	invalidate s;
+}
+
+function _draw_image_file_stretch_( lay_, dleft, dtop, dwidth, dheight, file_ )
+{
+	var s= new global.Layer( window, this );
+	s.loadImages( file_ );
+	s.setSizeToImageSize();
+	
+	lay_.stretchCopy( dleft, dtop, dwidth, dheight, s, s.left, s.top, s.width, s.height, stFastLinear );
+	
+	invalidate s;
+}
+
+/////////////////////////////////////////////////////////////////////////
+// class
+class ScreenDrawUtil
+{
+	var x=0, y=0, width=32, height=32;
+	var lay= void;
+	var txt= [];
+	
+	function ScreenDrawUtil() {}
+	
+	function set( layer_, x_, y_, w_, h_ )
+	{
+		lay= layer_;
+		x= x_;
+		y= y_;
+		width= w_;
+		height= h_;
+	}
+	
+	function add( txt_ )
+	{
+		txt.add( txt_ );
+		draw();
+		lay.update();
+	}
+	
+	function addPoint()
+	{
+		txt[txt.count-1] +='.';
+		draw();
+		lay.update();
+	}
+	
+	function addS( op )
+	{
+		txt.add( op.txt_ );
+		draw();
+		lay.update();
+		return true;
+	}
+	
+	function addPointS()
+	{
+		txt[txt.count-1] +='.';
+		draw();
+		lay.update();
+		return true;
+	}
+	
+	function draw()
+	{
+		lay.fillRect( x, y, width, height, 0xff000000 );
+		
+		for( var i=0; i<txt.count; i++)
+		{
+			lay.drawText( x+10, y+(i*25)+10, txt[i], 0x00ff00 );
+		}
+	}
+
+}
+
+/////////////////////////////////////////////////////////////////////////
+//
+class Base64unit
+{
+
+	var vlist= [
+		"A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
+		"K", "L", "M", "N", "O", "P", "Q", "R", "S", "T",
+		"U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d",
+		"e", "f", "g", "h", "i", "j", "k", "l", "m", "n",
+		"o", "p", "q", "r", "s", "t", "u", "v", "w", "x",
+		"y", "z", "0", "1", "2", "3", "4", "5", "6", "7",
+		"8", "9", "+", "/"
+	];
+	
+	function Base64unit() {}
+	
+	function to64( n )
+	{
+		return vlist[n];
+	}
+	
+	function to10( v )
+	{
+		return vlist.find( v.trim );
+	}
+	
+	function decString( v )
+	{
+		var r= [];
+		for( var i=decString.length; i>0; i--)
+		{
+			r.add( decString[i-1] );
+		}
+	}
+	
+	function decString10( v )
+	{
+		var r= decString[0];
+		for( var i=1; i<decString.length; i++)
+		{
+			r+= to10(decString[i])*Math.pow(10,i);
+		}
+	}
+	
+	function getBool( v=0, n=0 )
+	{
+		return v>>n&0x1;
+	}
+	
+	function setBool( v=0, n=0, f=true )
+	{
+		if( f ) v |= 0x1<<n;
+		else v &= ~(0x1<<n);
+	}
+	
+	/*
+	function decBitflag( n, m )
+	{
+		var vr= decString( v );
+		
+		var vi= (int)(m/6);
+		var vv= m%6;
+		
+		var r= [];
+		
+		
+		for( var i=0; i<64; i++)
+		{
+			n && 0x0000001
+			r.add(  );
+			r+= decString[i]*Math.pow(10,i);
+		}
+	}
+	*/
+	//12345678901234567890123456789012345678901
+}
+
+/////////////////////////////////////////////////////////////////////////
+class MasterData
+{
+	var totaltime,turncount;
+	
+	function MasterData(){
+		totaltime= 0;
+		turncount= 0;
+	}
+}
+
+class MasterData
+{
+	var totaltime,turncount;
+	
+	function MasterData(){
+		totaltime= 0;
+		turncount= 0;
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////
+class Rect2D
+{
+	var x,y;
+	
+	function Rect2D( x_=0, y_=0 ){
+		x= x_;
+		y= y_;
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////
+class RectD
+{
+	var left,right,top,bottom;
+	
+	function RectD( left_=0, top_=0, right_=0, bottom_=0 ){
+		left= left_;
+		top= top_;
+		right= right_;
+		bottom= bottom_;
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////
+/*
+class Vector2D
+{
+
+	var x,y;
+	var w,h;
+	var zx,zy;
+	var a;
+	var r;
+
+	function Vector2D( x_=0, y_=0, w_=0, h_=0, zx_=1.0, zy_=1.0, a_=255, r_=0 ){
+		set( x_, y_, w_, h_, zx_, zy_, a_, r_ );
+	}
+
+	function finalize(){}
+	
+	function set( x_=0, y_=0, w_=0, h_=0, zx_=1.0, zy_=1.0, a_=255, r_=0 ){
+		x= x_;
+		y= y_;
+		w= w_;
+		h= h_;
+		zx= zx_;
+		zy= zy_;
+		a= a_;
+		r= r_;
+	}
+	
+}
+*/
+/////////////////////////////////////////////////////////////////////////
+/*
+class Vector3D
+{
+
+	var x=0.0, y=0.0, z=0.0, w=0.0;
+	
+	//var width=0,height=0;
+
+	function Vector3D( x_= 0.0, y_= 0.0, z_= 0.0 ){
+		set( x_, y_, z_ );
+	}
+
+	function finalize(){}
+	
+	function set( x_= 0.0, y_= 0.0, z_= 0.0 ){
+		x= x_;
+		y= y_;
+		z= z_;
+	}
+	
+	function copy( a_ ){
+		x= a_.x;
+		y= a_.y;
+		z= a_.z;
+		w= a_.w;
+	}
+	
+}
+*/
+/////////////////////////////////////////////////////////////////////////
+/*
+class Vector3Dp extends Vector3D
+{
+
+	var number;
+	var pos;
+
+	function Vector3D( n_=0, p_=0, x_= 0, y_= 0, z_= 0 ){
+		set( x_, y_, z_ );
+	}
+
+	function finalize(){}
+	
+	function setP( n_= 0, p_= 0 ){
+		number= n_;
+		pos= p_;
+	}
+}
+*/
+/////////////////////////////////////////////////////////////////////////
+class MathC
+{
+
+	var trad,rad;
+	var tsin,sin;
+	var tcos,cos;
+	
+	var Ctable;
+	
+	// コンストラクタ
+	function MathC()
+	{
+		rad= 0;
+		sin= 0;
+		cos= 0;
+		
+		Ctable= false;
+		//init();
+	}
+	
+	function initTable()
+	{
+	
+		trad= [];
+		tsin= [];
+		tcos= [];
+		
+		rad= 0;
+		sin= 0;
+		cos= 0;
+		
+		for(var i= 0; i<1024; i++) {
+		
+			rad= i* Math.PI/ 180;
+			sin= Math.sin(rad);
+			cos= Math.cos(rad);
+			
+			if( i== 90 || i== 270 ) { cos = 0; }
+			if( i== 180 || i== 360 ) { sin = 0; }
+			
+			trad.add(rad);
+			tsin.add(sin);
+			tcos.add(cos);
+		
+		}
+		
+		rad= 0;
+		sin= 0;
+		cos= 0;
+		
+		Ctable= true;
+	}
+	
+	// デストラクタ
+	function finalize(){}
+	
+	function set( r_ )
+	{
+		if( Ctable ) {
+			setT( r_ );
+		} else {
+			setA( r_ );
+		}
+	}
+	
+	function setA( r_ )
+	{
+		//rad= r_ * Math.PI / 180;
+		rad= 0.0174532925;
+		sin= Math.sin(rad);
+		cos= Math.cos(rad);
+			
+		if( r_== 90 || r_== 270 ) { cos = 0; }
+		if( r_== 180 || r_== 360 ) { sin = 0; }
+		
+	}
+	
+	function setT( r_ )
+	{
+		rad= trad[ r_ ];
+		sin= tsin[ r_ ];
+		cos= tcos[ r_ ];
+	}
+	
+
+}
+
+///////////////////////////////////////////////////////
+//タイマーヘルパー
+class ParUnit
+{
+	
+	function ParUnit() {}
+	
+	/////////////////////////////////////////////
+	//
+	function pUpDown( p_ )
+	{
+		var r;
+		
+		if( p_<0.5 ) r= p_/0.5;
+		else r= 1.0-((p_-0.5)/0.5);
+		
+		return r;
+	}
+	
+	function pDownUp( p_ )
+	{
+		var r;
+		
+		if( p_<0.5 ) r= 1.0-(p_/0.5);
+		else r= (p_-0.5)/0.5;
+		
+		return r;
+	}
+	
+	function pRev( p_ )
+	{
+		var r;
+		
+		r= 1.0-p_;
+		
+		return r;
+	}
+	
+	function Par( s_, e_, v_ )
+	{
+		var ret= s_-((s_-e_)*v_);
+		return ret;
+	}
+	
+	/*
+	function pSlowDown( p_ )
+	{
+		var r;
+		
+		r= Math.sin( (90*p_)*Math.PI/180 );
+		
+		return r;
+	}
+	
+	function pSpeedUp( p_ )
+	{
+		var r;
+		
+		r= 1.0-(Math.cos( (90*p_)*Math.PI/180 ));
+		
+		return r;
+	}
+	*/
+	
+	function Zone( v_, w_=0, z_=1.0 )
+	{
+		
+		var ret= 0;
+		
+		//end
+		if( v_>(w_+z_) ) ret= 1.0;
+		
+		if( v_>w_ && ret!=1.0 )
+		{
+			var vv= v_-w_;
+			ret= vv/z_;
+		}
+		
+		return ret;
+	}
+
+	function Zone2( v_, w_=0, z_=1.0 )
+	{
+		
+		var ret= 0;
+		
+		//end
+		if( v_>(w_+z_) ) ret= 1.0;
+		
+		if( v_>w_ && ret!=1.0 )
+		{
+			var vv= v_-w_;
+			ret= vv/z_;
+		}
+		
+		return ret;
+	}
+	
+	function Spd( v_, a_ )
+	{
+		var ret= v_;
+		
+		if(a_ < 0)
+		{
+			// 上弦 ( 最初が動きが早く、徐々に遅くなる )
+			ret = 1.0- ret;
+			ret = 1.0- Math.pow(ret, -a_);
+		}
+		else if(a_ > 0)
+		{
+			// 下弦 ( 最初は動きが遅く、徐々に早くなる )
+			ret = Math.pow(ret, a_);
+		}
+		
+		return ret;
+	}
+	
+	function rZone( v_, w_=0, z_=1.0, a_=0 )
+	{
+		
+		var ret= 0;
+		
+		//end
+		if( v_>(w_+z_) ) ret= 1.0;
+		
+		if( v_>w_ && ret!=1.0 )
+		{
+			var vv= v_-w_;
+			ret= vv/z_;
+		}
+		
+		if(a_ < 0)
+		{
+			// 上弦 ( 最初が動きが早く、徐々に遅くなる )
+			ret = 1.0- ret;
+			ret = 1.0- Math.pow(ret, -a_);
+		}
+		else if(a_ > 0)
+		{
+			// 下弦 ( 最初は動きが遅く、徐々に早くなる )
+			ret = Math.pow(ret, a_);
+		}
+		
+		return ret;
+	}
+	
+}
+
+///////////////////////////////////////////////////////
+//
+class splitNumber
+{
+
+	var num;
+	var count;
+	//var pNumEnable;
+	
+	function splitNumber( i_=void, m_=false )
+	{
+		num= new Array();
+		count= 0;
+		//pNumEnable= new Array();
+		if( i_!==void ) {
+			split( i_, m_ );
+		}
+	}
+	
+	function finalize() {
+		invalidate num;
+	}
+	
+	function split( i_, m_=false )
+	{
+		var v= Math.abs( i_ );
+		
+		//桁数を調べる
+		if( v>0 ) count++;
+		for( var i=1; i<20; i++) {
+			if( v>=Math.pow(10,i) ) count++;
+		}
+		
+		num.clear();
+		num.add( (int)(v%10) );
+		for( var i=1; i<10; i++)
+		{
+			var n= (int)((v/ Math.pow(10,i) )%10);
+			
+			if( i==count ) {
+				if( m_ ) {
+					if( i_<0 ) num.add( -3 );
+					else num.add( -2 );
+				}
+			}
+			
+			if( i<count ) {
+				num.add( n );
+			} else {
+				num.add( -1 );
+			}
+		}
+		
+		//for( var i=0; i<10; i++) {
+		//	Debug.message( "splitNumber.num("+i+":"+count+")= "+num[i] );
+		//}
+		
+	}
+}

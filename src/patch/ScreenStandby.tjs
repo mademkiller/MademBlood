@@ -1,0 +1,385 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenAvg
+//
+// Tform2から派生してないのでscreenのカウントに入らず。
+//
+/////////////////////////////////////////////////////////////////////////
+//
+///////////////////////////////////////////////////////
+//
+class midComSelector2 extends LayerTrueBase
+{
+
+	var RstyleIcons= [];
+	var RstatsIcons= [];
+	
+	var miniLineIcons= [];
+	var miniIcons= [];
+	
+	var ui_Cor_MiniLine;
+	
+	//var ui_Cor_Mid;
+	var selectBtn= [];
+	
+	function midComSelector2( win, par, pal ) {
+		super.LayerTrueBase(...);
+		name= "midIconSelector";
+	}
+	
+	function finalize() {
+		
+		for(var i=0; i<miniLineIcons.count; i++) invalidate miniLineIcons[i];
+		for(var i=0; i<miniIcons.count; i++) invalidate miniIcons[i];
+		
+		for(var i=0; i<RstyleIcons.count; i++) invalidate RstyleIcons[i];
+		for(var i=0; i<RstatsIcons.count; i++) invalidate RstatsIcons[i];
+		for(var i=0; i<selectBtn.count; i++) invalidate selectBtn[i];
+		invalidate ui_Cor_MiniLine;
+		
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 624,398+40, 0x00000000 );
+		loadImages("btl_operation_plate02");
+		
+		//////////
+		//ミニアイコン
+		for(var i= 0; i<10; i++ ){
+			var yy= 40+(i*32);
+			miniLineIcons[i]= new LayerEventBase2( window, this );
+			miniLineIcons[i].setLayer( 4, yy );
+			miniLineIcons[i].setData(i);
+			miniLineIcons[i].loadImages("slg_Org_plate_org%02d".sprintf(i+1));
+			miniLineIcons[i].action_Execute= onMiniAction;
+			miniLineIcons[i].setToAlpha();
+			//miniLineIcons[i].setDropDraw();
+			//miniLineIcons[i].Drop_parentDraw();
+			//if(tf.EncountR[0][i]!=-1) miniLineIcons[i].visible= true;
+			//else miniLineIcons[i].visible= false;
+		}
+		
+		for(var i= 0; i<60; i++ ){
+			var xx= 35+(i%6)*31;
+			var yy= 40+(i\6)*32;
+			miniIcons[i]= new charMiniIcon2( window, this );
+			miniIcons[i].setLayer( xx, yy );
+			miniIcons[i].setData(i\6);
+			miniIcons[i].action_Execute= onMiniAction;
+			
+			miniIcons[i].xi= i%6;
+			miniIcons[i].yi= i\6;
+			//miniIcons[i].setDropDraw();
+			miniIcons[i].drawStatus();
+		}
+		
+		//////////
+		//指示アイコン
+		for(var i= 0; i<10; i++ ){
+			var yy= 40+(i*32);
+			
+			RstyleIcons[i]= new TButtonBase1s( window, this );
+			RstyleIcons[i].setData(i,f.used.party[i].order);
+			RstyleIcons[i].setLayer( 377, yy, 96, 30 );
+			RstyleIcons[i].loadImages("slg_Dir_bt_s00");
+			RstyleIcons[i].callbackEvent= set_order_style;
+			
+			RstyleIcons[i].isSelected= f.used.party[i].order.style;
+			RstyleIcons[i].setDropDraw();
+			RstyleIcons[i].button_Update();
+			RstyleIcons[i].setToAlpha();
+	// 		RstyleIcons[i].AllLockOut= true; //ロックをリリースするか
+			
+			RstatsIcons[i]= new TButtonBase1s( window, this );
+			RstatsIcons[i].setData(i,f.used.party[i].order);
+			RstatsIcons[i].setLayer( 318, yy, 48, 30  );
+			RstatsIcons[i].loadImages("slg_Dir_bt_a00");
+			RstatsIcons[i].callbackEvent= set_order_state;
+			
+			RstatsIcons[i].isSelected= f.used.party[i].order.state;
+			RstatsIcons[i].setDropDraw();
+			RstatsIcons[i].button_Update();
+			RstatsIcons[i].setToAlpha();
+		// 	RstatsIcons[i].AllLockOut= true; //ロックをリリースするか
+			
+		}
+		
+		//開戦
+		selectBtn[0]= new TButtonBase1k( window, this );
+		selectBtn[0].setLayer( 5, 370, 96, 30 );
+		selectBtn[0].loadImages("btl_operation_bt_attack");
+		selectBtn[0].callbackEvent= set_att_executed;
+		selectBtn[0].setToAlpha();
+// 		selectBtn[0].AllLockOut= true; //ロックをリリースするか
+		
+		//防衛
+		selectBtn[1]= new TButtonBase1k( window, this );
+		selectBtn[1].setLayer( 5, 400, 96, 30 );
+		selectBtn[1].loadImages("btl_operation_bt_rush");
+		selectBtn[1].callbackEvent= set_def_executed;
+		selectBtn[1].setToAlpha();
+	// 	selectBtn[1].AllLockOut= true; //ロックをリリースするか
+		
+		//防衛
+		selectBtn[2]= new TButtonBase1k( window, this );
+		selectBtn[2].setLayer( 5, 430, 96, 30 );
+		selectBtn[2].loadImages("btl_operation_bt_standby");
+		selectBtn[2].callbackEvent= set_std_executed;
+		selectBtn[2].setToAlpha();
+	// 	selectBtn[2].AllLockOut= true; //ロックをリリースするか
+		
+		//ターゲットアイコン
+		ui_Cor_MiniLine= new global.LayerTrueBase( window, this );
+		ui_Cor_MiniLine.setLayer( 4, 0, 278, 30, 0xff000000 );
+		ui_Cor_MiniLine.visible= false;
+		ui_Cor_MiniLine.loadImages("btl_operation_bt_select");
+		ui_Cor_MiniLine.setToAlpha();
+		
+		setToAlpha();
+		
+		for(var i= 0; i<10; i++ ){
+			
+			if(f.used.party[i].status!=2){
+// 				miniLineIcons[i].visible= true;
+// 				for(var x= 0; x<6; x++ ) miniIcons[(i*6)+x].visible= true;
+// 				RstyleIcons[i].button_Enabled(true);
+// 				RstatsIcons[i].button_Enabled(true);
+// 			}else{
+				miniLineIcons[i].Drop_parentDraw();
+				miniLineIcons[i].visible= false;
+				for(var x= 0; x<6; x++ ){
+					miniIcons[(i*6)+x].Drop_parentDraw();
+					miniIcons[(i*6)+x].visible= false;
+				}
+				RstyleIcons[i].button_Enabled(false);
+				RstatsIcons[i].button_Enabled(false);
+			}
+		}
+		
+		selectBtn[0].setDropDraw();
+		selectBtn[1].setDropDraw();
+		selectBtn[2].setDropDraw();
+		
+		if(f.used.stat.attackmode==2){
+			//selectBtn[0].button_Enabled(false);
+		}
+		
+		if(gt.storybattle==1){
+			selectBtn[1].button_Enabled(false);
+			selectBtn[2].button_Enabled(false);
+		} else 
+		
+		if(gt.storybattle==10){
+			selectBtn[0].button_Enabled(false);
+			selectBtn[1].button_Enabled(false);
+		} else 
+		
+		if(!ca.get_troops_party3() && gt.storybattle!=1 ){
+			selectBtn[2].button_Enabled(false);
+		} else
+		
+		//自分から攻めた場合は待機を無効に
+		if(f.used.stat.attackmode==1){
+			selectBtn[2].button_Enabled(false);
+		}
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		for(var i= 0; i<10; i++ ) miniLineIcons[i].setEnableEvent( f_, f2_ );
+		for(var i= 0; i<60; i++ ) miniIcons[i].setEnableEvent( f_, f2_ );
+		
+		for(var i= 0; i<10; i++ ){
+			RstyleIcons[i].setEnableEvent( f_, f2_ );
+			RstatsIcons[i].setEnableEvent( f_, f2_ );
+		}
+		selectBtn[0].setEnableEvent( f_, f2_ );
+		selectBtn[1].setEnableEvent( f_, f2_ );
+		selectBtn[2].setEnableEvent( f_, f2_ );
+		
+		//core2.setEvent_aLock_false();
+		
+	}
+	
+	//画面更新
+	function drawStatus()
+	{
+		for(var i= 0; i<10; i++ ){
+			RstyleIcons[i].button_Update();
+			RstatsIcons[i].button_Update();
+		}
+		
+		for(var i= 0; i<10; i++ ){
+			f.used.party[i].HP.max= 0;
+			f.used.party[i].HP.now= 0;
+			for(var c= 0; c<6; c++ ){
+				if(f.used.party[i].division[c]!=0){
+					var cc= f.used.party[i].division[c];
+					f.used.party[i].HP.max+= gf.get(cc,gf.char).HP.max;
+					f.used.party[i].HP.now+= gf.get(cc,gf.char).HP.now;
+				}
+			}
+		}
+		
+		for(var i= 0; i<10; i++ ){
+			var ch= f.used.party[i];
+			fillRect( 223,44+(32*i), 52,17, 0xff000000 );
+			
+			drawText2( 227, 48+(32*i), "%5d".sprintf(ch.HP.now),, 214 );
+			
+			//ライフ
+			fillRect( 221,62+(32*i), 56,2, 0xffaa0000 );
+			fillRect( 221,62+(32*i), 56*(ch.HP.now/ch.HP.max),2, 0xff00f68c );
+		}
+		
+		//for(var i= 0; i<60; i++ ){
+		//	miniIcons[i].drawStatus();
+		//}
+		
+	}
+	
+	//マウスイベント　ミニアイコン用
+	function onMiniAction(ev)
+	{
+		//dm("onMiniAction="+ev.type);
+		
+		if( ev.type=="onMouseDown" && ev.button==mbLeft ) {
+	 		tf.allysSelectNumber= ev.layer._id;
+	 		//ca.standby_set_players(tf.allysSelectNumber);
+	 		kag.process( , "*selecter" );
+		}
+		
+		if( ev.type=="onMouseEnter" ){
+// 			var xx= 5;
+// 			var yy= ev.layer.top;
+// 			ui_Cor_MiniLine.setPos(xx,yy);
+			ui_Cor_MiniLine.top= ev.layer.top;
+			ui_Cor_MiniLine.visible= true;
+		}
+		
+		if( ev.type=="onMouseLeave" ){
+			ui_Cor_MiniLine.visible= false;
+		}
+	}
+	
+	//指示アイコン用
+ 	function set_order_style(lay){
+ 		f.used.party[lay._id].order.style= lay.isSelected;
+	}
+	
+ 	function set_order_state(lay){
+ 		f.used.party[lay._id].order.state= lay.isSelected;
+ 		
+ 		//自分から攻めているときは待機を操作しない
+ 		if(f.used.stat.attackmode!=1) {
+	 		if(ca.get_troops_party3()  && gt.storybattle!=1 ) {
+				selectBtn[2].button_Enabled(true);
+			} else selectBtn[2].button_Enabled(false);
+		}
+	}
+	
+	
+	//敵師団選択
+ 	function set_enemy_numberL(){
+ 		tf.enemySelectNumber--;
+ 		//ca.standby_set_enemys(tf.enemySelectNumber);
+ 		//ca.map_battle_setting_enemy_data_exe();
+ 		if(0>tf.enemySelectNumber) tf.enemySelectNumber= tf.EncountL[0].count-1;
+ 		kag.process( , "*selecter" );
+	}
+	
+ 	function set_enemy_numberR(){
+ 		tf.enemySelectNumber++;
+ 		//ca.standby_set_enemys(tf.enemySelectNumber);
+ 		//ca.map_battle_setting_enemy_data_exe();
+ 		if(tf.EncountL[0].count<=tf.enemySelectNumber) tf.enemySelectNumber= 0;
+ 		kag.process( , "*selecter" );
+	}
+	
+	//選択
+ 	function set_att_executed() {
+		tf.Encounter= 0;
+		ca.map_battle_setting_enemy_data_exe();
+		//dm("set_att_executed.tf.EncountR= %d,%d,%d,%d,%d.%d".spritf(tf.EncountR[0]));
+ 		kag.process( , "*Enter" );
+	}
+	
+ 	function set_def_executed() {
+ 		tf.Encounter= 1;
+ 		ca.map_battle_setting_enemy_data_exe();
+ 		kag.process( , "*EncountEnter" );
+	}
+	
+ 	function set_std_executed() {
+ 		tf.Encounter= 2;
+ 		ca.map_battle_setting_enemy_data_exe();
+ 		kag.process( , "*EncountEnter" );
+	}
+}
+
+
+///////////////////////////////////////////////////////
+//ラインセレクト
+class charMiniLineIcon2 extends LayerEventBase2
+{
+	
+	function charMiniLineIcon2( win, par, pal ) {
+		super.LayerEventBase2(...);
+		name= "charMiniLineIcon2";
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 30,30, 0x00000000 );
+		setToAlpha();
+	}
+	
+	function drawStatus(){
+		loadImages("slg_Org_plate_org%02d".sprintf(_id+1));
+	}
+}
+
+///////////////////////////////////////////////////////
+//ミニキャラセレクト
+class charMiniIcon2 extends LayerEventBase2
+{
+	var arr=void;
+	var xi=0, yi=0;
+	var ch= void;
+	
+	function charMiniIcon2( win, par, pal ){
+		super.LayerEventBase2(...);
+		name= "charMiniIcon";
+	}
+	
+	function finalize(){
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 30,30, 0x00000000 );
+		setToAlpha();
+	}
+	
+ 	function getWaper(){
+ 		var dd= %[ n:0, x:0, y:0 ];
+ 		dd.x= xi;
+ 		dd.y= yi;
+ 		dd.n= f.used.party[dd.y].division[dd.x];
+ 		return dd;
+ 	}
+	
+	function drawStatus(){
+		var cc= f.used.party[yi].division[xi];
+		if( cc==0 ) loadImages("bc_mini1_0000");
+		else {
+			ch= gf.get(cc,gf.char);
+			loadImages(ch.image[3].file);
+		}
+	}
+}

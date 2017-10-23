@@ -1,0 +1,67 @@
+// path‚ğ’Ç‰Á
+
+Storages.addAutoPath("character/");
+Storages.addAutoPath("character/normal/");
+Storages.addAutoPath("character/big/");
+Storages.addAutoPath("character/face/");
+Storages.addAutoPath("character/battle/");
+
+Storages.addAutoPath("graphics/");
+Storages.addAutoPath("graphics/background/");
+Storages.addAutoPath("graphics/effect/");
+Storages.addAutoPath("graphics/emotion/");
+Storages.addAutoPath("graphics/event/");
+Storages.addAutoPath("graphics/rule/");
+Storages.addAutoPath("graphics/unit/");
+
+Storages.addAutoPath("interface/");
+Storages.addAutoPath("interface/adv_ui/");
+Storages.addAutoPath("interface/btl_ui/");
+Storages.addAutoPath("interface/slg_ui/");
+Storages.addAutoPath("interface/btl_effect/");
+Storages.addAutoPath("interface/pub/");
+Storages.addAutoPath("interface/thumbnail/");
+Storages.addAutoPath("interface/sys_ui/");
+Storages.addAutoPath("interface/systemp/");
+Storages.addAutoPath("interface/icon/");
+
+Storages.addAutoPath("sound/");
+Storages.addAutoPath("sound/bgm/");
+Storages.addAutoPath("sound/se/");
+Storages.addAutoPath("sound/movie/");
+
+Storages.addAutoPath("gamesystem/kag/");
+Storages.addAutoPath("gamesystem/battle/");
+
+Storages.addAutoPath("voice/");
+
+
+
+Storages.addAutoPath(System.exePath + "character.xp3>battle/");
+Storages.addAutoPath(System.exePath + "character.xp3>big/");
+Storages.addAutoPath(System.exePath + "character.xp3>face/");
+Storages.addAutoPath(System.exePath + "character.xp3>normal/");
+
+Storages.addAutoPath(System.exePath + "sound.xp3>bgm/");
+Storages.addAutoPath(System.exePath + "sound.xp3>movie/");
+Storages.addAutoPath(System.exePath + "sound.xp3>se/");
+
+Storages.addAutoPath(System.exePath + "voice.xp3>");
+
+Storages.addAutoPath(System.exePath + "graphics.xp3>background/");
+Storages.addAutoPath(System.exePath + "graphics.xp3>effect/");
+Storages.addAutoPath(System.exePath + "graphics.xp3>emotion/");
+Storages.addAutoPath(System.exePath + "graphics.xp3>event/");
+Storages.addAutoPath(System.exePath + "graphics.xp3>rule/");
+Storages.addAutoPath(System.exePath + "graphics.xp3>unit/");
+
+Storages.addAutoPath(System.exePath + "interface.xp3>adv_ui/");
+Storages.addAutoPath(System.exePath + "interface.xp3>btl_effect/");
+Storages.addAutoPath(System.exePath + "interface.xp3>btl_ui/");
+Storages.addAutoPath(System.exePath + "interface.xp3>icon/");
+Storages.addAutoPath(System.exePath + "interface.xp3>pub/");
+Storages.addAutoPath(System.exePath + "interface.xp3>slg_ui/");
+Storages.addAutoPath(System.exePath + "interface.xp3>sys_ui/");
+Storages.addAutoPath(System.exePath + "interface.xp3>thumbnail/");
+
+

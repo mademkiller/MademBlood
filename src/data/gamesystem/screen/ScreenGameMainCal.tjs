@@ -1,0 +1,414 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenGameMainCal
+//
+/////////////////////////////////////////////////////////////////////////
+//
+class ScreenGameMainCal extends TFrame2
+{
+	var viewEvButton= [ "","","","","", "","","","","" ];
+	var viewEvJump= [ "","","","","", "","","","","" ];
+	
+	function ScreenGameMainCal( g_, s_ ){
+		super.TFrame2(...);
+		backGround.callbackREvent2= rightClickCallBack;
+	}
+	
+	function finalize() {
+	
+		PostReleaseScreen();
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	// init
+	//f.used.party
+	function onPreLoad()
+	{
+		
+		with( panel )
+		{
+			backGround.loadImages("slg_Org_bg");
+ 			
+			//ui
+			.uiBase= new LayerTrueBase( kag, backGround );
+			.uiBase.setLayer( 0, 540 );
+			.uiBase.loadImages("slg_top_chip01");
+			.uiBase.drawImageFile( 312,10, "slg_topicCall" );
+			.uiBase.drawImageFile( 5,40, "slg_call_plate_01" );
+			.uiBase.drawText4( 310,100, "親交ボタンや調教ボタンをＯＮにすることで、",0xff0000,15 );
+			.uiBase.drawText4( 310,115, "コールイベント発動のためのポイントが",0xff0000,15 );
+			.uiBase.drawText4( 310,130, "ターン終了時にたまります。",0xff0000,15 );
+			.uiBase.drawText4( 310,145, "各武将ヒロインへの接し方を決めて下さい。",0xff0000,15 );
+			
+ 			.uiMList1= new LayerTrueBase( kag, backGround, this );
+ 			.uiMList1.setLayer( 0, 0, 960, 260 );
+ 			.uiMList1.loadImages("slg_call_back00");
+ 			
+ 			.uiMList2= new LayerTrueBase( kag, backGround, this );
+ 			.uiMList2.setLayer( 0, 0, 960, 260 );
+ 			.uiMList2.loadImages("slg_call_back00");
+ 			
+			//キャラパネル
+ 			.uiPMList0= new callCharPanel( kag, .uiMList1, this );
+ 			.uiPMList0._id= 0;
+ 			.uiPMList0.setLayer( 0, 0, "slg_call_ch01a", "slg_call_ch01b" );
+			.uiPMList0.selectBtn[0].callbackEvent= function( v ) { f.used.stat.callfrsp[0]= v.isSelected; };
+	 		.uiPMList0.selectBtn[1].callbackEvent= function( v ) { f.used.stat.calltrng[0]= v.isSelected; };
+	 		.uiPMList0.selectBtn[2].setCallBack(jump_callback);
+	 		
+ 			.uiPMList1= new callCharPanel( kag, .uiMList1, this );
+ 			.uiPMList1._id= 1;
+ 			.uiPMList1.setLayer( 184, 0, "slg_call_ch02a", "slg_call_ch02b" );
+			.uiPMList1.selectBtn[0].callbackEvent= function( v ) { f.used.stat.callfrsp[1]= v.isSelected; };
+	 		.uiPMList1.selectBtn[1].callbackEvent= function( v ) { f.used.stat.calltrng[1]= v.isSelected; };
+	 		.uiPMList1.selectBtn[2].setCallBack(jump_callback);
+ 			
+  			.uiPMList2= new callCharPanel( kag, .uiMList1, this );
+ 			.uiPMList2._id= 2;
+ 			.uiPMList2.setLayer( 368, 0, "slg_call_ch03a", "slg_call_ch03b" );
+			.uiPMList2.selectBtn[0].callbackEvent= function( v ) { f.used.stat.callfrsp[2]= v.isSelected; };
+	 		.uiPMList2.selectBtn[1].callbackEvent= function( v ) { f.used.stat.calltrng[2]= v.isSelected; };
+	 		.uiPMList2.selectBtn[2].setCallBack(jump_callback);
+ 			
+  			.uiPMList3= new callCharPanel( kag, .uiMList1, this );
+ 			.uiPMList3._id= 3;
+ 			.uiPMList3.setLayer( 552, 0, "slg_call_ch04a", "slg_call_ch04b" );
+			.uiPMList3.selectBtn[0].callbackEvent= function( v ) { f.used.stat.callfrsp[3]= v.isSelected; };
+	 		.uiPMList3.selectBtn[1].callbackEvent= function( v ) { f.used.stat.calltrng[3]= v.isSelected; };
+	 		.uiPMList3.selectBtn[2].setCallBack(jump_callback);
+ 			
+  			.uiPMList4= new callCharPanel( kag, .uiMList1, this );
+ 			.uiPMList4._id= 4;
+ 			.uiPMList4.setLayer( 736, 0, "slg_call_ch05a", "slg_call_ch05b" );
+			.uiPMList4.selectBtn[0].callbackEvent= function( v ) { f.used.stat.callfrsp[4]= v.isSelected; };
+	 		.uiPMList4.selectBtn[1].callbackEvent= function( v ) { f.used.stat.calltrng[4]= v.isSelected; };
+	 		.uiPMList4.selectBtn[2].setCallBack(jump_callback);
+ 			
+  			.uiPMList5= new callCharPanel( kag, .uiMList2, this );
+ 			.uiPMList5._id= 5;
+ 			.uiPMList5.setLayer( 0, 0, "slg_call_ch06" );
+			.uiPMList5.selectBtn[0].callbackEvent= function( v ) { f.used.stat.callfrsp[5]= v.isSelected; };
+	 		.uiPMList5.selectBtn[1].callbackEvent= function( v ) { f.used.stat.calltrng[5]= v.isSelected; };
+	 		.uiPMList5.selectBtn[2].setCallBack(jump_callback);
+ 			
+  			.uiPMList6= new callCharPanel( kag, .uiMList2, this );
+ 			.uiPMList6._id= 6;
+ 			.uiPMList6.setLayer( 184, 0, "slg_call_ch07" );
+			.uiPMList6.selectBtn[0].callbackEvent= function( v ) { f.used.stat.callfrsp[6]= v.isSelected; };
+	 		.uiPMList6.selectBtn[1].callbackEvent= function( v ) { f.used.stat.calltrng[6]= v.isSelected; };
+	 		.uiPMList6.selectBtn[2].setCallBack(jump_callback);
+ 			
+  			.uiPMList7= new callCharPanel( kag, .uiMList2, this );
+ 			.uiPMList7._id= 7;
+ 			.uiPMList7.setLayer( 368, 0, "slg_call_ch08" );
+			.uiPMList7.selectBtn[0].callbackEvent= function( v ) { f.used.stat.callfrsp[7]= v.isSelected; };
+	 		.uiPMList7.selectBtn[1].callbackEvent= function( v ) { f.used.stat.calltrng[7]= v.isSelected; };
+	 		.uiPMList7.selectBtn[2].setCallBack(jump_callback);
+ 			
+  			.uiPMList8= new callCharPanel( kag, .uiMList2, this );
+ 			.uiPMList8._id= 8;
+ 			.uiPMList8.setLayer( 552, 0, "slg_call_ch09" );
+			.uiPMList8.selectBtn[0].callbackEvent= function( v ) { f.used.stat.callfrsp[8]= v.isSelected; };
+	 		.uiPMList8.selectBtn[1].callbackEvent= function( v ) { f.used.stat.calltrng[8]= v.isSelected; };
+	 		.uiPMList8.selectBtn[2].setCallBack(jump_callback);
+ 			
+  			.uiPMList9= new callCharPanel( kag, .uiMList2, this );
+ 			.uiPMList9._id= 9;
+ 			.uiPMList9.setLayer( 736, 0, "slg_call_ch10" );
+			.uiPMList9.selectBtn[0].callbackEvent= function( v ) { f.used.stat.callfrsp[9]= v.isSelected; };
+	 		.uiPMList9.selectBtn[1].callbackEvent= function( v ) { f.used.stat.calltrng[9]= v.isSelected; };
+	 		.uiPMList9.selectBtn[2].setCallBack(jump_callback);
+ 			
+	 		drawStatus();
+		}
+		return true;
+	}
+	
+	function onPostRelease()
+	{
+	}
+	
+	///////////////////////////////////////////////////////
+	// show
+	//
+	function onInit()
+	{
+		backGround.setLayer( 0, 0, 960, 720, 0x00000000 );
+		backGround.visible= false;
+		backGround.opacity= 0;
+	}
+	
+	function onShow( time_, en_ )
+	{
+		//init_panel();
+		//parrentSrn.enabledButton([ 1,0,0, 0,2,0, 0,0,0 ]);
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 0;
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,255)" ] );
+		
+		panel.uiBase.setPos( 0, 720 );
+		panel.uiBase.beginMove( %[ time:time_, path:"(0,540,255)", accel:-2 ] );
+		
+		panel.uiMList1.setPos( 960, 10 );
+		panel.uiMList1.beginMove( %[ time:time_, path:"(20,10,255)", accel:-2 ] );
+		
+		panel.uiMList2.setPos( -960, 275 );
+		panel.uiMList2.beginMove( %[ time:time_, path:"(20,275,255)", accel:-2 ] );
+		
+		dm("onShow");
+	}
+	
+	function onShowEnd()
+	{
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 255;
+		
+		//frameWork.rckicEvent= rightClickCallBack;
+		
+		dm("onShowEnd");
+	}
+	
+	function onHide( time_, en_ )
+	{
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,0)", accel:2 ] );
+		
+		panel.uiBase.beginMove( %[ time:time_, path:"(0,720,255)", accel:2 ] );
+		panel.uiMList1.beginMove( %[ time:time_, path:"(960,10,255)", accel:2 ] );
+		panel.uiMList2.beginMove( %[ time:time_, path:"(-960,275,255)", accel:2 ] );
+	}
+	
+	function onHideEnd()
+	{
+		backGround.visible= false;
+		backGround.opacity= 0;
+		
+		kag.KeyDown_CallBack= void;
+		
+		PostReleaseScreen();
+		
+	}
+	
+	//表示更新
+	function drawStatus()
+	{
+		panel.uiPMList0.drawStatus();
+		panel.uiPMList1.drawStatus();
+		panel.uiPMList2.drawStatus();
+		panel.uiPMList3.drawStatus();
+		panel.uiPMList4.drawStatus();
+		panel.uiPMList5.drawStatus();
+		panel.uiPMList6.drawStatus();
+		panel.uiPMList7.drawStatus();
+		panel.uiPMList8.drawStatus();
+		panel.uiPMList9.drawStatus();
+		
+		var tc1= f.覇道;
+		var tc2= f.治世;
+		
+		if(tc1>50) tc1= 50;
+		if(tc2>50) tc2= 50;
+		
+// 		tc1= 22;
+// 		tc2= 44;
+		
+		var tp1= 1-(tc1/50);
+		var tp2= 1-(tc2/50);
+		
+		panel.uiBase.drawText2( 76, 55, "%2d".sprintf(tc1),0xffffff, 214 );
+		panel.uiBase.drawText2( 76, 83, "%2d".sprintf(tc2),0xffffff, 214 );
+		
+		panel.uiBase.fillRect( 104+200-(200*tp1),51,  200*tp1,20, 0xff000000 );
+		panel.uiBase.fillRect( 104+200-(200*tp2),79, 200*tp2,20, 0xff000000 );
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		backGround.setEnableEvent(f_);
+		
+		panel.uiPMList0.selectBtn[0].setEnableEvent(f_);
+		panel.uiPMList0.selectBtn[1].setEnableEvent(f_);
+		panel.uiPMList0.selectBtn[2].setEnableEvent(f_);
+		panel.uiPMList1.selectBtn[0].setEnableEvent(f_);
+		panel.uiPMList1.selectBtn[1].setEnableEvent(f_);
+		panel.uiPMList1.selectBtn[2].setEnableEvent(f_);
+		panel.uiPMList2.selectBtn[0].setEnableEvent(f_);
+		panel.uiPMList2.selectBtn[1].setEnableEvent(f_);
+		panel.uiPMList2.selectBtn[2].setEnableEvent(f_);
+		panel.uiPMList3.selectBtn[0].setEnableEvent(f_);
+		panel.uiPMList3.selectBtn[1].setEnableEvent(f_);
+		panel.uiPMList3.selectBtn[2].setEnableEvent(f_);
+		panel.uiPMList4.selectBtn[0].setEnableEvent(f_);
+		panel.uiPMList4.selectBtn[1].setEnableEvent(f_);
+		panel.uiPMList4.selectBtn[2].setEnableEvent(f_);
+		panel.uiPMList5.selectBtn[0].setEnableEvent(f_);
+		panel.uiPMList5.selectBtn[1].setEnableEvent(f_);
+		panel.uiPMList5.selectBtn[2].setEnableEvent(f_);
+		panel.uiPMList6.selectBtn[0].setEnableEvent(f_);
+		panel.uiPMList6.selectBtn[1].setEnableEvent(f_);
+		panel.uiPMList6.selectBtn[2].setEnableEvent(f_);
+		panel.uiPMList7.selectBtn[0].setEnableEvent(f_);
+		panel.uiPMList7.selectBtn[1].setEnableEvent(f_);
+		panel.uiPMList7.selectBtn[2].setEnableEvent(f_);
+		panel.uiPMList8.selectBtn[0].setEnableEvent(f_);
+		panel.uiPMList8.selectBtn[1].setEnableEvent(f_);
+		panel.uiPMList8.selectBtn[2].setEnableEvent(f_);
+		panel.uiPMList9.selectBtn[0].setEnableEvent(f_);
+		panel.uiPMList9.selectBtn[1].setEnableEvent(f_);
+		panel.uiPMList9.selectBtn[2].setEnableEvent(f_);
+		
+		parrentSrn.lockButton(!f_);
+		
+	}
+	///////////////////////////////////////////////////////
+	// method
+	
+	
+	///////////////////////////////////////////////////////
+	// callback
+	function jump_callback(lay){
+		f.used.returnback_flag= 3;
+		dm("jump_callback= %s.%s.%s".sprintf(f.used.stat.calljump[lay._id],lay._id,lay.name));
+		core2.kagBackStart( 300, "routecontrol.ks", f.used.stat.calljump[lay._id] );
+	}
+	
+	function rightClickCallBack(){
+		parrentSrn.opt_buttom_top(0);
+	}
+}
+
+
+///////////////////////////////////////////////////////
+//
+class callCharPanel extends LayerTrueBase
+{
+	var textLayer= void;
+	var imgfile= [];
+	var selectBtn= [];
+	
+	var executeEvent= "";
+	
+	function callCharPanel( win, par, pal ) {
+		super.LayerTrueBase(...);
+		name= "callCharPanel";
+	}
+	
+	function finalize() {
+		invalidate textLayer;
+		for(var i=0; i<imgfile.count; i++) invalidate imgfile[i];
+		for(var i=0; i<selectBtn.count; i++) invalidate selectBtn[i];
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_, file_, file2_=void ){
+		//super.setLayer( x_, y_, 302,593, 0x00000000 );
+		global.LayerTrueBase.setLayer( x_, y_, 180,260, 0x00000000 );
+		imgfile.add(file_);
+		if(file2_!=void) imgfile.add(file2_);
+		loadImages(imgfile[0]);
+		
+		selectBtn[0]= new TButtonBase1s( window, this );
+		selectBtn[0].setLayer( 9, 202, 40, 24, 2 );
+		selectBtn[0].loadImages("slg_call_bt01");
+		
+		selectBtn[1]= new TButtonBase1s( window, this );
+		selectBtn[1].setLayer( 9, 230, 40, 24, 2 );
+		selectBtn[1].loadImages("slg_call_bt02");
+		
+		selectBtn[2]= new TButtonBase1k( window, this );
+		selectBtn[2].setLayer( 4, 153, 172, 24 );
+		selectBtn[2].loadImages("slg_call_bt00");
+		selectBtn[2].visible= false;
+		selectBtn[2]._id= _id;
+		
+		//ターゲットアイコン
+		textLayer= new global.LayerTextBase( window, this );
+		textLayer.setLayer( 0, 0, 180, 260, 0xff000000 );
+		textLayer.visible= true;
+		
+		drawStatus();
+		
+	}
+	
+	function drawStatus()
+	{
+		
+ 		var ct1= [
+	 			f.used.親交値.Tilca,f.used.親交値.Freya,f.used.親交値.Thor,f.used.親交値.Regret,f.used.親交値.Odin,
+	 			f.used.親交値.Ferna,f.used.親交値.Hel,f.used.親交値.Fenrir,f.used.親交値.Jormu,0
+	 		];
+ 			
+ 		var ct2= [
+	 			f.used.調教値.Tilca,f.used.調教値.Freya,f.used.調教値.Thor,f.used.調教値.Regret,f.used.調教値.Odin,
+	 			0,0,0,0,0
+	 		];
+	 		
+//	 	f.friend.Tilca= 1;
+//	 	f.friend.Freya= 1;
+	 	
+ 		var ct3= [
+	 			f.friend.Tilca,f.friend.Freya,f.friend.Thor,f.friend.Regret,f.friend.Odin,
+	 			f.friend.Ferna,f.friend.Hel,f.friend.Fenrir,f.friend.Jormu,0
+	 		];
+	 		
+	 		
+ 		var ct4= [
+ 				f.metamor01,f.metamor02,f.metamor03,f.metamor04,f.metamor05,
+ 				0,0,0,0,0
+	 		];
+	 		
+ 		var ct5= [ 2,2,2,2,2, 1,1,1,1,0 ];
+ 		
+ 		var ct6= [ 60,40,50,40,40, 1,1,1,1,0 ];
+		
+		var cc= %[ si:ct1[_id], ch:ct2[_id ], fr:ct3[_id], me:ct4[_id] ];
+		//var cc= %[ si:123, ch:456, fr:ct3[_id], me:ct4[_id] ];
+		
+		selectBtn[0].button_Selected(f.used.stat.callfrsp[_id]);
+		selectBtn[1].button_Selected(f.used.stat.calltrng[_id]);
+		
+		if(cc.fr && ct5[_id]>0 ) {
+		
+			textLayer.clearText();
+			
+			if(storage!=imgfile[cc.me]) loadImages(imgfile[cc.me]);
+			
+			textLayer.drawText2( 52, 207, "%2d".sprintf( cc.si ),0xffffff, 214 );
+ 			fillRect( 75,213, 100*(cc.si/99),3, 0xffffffff );
+ 			
+ 			if(ct5[_id]>1) {
+ 			
+ 				var fn= 0;
+ 				//if( cc.si!=0 ) fn= (cc.si/(cc.si+cc.ch))*100;
+ 				//if( cc.ch!=0 ) 
+ 				fn= (int)((1-cc.ch/ct6[_id])*100);
+ 				//if( fn<0 ) fn= 0;
+ 				
+				textLayer.drawText2( 60, 185, "%2d%%".sprintf(fn),0xffffff, 214 );
+			
+				textLayer.drawText2( 52, 235, "%2d".sprintf( cc.ch ),0xffffff, 214 );
+ 				fillRect( 75,240, 100*(cc.ch/99),3, 0xffff58af );
+ 				
+ 				selectBtn[1].visible= true;
+ 				
+ 			} else selectBtn[1].visible= false;
+ 			
+ 			if(f.used.stat.callchar[_id]!="") {
+ 				selectBtn[2].visible= true;
+ 				textLayer.drawText2( 10, 158, f.used.stat.callchar[_id], 0x000000, 14 );
+ 			} else selectBtn[2].visible= false;
+			
+			visible= true;
+			
+		} else visible= false;
+ 	}
+	
+}
+

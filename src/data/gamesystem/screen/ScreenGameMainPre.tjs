@@ -1,0 +1,1053 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenGameMainOrg
+//
+/////////////////////////////////////////////////////////////////////////
+//
+class ScreenGameMainPre extends TFrame2
+{
+	//var selectLineIndex= 0;
+	//var selectMiniIndex= 0;
+	//var selectmultiIndex= -1;
+	
+	function ScreenGameMainPre( g_, s_ ){
+		super.TFrame2(...);
+		backGround.callbackREvent2= rightClickCallBack;
+	}
+	
+	function finalize() {
+		PostReleaseScreen();
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	// init
+	//
+	function onPreLoad()
+	{
+		with( panel )
+		{
+			backGround.loadImages("slg_Org_bg");
+			
+			//ui
+			.uiBase= new LayerTrueBase( kag, backGround );
+			.uiBase.setLayer( 0, 540 );
+			.uiBase.loadImages("slg_top_chip01");
+			.uiBase.drawImageFile( 312,10, "slg_topicPre" );
+			.uiBase.drawText4( 335,145, "アイテムの購買と装備が出来ます。",0xff0000,15 );
+			
+			.uiTopInfo= new charTopStatus( kag, backGround );
+			.uiTopInfo.setLayer( 0, 0 );
+			.uiTopInfo.setCharNo(0);
+			
+			.uiLList= new itemSelector( kag, backGround, this );
+			.uiLList.setLayer( 0, 127 );
+			
+			.uiMList= new midIconSelector2( kag, backGround, this );
+			.uiMList.setLayer( 400, 50 );
+			
+			.uiBTag= new LayerTrueBase( kag, .uiBase );
+			.uiBTag.setLayer( 12, 556 );
+			.uiBTag.loadImages("slg_topicOrg");
+			
+			.selectBtn0= new TButtonBase1k( kag, .uiBase );
+			.selectBtn0.setLayer( 320, 90, 48, 48 );
+			.selectBtn0.loadImages("slg_Pre_bt_m01");
+			.selectBtn0.callbackEvent= buy_items;
+			.selectBtn0.setDropDraw();
+		// 	.selectBtn0.AllLockOut= true; //ロックをリリースするか
+			
+			.selectBtn1= new TButtonBase1k( kag, .uiBase );
+			.selectBtn1.setLayer( 370, 90, 48, 48 );
+			.selectBtn1.loadImages("slg_Pre_bt_m02");
+			.selectBtn1.callbackEvent= sales_items;
+			.selectBtn1.setDropDraw();
+		// 	.selectBtn1.AllLockOut= true; //ロックをリリースするか
+			
+			.selectBtn2= new TButtonBase1s( kag, .uiBase );
+			.selectBtn2.setLayer( 420, 90, 48, 48 );
+			.selectBtn2.loadImages("slg_Pre_bt_m03");
+			.selectBtn2.callbackEvent= buy_item_multi;
+			.selectBtn2.button_Selected(gt.pre.selectmultiIndex);
+			.selectBtn2.setDropDraw();
+		// 	.selectBtn2.AllLockOut= true; //ロックをリリースするか
+			
+			.selectBtn3= new TButtonBase1s( kag, .uiBase );
+			.selectBtn3.setLayer( 480, 90, 116, 48, 2 );
+			.selectBtn3.loadImages("slg_Pre_bt_m04");
+			.selectBtn3.callbackEvent= buy_item_mat_auto;
+			.selectBtn3.button_Selected(f.used.itemMatAutoSales);
+	// 		.selectBtn3.AllLockOut= true; //ロックをリリースするか
+			
+			//ドラッグスクリーン
+			.drugScreen= new TDrugMoveBase2( kag, backGround );
+			.drugScreen.setLayer( 0, 0, 970, 720 );
+			
+			.uiLList.selectDrop1.Drop_Exec.setDrugs( .drugScreen );
+			.uiLList.selectDrop1.Drop_Exec.Execute= item1_drop_callback;
+			.uiLList.selectDrop1.Drop_Exec.Enabled= true;
+			.uiLList.selectDrop2.Drop_Exec.setDrugs( .drugScreen );
+			.uiLList.selectDrop2.Drop_Exec.Execute= item2_drop_callback;
+			.uiLList.selectDrop2.Drop_Exec.Enabled= true;
+			
+			.uiLList.itemUseds.setCallBack(used_items);
+			
+			
+			.uiLList.setDrugs( .drugScreen );
+			
+			
+			drawStatus();
+			
+			buttom_locks(0);
+			
+			///////////////////////
+			
+		}
+		
+		return true;
+	}
+	
+	function onPostRelease()
+	{
+	}
+	///////////////////////////////////////////////////////
+	// show
+	//
+	function onInit()
+	{
+		backGround.setLayer( 0, 0, 960, 720, 0x00000000 );
+		backGround.visible= false;
+		backGround.opacity= 0;
+	}
+	
+	function onShow( time_, en_ )
+	{
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 0;
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,255)" ] );
+		
+		panel.uiBase.setPos( 0, 720 );
+		panel.uiBase.beginMove( %[ time:time_, path:"(0,540,255)", accel:-2 ] );
+		
+		panel.uiTopInfo.setPos( 0, -140 );
+		panel.uiTopInfo.beginMove( %[ time:time_, path:"(0,0,255)", accel:-2 ] );
+		
+		panel.uiLList.setPos( -302, 139 );
+		panel.uiLList.beginMove( %[ time:time_, path:"(0,139,255)", accel:-2 ] );
+		
+		panel.uiMList.setPos( 960, 100 );
+		panel.uiMList.beginMove( %[ time:time_, path:"(326,100,255)", accel:-2 ] );
+		
+		
+		dm("onShow");
+	}
+	
+	function onShowEnd()
+	{
+	
+// 		panel.uiLList.setEnableEvent(true);
+// 		panel.uiMList.setEnableEvent(true);
+// 		
+// 		panel.selectBtn0.setEnableEvent(true);
+// 		panel.selectBtn1.setEnableEvent(true);
+// 		panel.selectBtn2.setEnableEvent(true);
+// 		panel.selectBtn3.setEnableEvent(true);
+// 		
+ 		
+		
+		//setEnableEvent(true);
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 255;
+		
+		//frameWork.rckicEvent= rightClickCallBack;
+		
+		//parrentSrn.lockButton(false);
+		
+		dm("onShowEnd");
+	}
+	
+	function onHide( time_, en_ )
+	{
+		//parrentSrn.lockButton(true);
+		
+		//setEnableEvent(false);
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,0)", accel:2 ] );
+		
+		panel.uiBase.beginMove( %[ time:time_, path:"(0,720,255)", accel:2 ] );
+		panel.uiTopInfo.beginMove( %[ time:time_, path:"(0,-140,255)", accel:2 ] );
+		panel.uiLList.beginMove( %[ time:time_, path:"(-302,139,255)", accel:2 ] );
+		panel.uiMList.beginMove( %[ time:time_, path:"(960,100,255)", accel:2 ] );
+		
+	}
+	
+	function onHideEnd()
+	{
+		backGround.visible= false;
+		backGround.opacity= 0;
+		
+		kag.KeyDown_CallBack= void;
+		
+		PostReleaseScreen();
+	}
+	
+	//表示更新
+	function drawStatus()
+	{
+		panel.uiLList.drawStatus();
+		panel.uiMList.drawStatus();
+		panel.uiTopInfo.drawStatus();
+	}
+	
+	function rightClickCallBack(){
+		parrentSrn.opt_buttom_top(0);
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		panel.uiLList.setEnableEvent(f_);
+		panel.uiMList.setEnableEvent(f_);
+		
+		panel.selectBtn0.setEnableEvent(f_);
+		panel.selectBtn1.setEnableEvent(f_);
+		panel.selectBtn2.setEnableEvent(f_);
+		panel.selectBtn3.setEnableEvent(f_);
+		
+		backGround.setEnableEvent(f_);
+		
+		parrentSrn.lockButton(!f_);
+		
+	}
+	///////////////////////////////////////////////////////
+	// method
+	function buttom_locks(m)
+	{
+		switch(m){
+			case 0:
+				//全てロック
+// 	 				panel.uiLList.selectBtreset.button_Enabled(true);
+// 	 				//var slmed= [ 1,1,1,1,1,1, 1,1,1,1,1,1, 1,1,1,1,1,1, 1,1,1,1,1,1, 1,1,1,1,1,1 ];
+// 	 				panel.uiLList.Icons.setEnableAll(1);
+// 				
+// 					panel.uiMList.selectBtcancel.button_Enabled(false);
+// 					panel.uiMList.selectBtDrop.button_Enabled(false);
+// 					panel.uiMList.selectBtexec.button_Enabled(false);
+// 				
+// 					panel.uiMList.selectBtn1.button_Enabled(false);
+// 					panel.uiMList.selectBtn2.button_Enabled(false);
+// 				
+// 	 				var slcat= [ 2,1,1, 1,1,1, 1,1,1, 1,1,1 ];
+// 	// 				var slchr= [ 1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,1 ];
+// 	// 				
+// 	 				panel.uiMList.selectBt.setEnable(slcat);
+// 	// 				//panel.uiMList.selectChar.setEnable(slchr);
+// 	 				panel.uiMList.selectChar.setEnableAll(1);
+// 				
+// 					panel.uiMList.dMedalion1.button_Enabled(false);
+// 					panel.uiMList.dMedalion2.button_Enabled(false);
+
+ 				panel.uiLList.selectBt.setEnable([ 2,1,1,1, 1,1,1,1,  1,1,1,1 ]);
+ 				//panel.uiMList.selectBt.setEnable([ 2,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,1 ]);
+
+				panel.uiLList.selectDrop1.visible= false;
+				panel.uiLList.selectDrop2.visible= false;
+		
+				panel.selectBtn0.button_Enabled(false);
+				panel.selectBtn1.button_Enabled(false);
+			
+				break;
+				
+			////////////////////
+			case 10:
+				//購入
+				break;
+		}
+	}
+	///////////////////////////////////////////////////////
+	// callback
+	//
+	//キャラチェック時
+	function char_lock_check(f_=false,lay)
+	{
+		if(f_){
+			gt.pre.selectCharIndex= lay._data[lay._id];
+			
+			panel.uiTopInfo.setChar2(lay.ch);
+			panel.uiTopInfo.drawStatus();
+			
+			var a1= ca.item_getdata(lay.ch.equipedID.weapon);
+			panel.uiLList.selectDrop1.setData(lay.ch.equipedID.weapon);
+			//panel.uiLList.selectDrop1.drawStatus();
+			
+			var a2= ca.item_getdata(lay.ch.equipedID.armor);
+			panel.uiLList.selectDrop2.setData(lay.ch.equipedID.armor);
+			//panel.uiLList.selectDrop2.drawStatus();
+		}else{
+			gt.pre.selectCharIndex= 0;
+		}
+		
+		panel.uiLList.drawStatus();
+		
+		panel.uiMList.setLock_cancel(...);
+	}
+	
+	//アイテムを購入できるか？
+	function buy_items_check(id)
+	{
+		var ma= [1,4,10 ];
+		var a= ca.buy_items_check(id,ma[gt.pre.selectmultiIndex]);
+		
+		//ボタンの入力を有効に
+		panel.selectBtn0.button_Enabled(a);
+		/*
+		panel.selectBtn0.setEnableEvent(a);
+		
+		//ボタンの有効化
+		if(a) panel.selectBtn0.opacity=255;
+		else panel.selectBtn0.opacity=128;
+		*/
+	}
+	
+	//アイテムを売却できるか？
+	function sales_items_check(id)
+	{
+		var ma= [1,4,10 ];
+		var a= ca.sales_items_check(id,ma[gt.pre.selectmultiIndex]);
+		
+		//ボタンの入力を有効に
+		panel.selectBtn1.button_Enabled(a);
+		/*
+		panel.selectBtn1.setEnableEvent(a);
+		
+		//ボタンの有効化
+		if(a) panel.selectBtn1.opacity=255;
+		else panel.selectBtn1.opacity=128;
+		*/
+	}
+	
+	//購入
+	function buy_items()
+	{
+// 		var dd= panel.uiLList.selectNo;
+// 		var ch= gf.get(dd,gf.list.item);
+// 		var cc= gf.get2(dd,gf.list.item);
+ 		var dd= ca.item_getdata(gt.pre.selectItemIndex);
+// 		
+// 		f.used.itemcount[dd.n]++;
+// 		f.used.stat.gold.now-= dd.d.price;
+		
+		var ma= [1,4,10 ];
+		
+		ca.item_buy_get_gold(dd.i,ma[gt.pre.selectmultiIndex]);
+		
+		buy_items_check(dd.i);
+		sales_items_check(dd.i);
+		
+		drawStatus();
+		
+		parrentSrn.updateStatusAM2(dd.d.price,3);
+		
+		//parrentSrn.updateStatus();
+		//panel.uiLList.drawStatus();
+		//return true;
+	}
+	
+	//売却
+	function sales_items()
+	{
+		//var dd= ca.item_getdata(panel.uiLList.selectNo);
+		var dd= ca.item_getdata(gt.pre.selectItemIndex);
+		var ma= [1,4,10 ];
+		
+		ca.item_sales_get_gold(dd.i,ma[gt.pre.selectmultiIndex]);
+		
+		ca.item_set_addstock(dd.i,ma[gt.pre.selectmultiIndex]);
+		
+		//ca.item_stock_update();
+		
+		buy_items_check(dd.i);
+		sales_items_check(dd.i);
+		
+		drawStatus();
+		
+		parrentSrn.updateStatusAM2(dd.d.price\2,3,true);
+		//parrentSrn.updateStatus();
+		//panel.uiLList.drawStatus();
+		//return true;
+	}
+	
+	
+	//アイテムを使用
+	function used_items()
+	{
+		var dd= ca.item_getdata(gt.pre.selectItemIndex);
+		var ma= [1,4,10 ];
+		
+		ca.item_sales_get_used(dd.i,ma[gt.pre.selectmultiIndex]);
+		
+		drawStatus();
+		
+		//return true;
+	}
+	
+	//装備アイテムをキャンセル
+	function item1_cancel_callback( lay, src ){
+		item0_cancel_callback( lay, src, 1 );
+	}
+	
+	function item2_cancel_callback( lay, src ){
+		item0_cancel_callback( lay, src, 2 );
+	}
+	
+	function item0_cancel_callback( lay, src, i )
+	{
+		var ch= gf.get(gt.pre.selectCharIndex,gf.char);
+		var dd= ca.item_getdata(lay._id);
+		
+		ca.item_reset_char_stats( dd, ch, i );
+		
+		f.used.itemcount[dd.n]++;
+		f.used.itemusedcount[dd.n]--;
+	}
+	
+	
+	//ドロップ関係1
+	function item1_drop_callback( lay, src ){
+		item0_drop_callback( lay, src, 1 );
+	}
+	
+	//ドロップ関係2
+	function item2_drop_callback( lay, src ){
+		item0_drop_callback( lay, src, 2 );
+	}
+	
+	//ドロップ関係
+	function item0_drop_callback( lay, src, i )
+	{
+		if(ca.item_set_chars(src.lay._id,i,gt.pre.selectCharIndex) && gt.pre.selectCharIndex!=0)
+		{
+ 			if(lay._id!=0) item0_cancel_callback( lay, src, i );
+		
+			var ch= gf.get(gt.pre.selectCharIndex,gf.char);
+			var dd= ca.item_getdata(src.lay._id);
+		
+			lay.setData(src.lay._id);
+			
+			//ca.item_set_char_stats( lay, src, i );
+			ca.item_set_char_stats( dd, ch, i );
+		
+			f.used.itemcount[dd.n]--;
+			f.used.itemusedcount[dd.n]++;
+		
+			//panel.uiLList.drawStatus();
+			//panel.uiTopInfo.setChar(ch);
+			
+			drawStatus();
+		}
+	}
+	
+	//倍率更新
+	function buy_item_multi()
+	{
+		gt.pre.selectmultiIndex++;
+		if(gt.pre.selectmultiIndex>2) gt.pre.selectmultiIndex=0;
+		
+		buy_items_check(gt.pre.selectItemIndex);
+		sales_items_check(gt.pre.selectItemIndex);
+	
+		drawStatus();
+		
+		return true;
+	}
+	
+	//鉱石の自動売却
+	function buy_item_mat_auto()
+	{
+		f.used.itemMatAutoSales++;
+		if(f.used.itemMatAutoSales>1) f.used.itemMatAutoSales=0;
+		return true;
+	}
+	
+}
+
+///////////////////////////////////////////////////////
+//ラインセレクト
+class itemSelector extends LayerTrueBase
+{
+	var itemStatus;
+	var selectBt;
+	//selectCharIndex;
+	//gt.pre.selectItemIndex
+	
+	var itemIcons= [];
+	var itemIconscount;
+	
+	var pTarget= [ 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0 ];
+	var pTargetPos= %[ x:0, y:0 ];
+	
+	var ui_Cor;
+	var ui_Cor_Mid2;
+	
+	var selectDrop1;
+	var selectDrop2;
+	
+	var selectCat= 0;
+	
+	var itemUseds;
+	//var selectNo= 0;
+	
+	function itemSelector( win, par, pal ) {
+		super.LayerTrueBase(...);
+	}
+	
+	function finalize(){
+		invalidate selectDrop1;
+		invalidate selectDrop2;
+		invalidate ui_Cor;
+		invalidate ui_Cor_Mid2;
+		invalidate itemStatus;
+		invalidate selectBt;
+		invalidate itemUseds;
+		invalidate itemIconscount;
+		for(var i=0; i<itemIcons.count; i++) invalidate itemIcons[i];
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 300,300, 0x00000000 );
+		
+		loadImages("slg_Pre_plate_pre");
+		
+		itemStatus= new itemTopStatus( window, this );
+		itemStatus.setLayer( 0, 295 );
+		itemStatus.setData(1,gf.item);
+		itemStatus.drawStatus();
+		itemStatus.visible= false;
+		
+ 		itemUseds= new TButtonBase1k( window, itemStatus );
+ 		itemUseds.setLayer( 262, 119, 30, 30 );
+ 		itemUseds.loadImages("slg_Pre_bt_use");
+ 		//itemUseds.callbackEvent= btn_callback_army;
+ 		itemUseds.button_Enabled(0);
+		
+		selectBt= new TButtonSelect4( window, this );
+		selectBt.setLayer( 10, 68 );
+		selectBt.setButton( 68, 24, 12 );
+		selectBt.setButtonPos([
+				  0, 0, 70, 0, 140, 0, 210, 0,
+				  0,26, 70,26, 140,26, 210,26,
+				  0,52, 70,52, 140,52, 210,52
+				]);
+			
+		selectBt.setButtonLoad([
+			"slg_Pre_bt_c01","slg_Pre_bt_c02","slg_Pre_bt_c03","slg_Pre_bt_c04",
+			"slg_Pre_bt_c05","slg_Pre_bt_c06","slg_Pre_bt_c07","slg_Pre_bt_c08",
+			"slg_Pre_bt_c09","slg_Pre_bt_c10","slg_Pre_bt_c11","slg_Pre_bt_c12"]);
+			
+		selectBt.checked_Execute= checked_Execute_callback;
+	// 	selectBt.AllLockOut= true; //ロックをリリースするか
+		
+		for(var i= 0; i<18; i++ ){
+			var xx= 7+(i%6)*48;
+			var yy= 147+(i\6)*49;
+			itemIcons[i]= new itemTopIcons( window, this );
+			itemIcons[i].setLayer( xx, yy );
+		}
+		
+		//selectDrop1= new itemTextStatus( window, this );
+		//selectDrop1.setLayer( 80, 10 );
+		//selectDrop1.setData(0,gf.char);
+		
+		selectDrop1= new itemTopIcons( window, this );
+		selectDrop1.setLayer( 170, 10, 48, 48, 1 );
+		selectDrop1.loadImages("itm0000");
+		selectDrop1.setData(0);
+		selectDrop1.Drug_Enter= ui_Cor1_callbak;
+		selectDrop1.visible= false;
+		
+		selectDrop2= new itemTopIcons( window, this );
+		selectDrop2.setLayer( 240, 10, 48, 48, 1 );
+		selectDrop2.loadImages("itm0000");
+		selectDrop2.setData(0);
+		selectDrop2.Drug_Enter= ui_Cor2_callbak;
+		selectDrop2.visible= false;
+		
+		itemIconscount= new LayerTextBase( window, this );
+		itemIconscount.setLayer( 0, 0, 200, 300 );
+		itemIconscount.visible= true;
+		
+		ui_Cor= new global.LayerTrueBase( window, this );
+		ui_Cor.setLayer( 0, 0, 30, 30, 0xff000000 );
+		ui_Cor.visible= false;
+		ui_Cor.loadImages("btl_draft_chip05");
+		
+		ui_Cor_Mid2= new global.LayerTrueBase( window, this );
+		ui_Cor_Mid2.setLayer( 0, 0, 30, 30, 0xff000000 );
+		ui_Cor_Mid2.visible= false;
+		ui_Cor_Mid2.loadImages("btl_draft_chip05g");
+		
+		gt.pre.selectItemIndex= 0;
+		
+		drawStatus();
+	}
+	
+	////////////////////
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		selectBt.setEnableEvent( f_, f2_ );
+		for(var i= 0; i<18; i++ ) itemIcons[i].setEnableEvent( f_, f2_ );
+		selectDrop1.setEnableEvent( f_, f2_ );
+		selectDrop2.setEnableEvent( f_, f2_ );
+		itemUseds.setEnableEvent( f_, f2_ );
+	}
+	
+	////////////////////
+	//
+	function checked_Execute_callback( n_ )
+	{
+		selectCat= n_;
+		//pIndex= n_;
+		drawStatus();
+		return true;
+	}
+	
+	//コールバックをセット
+	function setDrugs( f_=void )
+	{
+		for(var i= 0; i<18; i++ ){
+			itemIcons[i].Drug_Enter= ui_Cor_callbak;
+			itemIcons[i].Drug_Exec.setDrugs( f_ );
+ 			itemIcons[i].Drug_Exec.Enabled= true;
+		}
+	}
+	
+	function itemdata_update()
+	{
+		for(var i= 0; i<18; i++ ){
+			var ii= i+(selectCat*100)+1;
+			itemIcons[i].setData(ii);
+		}
+	}
+	
+	function drawStatus()
+	{
+		itemdata_update();
+		//itemIconscount.clearText();
+		for(var i= 0; i<18; i++ ){
+			itemIcons[i].drawStatus();
+			
+		}
+		itemStatus.drawStatus();
+		if(ca.used_items_check(itemStatus._id)) itemUseds.button_Enabled(1);
+		else itemUseds.button_Enabled(0);
+		
+		selectDrop1.drawStatus();
+		selectDrop2.drawStatus();
+		
+		if(gt.pre.selectCharIndex!=0){
+			selectDrop1.visible= true;
+			selectDrop2.visible= true;
+		}else{
+			selectDrop1.visible= false;
+			selectDrop2.visible= false;
+		}
+		
+		ui_Cor_Mid2.setPos(pTargetPos.x,pTargetPos.y);
+		if(pTarget[selectCat]==1) ui_Cor_Mid2.visible= true;
+		else ui_Cor_Mid2.visible= false;
+	}
+	
+	//アイテム選択
+	function ui_Cor_callbak(lay,ev)
+	{
+	
+		//if( ev.type=="onMouseDown" && ev.button==mbLeft && selectNo!=lay._id ) {
+		if( ev.type=="onMouseDown" && ev.button==mbLeft && gt.pre.selectItemIndex!=lay._id ) {
+			//selectNo= lay._id;
+			gt.pre.selectItemIndex= lay._id;
+			
+// 			itemStatus.setData(selectNo);
+// 			
+// 			framePanel.buy_items_check(selectNo);
+// 			framePanel.sales_items_check(selectNo);
+
+			for(var i= 0; i<18; i++ ) pTarget[i]= 0;
+			pTargetPos.x= lay.left;
+			pTargetPos.y= lay.top;
+	 		pTarget[selectCat]= 1;
+	 		
+			itemStatus.setData(gt.pre.selectItemIndex);
+			
+			framePanel.buy_items_check(gt.pre.selectItemIndex);
+			framePanel.sales_items_check(gt.pre.selectItemIndex);
+			
+			framePanel.drawStatus();
+			
+			itemStatus.visible= true;
+		}
+		
+		var xx= lay.left;
+		var yy= lay.top;
+		
+		if( ev.type=="onMouseEnter" ){
+			ui_Cor.setPos(xx,yy);
+			ui_Cor.visible= true;
+		}
+		
+		if( ev.type=="onMouseLeave" ){
+			ui_Cor.visible= false;
+		}
+	}
+	
+	//装備キャンセル
+	function ui_Cor1_callbak(lay,ev)
+	{
+		if( ev.type=="onMouseDown" && ev.button==mbRight && lay._id!=0 ) {
+			framePanel.item0_cancel_callback( lay, void, 1 );
+ 			lay._id=0;
+			framePanel.drawStatus();
+			//core2.setEvent_aLock_false();
+		}
+	}
+	
+	function ui_Cor2_callbak(lay,ev)
+	{
+		if( ev.type=="onMouseDown" && ev.button==mbRight && lay._id!=0 ) {
+			framePanel.item0_cancel_callback( lay, void, 2 );
+ 			lay._id=0;
+			framePanel.drawStatus();
+			//core2.setEvent_aLock_false();
+		}
+	}
+	
+}
+
+///////////////////////////////////////////////////////
+//ミニキャラセレクト
+class itemTopIcons extends TDrugEventBase2
+{
+// 		var cc= 0;
+// 		var ch= void;
+	
+	function itemTopIcons( win, par, pal ) {
+		super.TDrugEventBase2(...);
+		name= "itemTopIcons";
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 30,30, 0x00000000 );
+	}
+	
+	function drawStatus()
+	{
+// 		ch= gf.get(_id,gf.list.item);
+// 		cc= gf.get2(_id,gf.list.item);
+		
+		var dd= ca.item_getdata(_id);
+		
+		//if( dd.d.limit!=0 && ca.item_get_stock(_id)>-1 ){
+		if( ca.item_show_stock(_id) && dd.d.image[1].file!="" ){
+			visible= true;
+			loadImages(dd.d.image[1].file);
+			drawText4( 5,   30, "%d".sprintf(f.used.itemcount[dd.n]),0xffffff, 212 );
+		} else {
+			visible= false;
+		}
+		
+			
+//  		if( _id!=0 && f.used.itemcount[dd.n]==0 && ca.item_get_stock(_id)>-1 ) visible= false;
+//  		else {
+//  			visible= true;
+//  			loadImages(dd.d.image[1].file);
+//  		}
+	}
+}
+
+
+///////////////////////////////////////////////////////
+//ラインセレクト
+class itemTopStatus extends LayerTrueBase
+{
+	//var arr=void, i=0, yi=0;
+	var ext= void;
+	//var ch= void;
+	
+	function itemTopStatus( win, par, pal ) {
+		super.LayerTrueBase(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 300,300, 0x00000000 );
+	}
+	
+	function drawStatus()
+	{
+		var dd= ca.item_getdata(_id);
+		
+// 		ch= dd.d;
+// 		var cc= dd.n;
+		
+// 		ch= gf.get(_id,gf.list.item);
+// 		var cc= gf.get2(_id,gf.list.item);
+		
+		fillRect( 0,0, width,height, 0x00000000 );
+		
+		if(Storages.isExistentStorage(dd.d.image[0].file+".png")) drawImageFile( 8,5, dd.d.image[0].file);
+		
+		drawText4( 145,   8, "レア %d".sprintf(dd.d.rarity),0xffffff, 116 );
+		if(ca.item_get_stock(_id)!=9999) drawText4( 210,   8, "素材 %2d".sprintf(ca.item_get_stock(_id)),0xffffff, 116 );
+		drawText4( 145,  30, "%s".sprintf(dd.d.name),0xffbb02, 118 );
+		drawText4( 145,  56, "%s".sprintf(_ITEM_TYPE[(dd.d.type*_ITEM_TYPE[0])+2]),0xffffff, 116 );
+		
+		drawText4( 145,  76, "価格　 %7d".sprintf(dd.d.price),0xffffff, 116 );
+		drawText4( 145,  96, "買取　 %7d".sprintf(dd.d.price\2),0xffffff, 116 );
+		
+		drawText4( 145, 116, "所持数",0xffffff, 116 );
+		var cl= 0xffffff;
+		if(f.used.itemcount[dd.n]==0) cl= 0xff0000;
+		drawText4( 200, 116, "%7d".sprintf(f.used.itemcount[dd.n]),cl, 116 );
+		
+		drawText4( 145, 136, "装備数",0xffffff, 116 );
+		cl= 0xffffff;
+		if(f.used.itemusedcount[dd.n]==0) cl= 0xff0000;
+		drawText4( 200, 136, "%7d".sprintf(f.used.itemusedcount[dd.n]),cl, 116 );
+		
+		drawText4( 20,  143, "攻撃  [%3d]".sprintf(dd.d.pow),0xfe0000, 116 );
+		drawText4( 20,  163, "防御  [%3d]".sprintf(dd.d.def),0xffbb02, 116 );
+		drawText4( 20,  183, "速度  [%3d]".sprintf(dd.d.spd),0x02fec1, 116 );
+		drawText4( 20,  203, "士気  [%3d]".sprintf(dd.d.mor),0x00aeff, 116 );
+		
+		if(dd.d.attach[0].name!=""){
+			drawText4( 145,  183, "%s".sprintf(dd.d.attach[0].name),0xffffff, 116 );
+			if(dd.d.attach[0].value!=0) drawText4( 145+80,  183, "[%2d]".sprintf(dd.d.attach[0].value),0xffffff, 116 );
+		}
+		
+		if(dd.d.attach[1].name!=""){
+			drawText4( 145,  203, "%s".sprintf(dd.d.attach[1].name),0xffffff, 116 );
+			if(dd.d.attach[1].value!=0) drawText4( 145+80,  203, "[%2d]".sprintf(dd.d.attach[1].value),0xffffff, 116 );
+		}
+		
+		drawText2( 20,  240, "%s".sprintf(dd.d.comment),0x000000, 14 );
+	}
+}
+
+
+///////////////////////////////////////////////////////
+//
+class midIconSelector2 extends midIconSelector
+{
+
+	var ui_Cor_Mid2;
+	//var selectBt= 0;
+	//selectCharIndex;
+	var pTarget= [ 0,0 ];
+	var pTargetPos= %[ x:0, y:0 ];
+	
+	function midIconSelector2( win, par, pal ) {
+		super.midIconSelector(...);
+		name= "midIconSelector";
+	}
+	
+	function finalize() {
+		invalidate ui_Cor_Mid2;
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		global.LayerTrueBase.setLayer( x_, y_, 624,398+40, 0x00000000 );
+		//super.setLayer( x_, y_, 624,398+40, 0x00000000 );
+		drawImageFile(0,40,"slg_Org_plate_unitlist");
+		
+		for(var i= 0; i<72; i++ ){
+			var xx= 24+(i%12)*50;
+			var yy= 42+(i\12)*66;
+			midIcons[i]= new charMidIcon2( window, this );
+			midIcons[i].setLayer( xx, yy );
+			midIcons[i].setData(i,f.used.view.chview);
+			midIcons[i].tmode= true;
+		}
+		
+		//ターゲットアイコン
+		ui_Cor_Mid= new global.LayerTrueBase( window, this );
+		ui_Cor_Mid.setLayer( 0, 0, 48, 64, 0xff000000 );
+		ui_Cor_Mid.visible= false;
+		ui_Cor_Mid.loadImages("mid_icon_tg");
+		
+		ui_Cor_Mid2= new global.LayerTrueBase( window, this );
+		ui_Cor_Mid2.setLayer( 0, 0, 48, 64, 0xff000000 );
+		ui_Cor_Mid2.visible= false;
+		ui_Cor_Mid2.loadImages("mid_icon_tgg");
+	
+		selectBtn2= new TButtonSelect4( window, this );
+		selectBtn2.setLayer( 22, 14 );
+		selectBtn2.setButton( 104, 22, 2 );
+		selectBtn2.setButtonPos([ 0,0, 105,0 ]);
+		selectBtn2.setButtonLoad([ "slg_Org_bt_unitsol","slg_Org_bt_unitgen" ]);
+		selectBtn2.setCallBack(,opt_buttom_top);
+		selectBtn2.setEnable([ 2,1 ]);
+	// 	selectBtn2.AllLockOut= true; //ロックをリリースするか
+		
+// 		selectBtn[0]= new TButtonBase1k( window, this );
+// 		selectBtn[0].setLayer( 22, 14, 104, 22 );
+// 		selectBtn[0].loadImages("slg_Org_bt_unitsol");
+// 		selectBtn[0].callbackEvent= btn_callback_army;
+// 		
+// 		selectBtn[1]= new TButtonBase1k( window, this );
+// 		selectBtn[1].setLayer( 127, 14, 104, 22 );
+// 		selectBtn[1].loadImages("slg_Org_bt_unitgen");
+// 		selectBtn[1].callbackEvent= btn_callback_commd;
+
+		gt.pre.selectCharIndex=0;
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		for(var i= 0; i<72; i++ ){
+			midIcons[i].Drug_Enter= onMidAction;
+			midIcons[i].setEnableEvent( f_, f2_ );
+		}
+//  		selectBtn[0].setEnableEvent( f_, f2_ );
+//  		selectBtn[1].setEnableEvent( f_, f2_ );
+ 		selectBtn2.setEnableEvent( f_, f2_ );
+	}
+	
+	//ロックをキャンセル
+	function setLock_cancel(f_=false,lay)
+	{
+		pTargetPos.x= lay.left;
+		pTargetPos.y= lay.top;
+		
+// 		if(f_){
+// 			pTarget[pIndex]= 1;
+// 			//selectBt= lay._data[lay._id];
+// 			//framePanel.panel.uiTopInfo.setChar(lay.ch);
+// 			pTargetPos.x=
+// 			ui_Cor_Mid2.setPos(xx,yy);
+// 			ui_Cor_Mid2.visible= true;
+// 		}else{
+// 			pTarget[pIndex]= 0;
+// 			//selectBt= 0;
+// 			//gt.pre.selectCharIndex= 0;
+// 			ui_Cor_Mid2.visible= false;
+// 		}
+		
+ 		if(f_) pTarget[pIndex]= 1;
+ 		else pTarget[pIndex]= 0;
+
+		drawStatus();
+		
+				//dm("item1_drop_callback="+selectBt);
+	}
+	
+	function drawStatus()
+	{
+		for(var i= 0; i<72; i++ ){
+			midIcons[i].drawStatus();
+		}
+		
+		ui_Cor_Mid2.setPos(pTargetPos.x,pTargetPos.y);
+		if(pTarget[pIndex]==1) ui_Cor_Mid2.visible= true;
+		else ui_Cor_Mid2.visible= false;
+	}
+	
+	//キャラリスト
+	function onMidAction(lay,ev)
+	{
+		var xx= lay.left;
+		var yy= lay.top;
+		
+		if( ev.type=="onMouseDown" && ev.button==mbLeft ){
+			if( gt.pre.selectCharIndex!=lay._data[lay._id] || gt.pre.selectCharIndex==0 ) framePanel.char_lock_check(true,lay);
+			//if( gt.pre.selectCharIndex!=lay._data[lay._id] || gt.pre.selectCharIndex==0 ) framePanel.char_lock_check(true,lay);
+			else framePanel.char_lock_check(false,lay);
+			//core2.setEvent_aLock_false();
+		}
+		
+		if( ev.type=="onMouseDown" && ev.button==mbRight ){
+			framePanel.char_lock_check(false,lay);
+			//core2.setEvent_aLock_false();
+		}
+		
+		if( ev.type=="onMouseEnter" ){
+			if(gt.pre.selectCharIndex==0) {
+				framePanel.panel.uiTopInfo.setChar2(lay.ch);
+				framePanel.panel.uiTopInfo.drawStatus();
+			}
+			ui_Cor_Mid.setPos(xx,yy);
+			ui_Cor_Mid.visible= true;
+		}
+		
+		if( ev.type=="onMouseLeave" ){
+			ui_Cor_Mid.visible= false;
+		}
+	}
+	
+}
+
+///////////////////////////////////////////////////////
+//キャラセレクト
+class charMidIcon2 extends charMidIcon
+{
+	var ch= void;
+	var tmode= false;
+	
+	function charMidIcon2( win, par, pal ) {
+		super.charMidIcon(...);
+		name= "charMidIcon";
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function drawStatus()
+	{
+		if( _data[_id]==0 ) visible= false;
+		else {
+			visible= true;
+			
+			ch= gf.get(_data[_id],gf.char);
+			
+			var ph= ch.HP.now/ch.HP.max;
+			
+			if(Storages.isExistentStorage(ch.image[1].file+".png")) loadImages(ch.image[1].file);
+			
+			//ライフ
+			fillRect( 0,43, width,2, 0xffaa0000 );
+			fillRect( 0,43, width*ph,2, 0xff00f68c );
+			
+			//drawText4( 2,   48, "%4d".sprintf(ch.HP.now),0xffffff, 214 );
+			
+			var d= ca.get_item_type_to_index(ch.equipment.weapon);
+			if(d!=-1) drawImageFile(7,47, _getLiteral(_ITEM_TYPE,d)[2]);
+			
+			d= ca.get_item_type_to_index(ch.equipment.armor);
+			if(d!=-1) drawImageFile(27,47, _getLiteral(_ITEM_TYPE,d)[2]);
+			
+			//if( ch.troopsNo!=-1 && !tmode ){
+			if( ch.troopsNo>=0 && !tmode ){
+				opacity= 168;
+				Drug_Exec.Enabled= false;
+			} else {
+				opacity= 255;
+				Drug_Exec.Enabled= true;
+			}
+		}
+	}
+}

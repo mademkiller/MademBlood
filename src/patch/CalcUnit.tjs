@@ -1,0 +1,2772 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ゲーム関数
+//
+/////////////////////////////////////////////////////////////////////////
+//
+global.ca= new CalcUnit();
+global.calc= new CalcUnit();
+
+class CalcUnit
+{
+	var parent;
+	
+	function CalcUnit(par) { parent= par; }
+	
+	/////////////////////////////////////////////
+	//init
+// 	function start_game_set_datas()
+// 	{
+// 		//games.setArr2Indexs(f.used.party,gf.enemy,10,22);
+// 		
+// 	}
+	
+	/////////////////////////////////////////////
+	//calc
+	function ExpToLevel( exp_ )
+	{
+		return (int)( Math.sqrt( exp_/10 ))+1;
+	}
+
+	function LevelToExp( level_ )
+	{
+		return (int)( Math.pow( level_-1, 2 )*10);
+	}
+
+	function NextLevelToExp( level_ )
+	{
+		return (int)( Math.pow( level_, 2 )*10 + 1);
+	}
+
+	function DivisonHPSumAll( HP_=[] )
+	{
+		var hpsum=0;
+		for(var i=0;i<6;i++){hpsum = hpsum + HP_[i];}
+		return hpsum;
+	}
+
+	function HPcalc( baseHP_, Level_)
+	{
+		//ＨＰは、基礎ＨＰ×｛１＋（LV－１）×0.25｝で算出される。今回は、
+		var HP=0;
+		//HP = baseHP_ * (int)(1 + (Level_ - 1 ) * 0.25);
+		HP= (int)(baseHP_*(1+((Level_-1)*0.25)));
+		if(HP > 9999){HP = 9999;}
+		return HP;
+	}
+
+	function StatusCalc(sta_,Exp_,par)
+	{
+		if(par=='mor'){
+			sta_ = sta_ + (int)((sta_ * Math.sqrt(Exp_)/500) + (int)(Math.sqrt(Exp_)/40));
+			if(sta_ >  99){sta_ =  99;}
+		}else{
+			sta_ = sta_ + (int)((sta_ * Math.sqrt(Exp_)/200) + (int)(Math.sqrt(Exp_)/25));
+			if(sta_ > 999){sta_ = 999;}
+		}
+		if(sta_ < 1){sta_ = 1;}
+		return sta_;
+	}
+
+	function StatusCalc2(sta_,Exp_,par)
+	{
+		var ret= 0;
+		if(par=='mor'){
+			ret = sta_ + (int)((sta_ * Math.sqrt(Exp_)/500) + (int)(Math.sqrt(Exp_)/40));
+			if(ret >  99) ret =  99; 
+		}else{
+			ret = sta_ + (int)((sta_ * Math.sqrt(Exp_)/200) + (int)(Math.sqrt(Exp_)/25));
+			if(ret > 999) ret = 999; 
+		}
+		if(ret < 1) ret = 1; 
+		return ret;
+	}
+	
+	function initiativeCalc(spd,r_spd,revise=0){
+		return (spd+r_spd) + intrandom((spd+r_spd),(spd+r_spd) + 5)+intrandom((spd+r_spd),(spd+r_spd) + 5) + revise;
+	}
+
+	function allStatusCalc(sta_,rev_,n,side_,par_){
+		var side = new Array();
+		if(side_ == 'right'){side = tf.rightParty;}
+		                else{side = tf.leftParty;}
+		var all = (int)((sta_ + rev_) * (1 - side[n].curse / 10));
+		if(par_ == 'pow'){all = (int)(all - side[n].cutDown.pow);}
+		if(par_ == 'def'){all = (int)(all - side[n].cutDown.def);}
+		if(par_ == 'spd'){all = (int)(all - side[n].cutDown.spd);}
+		if(par_ == 'mor'){all = (int)(all - side[n].cutDown.mor);}
+		if(par_ == 'mor'){if(all <  1){all =  1;}if(all > 99){all = 99;}}else{if(all <  1){all =  1;}if(all > 999){all = 999;}}
+		return all;
+	}
+
+	function attackerDamageCalc(atk,atkHP,def,defLnd){
+		var sqrtTMP;
+		var atkTMP;
+		if(def < 1){def = 1;}
+		if(defLnd < 1){defLnd = 0;}
+		sqrtTMP = Math.sqrt(atkHP) / (def + 5 + Math.sqrt(defLnd));
+		atkTMP  = (2 * atk + 5);
+dm("A:"+"sqrtTMP="+sqrtTMP+"/atkTMP="+atkTMP+"/def="+def);
+		return (int)(atkTMP * sqrtTMP);
+	}
+
+	function defenderDamageCalc(atk,atkHP,def,defLnd){
+		var sqrtTMP;
+		var atkTMP;
+		if(def < 1){def = 1;}
+		if(defLnd < 1){defLnd = 0;}
+		sqrtTMP = Math.sqrt(atkHP) / (def + 5 + Math.sqrt(defLnd));
+		atkTMP  = (2 * atk + 5);
+dm("D:"+"sqrtTMP="+sqrtTMP+"/atkTMP="+atkTMP+"/def="+def);
+		return (int)((atkTMP * sqrtTMP) / 3);
+	}
+
+	function turnEndSkillCalc(hp,value){
+		return (int)((hp * (value / 100)) + value);
+	}
+
+//戦術スキル計算
+	//ダメージ
+	function tacticsSkillDamage(pow,level,powRevise,def,lnd,band,block){
+		//var tmp = (int)((pow * (1+0.01*(level+powRevise)-0.02*Math.sqrt(def)))*(1-0.03*Math.sqrt(lnd)*(1-0.01*(band+block))));
+		var tmp = (int)((pow * (1+0.01*(level+powRevise)-0.02*Math.sqrt(def)))*(1-0.02*Math.sqrt(lnd))*(1-(0.01*band))*(1-(0.01*block)));
+dm("pow:"+pow+"/Lv:"+level+"/Re:"+powRevise+"/def:"+def+"/lnd:"+lnd+"/壁:"+band+"/陣:"+block);
+dm("tmp="+tmp);
+		return tmp;
+	}
+
+	//蘇生・回復
+	function tacticsSkillResurrection(pow,level,powRevise){
+		var tmp = (int)(pow * (1+0.01*(level+powRevise)));
+		return tmp;
+	}
+
+	//城壁破壊
+	function tacticsSkillWallClash(pow,level,powRevise,lnd,band,block){
+		return (int)(pow * (1+0.01*(level+powRevise))*(1-0.03*Math.sqrt(lnd))*(1-0.01*band));
+	}
+
+	//城壁修復・拡張
+	function tacticsSkillWallRestore(pow,level,powRevise){
+		return (int)(pow * (1+0.01*(level+powRevise)));
+	}
+
+	//ステ変動
+	function tacticsSkillStatus(status,pow){
+		return (int)(status * (0.01*pow));
+	}
+
+	//バリア
+	function tacticsSkillBarrier(pow,level,powRevise){
+		return (int)(pow*(1+0.01*(level+powRevise)));
+	}
+
+	//威力補正計算
+	function tacticsSkillSetPowRevise(type,skillAtribute,charAtribute,enmeyDivine,allysDivine){
+		var powRevise=0;
+dm("sk属性="+skillAtribute);
+dm("ch属性="+charAtribute);
+dm("タイプ="+type);
+dm("敵加護="+enmeyDivine);
+dm("自加護="+allysDivine);
+		switch(skillAtribute){
+			case '対地':
+						if(charAtribute == 0){return;}
+						if(type == 'ダメージ'){
+							if(charAtribute.indexOf('海') != -1){powRevise += -75;}
+							if(charAtribute.indexOf('飛') != -1){powRevise += -75;}
+						}
+						break;
+			case '対海':
+						if(charAtribute == 0){return;}
+						if(type == 'ダメージ'){
+							if(charAtribute.indexOf('海') != -1){powRevise +=  50;}
+							if(charAtribute.indexOf('海') == -1){powRevise += -75;}
+						}
+						break;
+			case '対空':
+						if(charAtribute == 0){return;}
+						if(type == 'ダメージ'){
+							if(charAtribute.indexOf('飛') != -1){powRevise +=  50;}
+							if(charAtribute.indexOf('飛') == -1){powRevise += -75;}
+						}
+						break;
+			case   '火'://0
+						if(f.used.time.zone == 0){powRevise += 25;}//火
+						if(f.used.time.zone == 1){powRevise +=-25;}//氷
+						if(type == 'ダメージ'){
+							if(enmeyDivine == '火'){powRevise += -75;}
+							if(enmeyDivine == '氷'){powRevise +=  50;}
+						}
+						if(type == '回復' || type == '蘇生'){
+							if(allysDivine == '火'){powRevise +=  50;}
+							if(allysDivine == '氷'){powRevise += -75;}
+						}
+						break;
+			case   '氷'://1
+						if(f.used.time.zone == 1){powRevise += 25;}//氷
+						if(f.used.time.zone == 0){powRevise +=-25;}//火
+						if(type == 'ダメージ'){
+							if(enmeyDivine == '氷'){powRevise += -75;}
+							if(enmeyDivine == '火'){powRevise +=  50;}
+						}
+						if(type == '回復' || type == '蘇生'){
+							if(allysDivine == '氷'){powRevise +=  50;}
+							if(allysDivine == '火'){powRevise += -75;}
+						}
+						break;
+			case   '風'://2
+						if(f.used.time.zone == 2){powRevise += 25;}//風
+						if(f.used.time.zone == 3){powRevise +=-25;}//土
+						if(type == 'ダメージ'){
+							if(enmeyDivine == '風'){powRevise += -75;}
+							if(enmeyDivine == '土'){powRevise +=  50;}
+						}
+						if(type == '回復' || type == '蘇生'){
+							if(allysDivine == '風'){powRevise +=  50;}
+							if(allysDivine == '土'){powRevise += -75;}
+						}
+						break;
+			case   '土'://3
+						if(f.used.time.zone == 3){powRevise += 25;}//土
+						if(f.used.time.zone == 2){powRevise +=-25;}//風
+						if(type == 'ダメージ'){
+							if(enmeyDivine == '土'){powRevise += -75;}
+							if(enmeyDivine == '風'){powRevise +=  50;}
+						}
+						if(type == '回復' || type == '蘇生'){
+							if(allysDivine == '土'){powRevise +=  50;}
+							if(allysDivine == '風'){powRevise += -75;}
+						}
+						break;
+			case   '雷'://4
+						if(f.used.time.zone == 4){powRevise += 25;}//雷
+						if(f.used.time.zone == 5){powRevise +=-25;}//水
+						if(type == 'ダメージ'){
+							if(enmeyDivine == '雷'){powRevise += -75;}
+							if(enmeyDivine == '水'){powRevise +=  50;}
+						}
+						if(type == '回復' || type == '蘇生'){
+							if(allysDivine == '雷'){powRevise +=  50;}
+							if(allysDivine == '水'){powRevise += -75;}
+						}
+						break;
+			case   '水'://5
+						if(f.used.time.zone == 5){powRevise += 25;}//水
+						if(f.used.time.zone == 4){powRevise +=-25;}//雷
+						if(type == 'ダメージ'){
+							if(enmeyDivine == '水'){powRevise += -75;}
+							if(enmeyDivine == '雷'){powRevise +=  50;}
+						}
+						if(type == '回復' || type == '蘇生'){
+							if(allysDivine == '水'){powRevise +=  50;}
+							if(allysDivine == '雷'){powRevise += -75;}
+						}
+						break;
+			case   '光'://6
+						if(f.used.time.zone == 6){powRevise += 25;}//光
+						if(f.used.time.zone == 7){powRevise +=-25;}//闇
+						if(type == 'ダメージ'){
+							if(enmeyDivine == '光'){powRevise += -75;}
+							if(enmeyDivine == '闇'){powRevise +=  50;}
+						}
+						if(type == '回復' || type == '蘇生'){
+							if(allysDivine == '光'){powRevise +=  50;}
+							if(allysDivine == '闇'){powRevise += -75;}
+						}
+						break;
+			case   '闇'://7
+						if(f.used.time.zone == 7){powRevise += 25;}//光
+						if(f.used.time.zone == 6){powRevise +=-25;}//闇
+						if(type == 'ダメージ'){
+							if(enmeyDivine == '闇'){powRevise += -75;}
+							if(enmeyDivine == '光'){powRevise +=  50;}
+						}
+						if(type == '回復' || type == '蘇生'){
+							if(allysDivine == '闇'){powRevise +=  50;}
+							if(allysDivine == '光'){powRevise += -75;}
+						}
+						break;
+			default:
+		}
+		return powRevise;
+	}
+
+	function viewTacticsSkillList(n=[0,0,0,0,0,0]){
+		var viewSkillsList =[];
+		for(var i=0;i<6;i++){viewSkillsList[i] =[];}
+		for(var k=0;k<6;k++){
+			for(var i=0;i<gf.skill.count;i++){
+				var id = gf.skill[i].id.substring(1,4);
+				if(n[k] == id){
+					viewSkillsList[k][0] = i  ;dm(n[k]+"="+viewSkillsList[k][0]);
+					viewSkillsList[k][1] = i+1;dm(n[k]+"="+viewSkillsList[k][1]);
+					viewSkillsList[k][2] = i+2;dm(n[k]+"="+viewSkillsList[k][2]);
+					viewSkillsList[k][3] = i+3;dm(n[k]+"="+viewSkillsList[k][3]);
+					viewSkillsList[k][4] = i+4;dm(n[k]+"="+viewSkillsList[k][4]);
+					break;
+				}
+			}
+		}
+		return viewSkillsList;
+	}
+
+	//////////////////////////////
+	//
+	//
+	
+	////////////////////
+	//
+	function chardata_update(){
+		
+		for(var i= 1; i<gf.char.count; i++ ) {
+			if(gf.char[i]!==void){
+				var c= gf.char[i];
+				chardata_update2(c);
+			}
+		}
+	}
+	
+	//キャラクターステータスアップデート
+	function chardata_update2(ch){
+		if(ch.id!=0) {
+			ch.level= ExpToLevel( ch.experience );
+			ch.HP.max= HPcalc( ch.HP.base, ch.level );
+		
+			var co= char_rank_cost(ch);
+			ch.statickcost= ca.char_statick_cost(co,ch.loyalty);
+			
+//  		ch.pow= calc.StatusCalc( ch.pow, ch.experience );
+//     		ch.def= calc.StatusCalc( ch.def, ch.experience );
+//     		ch.spd= calc.StatusCalc( ch.spd, ch.experience );
+//    		ch.mor= calc.StatusCalc( ch.mor, ch.experience, 'mor' );
+    
+		}
+	}
+	
+	function map_item_HP( st_, mp_, mi_ ){
+		return 1000;
+	}
+	
+	//マップ効果プロトタイプ
+	function get_map_additional_effects_(){
+		
+		return %[
+			food:     %[add:0,par:0],
+			resource: %[add:0,par:0],
+			energy:   %[add:0,par:0],
+			gold:     %[add:0,par:0],
+			popula:0,
+			addexp:0,
+			addhp:0,
+			addfc:0,
+			addLNDhp:0
+		];
+	}
+	//
+	function map_trunend_additional_update(){
+		
+		var gtmp= get_map_additional_effects_();
+		
+		for( var i=0; i<f.used.mapf.territory.count; i++){
+		//領地の効果を集計
+			
+			gmp= get_map_additional_effects_();
+			
+			var mm= gf.list.map[gf.map[f.used.mapf.territory[i]].type.building].effect[0];
+			
+			Scripts.exec( mm );
+			
+			gtmp.food.add+=     gmp.food.add;     gtmp.food.par+=     gmp.food.par;
+			gtmp.resource.add+= gmp.resource.add; gtmp.resource.par+= gmp.resource.par;
+			gtmp.energy.add+=   gmp.energy.add;   gtmp.energy.par+=   gmp.energy.par;
+			gtmp.gold.add+=     gmp.gold.add;     gtmp.gold.par+=     gmp.gold.par;
+			gtmp.popula+=       gmp.popula;
+			gtmp.addexp+=       gmp.addexp;
+			gtmp.addhp+=        gmp.addhp;
+			gtmp.addfc+=        gmp.addfc;
+		}
+		
+		
+		f.used.stat.food.add=      ( _STANDARD_FOOD[f.used.difficulty]+     gtmp.food.add     )+(( _STANDARD_FOOD[f.used.difficulty]+     gtmp.food.add     )* gtmp.food.par);
+		f.used.stat.resource.add=  ( _STANDARD_RESOURCE[f.used.difficulty]+ gtmp.resource.add )+(( _STANDARD_RESOURCE[f.used.difficulty]+ gtmp.resource.add )* gtmp.resource.par);
+		f.used.stat.energy.add=    ( _STANDARD_ENERGY[f.used.difficulty]+   gtmp.energy.add   )+(( _STANDARD_ENERGY[f.used.difficulty]+   gtmp.energy.add   )* gtmp.energy.par);
+		f.used.stat.gold.add=      ( _STANDARD_GOLD[f.used.difficulty]+     gtmp.gold.add     )+(( _STANDARD_GOLD[f.used.difficulty]+     gtmp.gold.add     )* gtmp.gold.par);
+		f.used.stat.population.add=gtmp.popula;
+		//f.used.stat.exp.add=       gtmp.exp;
+		f.used.stat.company.hp= gtmp.addhp;
+		f.used.stat.company.exp= gtmp.addexp;
+		f.used.stat.companyFc.add= gtmp.addfc;
+		
+	}
+	
+	function map_effects_additional_update2(){
+		
+		var gtmp= [ 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0 ];
+		
+		for( var i=0; i<gf.map.count; i++){
+			//領地の効果を集計
+			gmp= get_map_additional_effects_();
+			
+			var mm= gf.list.map[gf.map[i].type.building].effect[0];
+			
+			Scripts.exec( mm );
+			
+			gtmp[gf.map[i].frag]+= gmp.addLNDhp;
+		}
+		
+		f.used.stat.Land= gtmp;
+		
+	}
+	
+	//忠誠からカウントへ
+	function char_loyalty2count(l_){
+		var r=4;
+		if(l_<=75) r=3;
+		if(l_<=55) r=2;
+		if(l_<=35) r=1;
+		if(l_<=15) r=0;
+		return r;
+	}
+	
+	//忠誠からカウントへ
+	function char_rankint2str(l_){
+		var r="S";
+		if(l_<=24) r="A";
+		if(l_<=20) r="B";
+		if(l_<=16) r="C";
+		if(l_<=12) r="D";
+		if(l_<=8 ) r="E";
+		if(l_<=4 ) r="F";
+		return r;
+	}
+	
+	////////////////////////
+	//マップ関係
+	//
+	//所有拠点を元にマップデータを更新
+	function map_set_getting_update(){
+		for( var i=0; i<f.used.mapf.territory.count; i++){
+			gf.map[f.used.mapf.territory[i]].frag= 0; //.frag= -1
+		}
+	}
+	
+	//駐屯情報を駐屯データにセット
+	function map_set_getting_enemy_update(){
+		
+		for( var i=0; i<gf.map.count; i++){
+			//gf.map[i].post.division.clear();
+			gf.map[i].post.division= [];
+		}
+		
+		//var t= [];
+		for( var i=10; i<f.used.party.count; i++){
+			var n= f.used.party[i];
+			//t.add(n.id);
+			
+			if(n.id!=999) {
+				gf.map[n.locate].post.division.add(n.id);
+			}
+			
+//			gf.map[n.locate].post.division.add(i+10);
+// 			gf.map[gf.enemy[n].locate].post.division.unshift(n);
+// 			gf.map[gf.enemy[n].locate].post.division.pop();
+			//map_set_enemy_status_update(n.id);
+		}
+		//gf.map[n.locate].post.division= t;
+		
+		//games.Csvseverf( 'mapdata', gf.map, "arr" );
+		
+	}
+	
+	//敵の初期ステータスを設定
+	function map_set_enemy_status_update(dv) {
+	
+		var ee= gf.enemy[dv];
+		for( var i=0; i<6; i++) {
+			if( ee.dev[i].id>0 ) {
+				var ch= gf.get(ee.dev[i].id,gf.char);
+				ee.dev[i].mhp= HPcalc(ch.HP.base,ee.dev[i].level);
+				ee.dev[i].hp= ee.dev[i].mhp;
+				ee.dev[i].exp= LevelToExp(ee.dev[i].level);
+			}
+		}
+			
+		//gf.map[n.locate].post.division= t;
+		
+		//games.Csvseverf( 'mapdata', gf.map, "arr" );
+	}
+	
+	/*
+	function map_getting_enemy_data(n){
+		if(gf.map[n].post.division.count>0){
+			var t= [];
+			for( var i=0; i<gf.map[n].post.division.count; i++){
+				var tt= %[];
+				var nn= gf.map[n].post.division[i];
+// 			dm("map_set_getting_enemy_update %d".sprintf(nn));
+				tt.d= gf.enemy[nn];
+				tt.image= [];
+			
+// 			dm("map_set_getting_enemy_update %d".sprintf(tt.d.dev[0].id));
+// 			tt.image.add( gf.char[tt.d.dev[0].id].image[3].file );
+// 			tt.image.add( gf.char[tt.d.dev[1].id].image[3].file );
+ 				for( var ii=0; ii<6; ii++){
+
+ 					if(tt.d.dev[ii].id!=0){
+						var ch= gf.get(tt.d.dev[0].id,gf.char);
+						tt.image.add( ch.image[3].file );
+					}
+ 				}
+				t.add(tt);
+			}
+			return t;
+		}else return void;
+	}
+	*/
+	
+	//駐屯情報からデータを生成
+	function map_getting_enemy_data(dv){
+		//if(gf.map[n].post.division.count>0){
+		
+			var dd= [];
+			var ig= [];
+			var hp= 0;
+			var mhp= 0;
+			
+			if(dv!==void){
+				for( var i=0; i<dv.count; i++){
+						dd.add(gf.enemy[dv[i]]);
+		 				if(gf.enemy[dv[i]].dev[gf.enemy[dv[i]].leader].id!=0){
+							var ch= gf.get(gf.enemy[dv[i]].dev[gf.enemy[dv[i]].leader].id,gf.char);
+							ig.add( ch.image[3].file );
+						}
+						
+						for( var ii=0; ii<6; ii++){
+								hp+= gf.enemy[dv[i]].dev[ii].hp;
+								mhp+= gf.enemy[dv[i]].dev[ii].mhp;
+							/*
+							if(gf.enemy[dv[i]].dev[ii].id!=0){
+								//hp+= gf.get(gf.enemy[dv[i]].dev[ii].id,gf.char).HP.now;
+								hp+= gf.get(gf.enemy[dv[i]].dev[ii].id,gf.char).HP.now;
+								mhp+= gf.get(gf.enemy[dv[i]].dev[ii].id,gf.char).HP.max;
+								//mhp+= gf.get(gf.enemy[dv[i]].dev[ii].id,gf.char).HP.max;
+							}
+							*/
+						}
+					//}
+				}
+			}
+			return %[ image:ig, d:dd, hp:hp, mhp:mhp ];
+			
+		//}else return void;
+	}
+	
+	//戦闘に突入するか
+	function map_battle_setting_check(){
+		
+		//師団がひとつも編成されていない
+		var ct= 0;
+		for(var i= 0; i<10; i++ ) ct+= f.used.party[i].status;
+		if( ct==0 ) return false;
+		
+		//師団がひとつもいない
+		ct= 0;
+		for(var i= 0; i<10; i++ ) if(f.used.party[i].status==2) ct++;
+		if( ct==0 ) return false;
+		
+		return true;
+	}
+	
+	
+	//建設条件
+	function map_item_building_condition(gm_,bm_){
+	
+		//自分の領地じゃない
+		if( gm_.frag!=0 ) return false;
+		
+		//建設可能じゃなくどこにも立てられる建物じゃない
+		if( gm_.type.state!=bm_.type.state && bm_.type.state!= 0 ) return false;
+		
+		//お金が足りない
+		if(0>f.used.stat.gold.now-bm_.cost) return false;
+		
+		dm("map_item_building_condition");
+		
+		return true;
+	}
+	
+	//代金支払
+	function map_item_buy_update(gm_,bm_){
+		gm_.HP.max= bm_.addHP;
+		gm_.HP.now= bm_.addHP;
+		f.used.stat.gold.now-=bm_.cost;
+	}
+	
+	////////////////////////
+	//編成関係
+	//
+	//隊列内を入れ替え
+	function exchangeDrop( xi_,yi_,xo_,yo_ ){
+		if(f.used.party[yi_].division[xi_]!=f.used.party[yo_].division[xo_]){
+			var va= f.used.party[yi_].division[xi_];
+			f.used.party[yi_].division[xi_]= f.used.party[yo_].division[xo_];
+			f.used.party[yo_].division[xo_]= va;
+			
+			var cc= f.used.party[yi_].division[xi_];
+			var cd= f.used.party[yo_].division[xo_];
+			if(cc!=0) gf.get(cc,gf.char).troopsNo= yi_;
+			if(cd!=0) gf.get(cd,gf.char).troopsNo= yo_;
+		}
+	}
+	
+	//隊列内に設定
+	function executeDrop( x_,y_,n_ ){
+		f.used.party[y_].division[x_]= n_;
+	}
+	
+	//隊列を入れ替え
+	function exchangeDropLine( yi, yo ){
+		var va= f.used.party[yi];
+		f.used.party[yi]= f.used.party[yo];
+		f.used.party[yo]= va;
+		
+		//師団内のキャラの対列番号を更新
+		for(var i= 0; i<6; i++ ){
+			var cc= f.used.party[yi].division[i];
+			var cd= f.used.party[yo].division[i];
+			if(cc!=0) gf.get(cc,gf.char).troopsNo= yi;
+			if(cd!=0) gf.get(cd,gf.char).troopsNo= yo;
+		}
+	}
+	
+	//隊列状態を更新
+	function party_status_update(){
+		for(var i= 0; i<10; i++ ){
+			var pt= 0;
+			for(var ii= 0; ii<6; ii++ ) pt+= f.used.party[i].division[ii];
+			if(pt>0) f.used.party[i].status= 2;
+			else f.used.party[i].status= 0;
+		}
+	}
+	
+	//すべてクリア
+	function party_lineall_clear(){
+		for(var i= 0; i<10; i++ ){
+			party_line_clear(i);
+		}
+	}
+	
+	//ラインをクリア
+	function party_line_clear(l_){
+		if(f.used.party[l_].status<3){
+			f.used.party[l_].status= 0;
+			for(var i= 0; i<6; i++ ){
+				var cc= f.used.party[l_].division[i];
+				if(cc!=0){
+					gf.get(cc,gf.char).troopsNo= -1;
+					f.used.party[l_].division[i]= 0;
+				}
+			}
+		}
+	}
+	
+	////////////////////////
+	//雇用関係
+	//
+	
+	//前方の空白をつめつつ一番後ろにセット
+	function set_cxview_array(va_,i_,n_)
+	{
+		var st= i_*12;
+		
+		//切り出し
+		var aa= [];
+		for(var i= 0; i<12; i++ ){
+			if(va_[st+i]!=0) aa.add(va_[st+i]);
+		}
+		
+		aa.add(n_);
+		
+		for(var i= 0; i<12; i++ ){
+			if(aa[i]!==void) va_[st+i]= aa[i];
+			else va_[st+i]= 0;
+		}
+		
+	}
+	
+ 	function get_char_status_copys(n_){
+ 	
+		var ch= gf.get(n_,gf.char);
+		var tch= %[];
+		(Dictionary.assignStruct incontextof tch)(ch);
+		return tch;
+ 	}
+	
+	//雇用
+	function char_setup_index(ch_){
+		
+		//テンポからコピー
+		var ch= gf.get(ch_.index,gf.char);
+		
+		//ステータスをバックアップ
+  		ch.parbackup.pow= ch.pow;
+  		ch.parbackup.def= ch.def;
+  		ch.parbackup.spd= ch.spd;
+  		ch.parbackup.mor= ch.mor;
+  		ch.parbackup.divine= ch.divine;
+  		ch.parbackup.special= ch.special;
+		
+		//
+		ch.uniqueName=  ch_.uniqueName;
+		ch.evaluation=  ch_.evaluation;
+		ch.statickcost= ch_.statickcost;
+		ch.rank=        ch_.rank;
+		ch.loyalty=     ch_.loyalty;
+		//ch.valor=       ch_.valor;
+		ch.valor=       ch_.loyalty;
+		
+		//
+		if(ch_.divineEx!="") ch.divine= ch_.divineEx;
+		else ch.divine= ch_.divine;
+		ch.special= "%s%s".sprintf(ch_.special,ch_.specialEx);
+		
+		//ライフ
+		ch.HP.max= ch_.HP.max;
+		ch.HP.now= 1;
+		
+		//称号
+		ch.prefixID= ch_.prefixID;
+		ch.suffixID= ch_.suffixID;
+		ch.prefix= ch_.prefix;
+		ch.suffix= ch_.suffix;
+		
+		
+		//ステータス
+		ch.pow= ch_.pow+ch_.revise.pow;
+		ch.def= ch_.def+ch_.revise.def;
+		ch.spd= ch_.spd+ch_.revise.spd;
+		ch.mor= ch_.mor+ch_.revise.mor;
+		
+		//スキル
+		ch.skill[6].name=  ch_.skill[6].name;
+		ch.skill[6].value= ch_.skill[6].value;
+		ch.skill[7].name=  ch_.skill[7].name;
+		ch.skill[7].value= ch_.skill[7].value;
+		
+		//雇用状態に
+		ch.troopsNo= -1;
+		
+	}
+	
+	//解雇
+	function char_setout_index(ch_){
+	
+		var ch= gf.get(ch_.index,gf.char);
+		var dd;
+		
+		//武器
+// 		dd= item_getdata(ch.equipedID.weapon);
+// 		f.used.itemcount[dd.n]++;
+// 		f.used.itemusedcount[dd.n]--;
+// 		
+// 		dd= item_getdata(ch.equipedID.armor);
+// 		f.used.itemcount[dd.n]++;
+// 		f.used.itemusedcount[dd.n]--;
+// 		
+		if(ch.equipedID.weapon!=0){
+			dd= item_getdata(ch.equipedID.weapon);
+			f.used.itemcount[dd.n]++;
+			f.used.itemusedcount[dd.n]--;
+		}
+		
+		if(ch.equipedID.armor!=0){
+			dd= item_getdata(ch.equipedID.armor);
+			f.used.itemcount[dd.n]++;
+			f.used.itemusedcount[dd.n]--;
+		}
+		
+		ch.equipedID.weapon= 0;
+		ch.equiped.weapon= "";
+		ch.equipedID.armor= 0;
+		ch.equiped.armor= "";
+		
+		ch.equipedADD.pow= 0;
+		ch.equipedADD.def= 0;
+		ch.equipedADD.spd= 0;
+		ch.equipedADD.mor= 0;
+		
+		//スキル
+		ch.skill[6].name=  "";
+		ch.skill[6].value= 0;
+		ch.skill[7].name=  "";
+		ch.skill[7].value= 0;
+		ch.skill[8].name=  "";
+		ch.skill[8].value= 0;
+		ch.skill[9].name=  "";
+		ch.skill[9].value= 0;
+		ch.skill[10].name=  "";
+		ch.skill[10].value= 0;
+		ch.skill[11].name=  "";
+		ch.skill[11].value= 0;
+		
+		ch.statickcost= 0;
+		
+		//属性等を
+		ch.divine= ch.parbackup.divine;
+		ch.special= ch.parbackup.special;
+		
+		//ライフ
+		ch.HP.now= 1;
+		
+		//称号
+		ch.prefixID= 0;
+		ch.suffixID= 0;
+		ch.prefix= "";
+		ch.suffix= "";
+		
+		//ステータス
+		ch.pow= ch.parbackup.pow;
+		ch.def= ch.parbackup.def;
+		ch.spd= ch.parbackup.spd;
+		ch.mor= ch.parbackup.mor;
+		
+		//師団から削除
+		if(ch.troopsNo>-1){
+			var n= f.used.party[ch.troopsNo].division.find(ch.index);
+			if(n!=-1) f.used.party[ch.troopsNo].division[n]= 0;
+		}
+		
+		//解雇状態に
+		ch.troopsNo= -2;
+		
+		//雇用リストから削除
+		var cf= f.used.view.chview.find(ch_.index);
+		f.used.view.chview[cf]= 0;
+	}
+	
+	//必要メダリオンを更新
+	function char_works_stat_condition_medalion(ch)
+	{
+		var tt= ch.recipe;
+		if(tt!==void && tt!="") tt= tt.substring(2,tt.length);
+		
+		var mt= [];
+		for(var i= 0; i<tt.length; i++ ){
+			
+			//表示データ
+			mt[i]= str2num(tt.substring(i,1));
+			
+			//コスト
+			if(mt[i]>0) gt.medalioncost[i]= 1;
+			else gt.medalioncost[i]= 0;
+		}
+		return mt;
+	}
+	
+	//雇用条件
+	function char_works_stat_condition(co_,bm_){
+	
+		//var cof= char_stat_caoslow(bm_.index);
+		dm("char_works_stat_condition %d.%d.%d".sprintf(f.used.stat.energy.now,f.used.stat.energy.now<co_,bm_.index>1000));
+		
+		//コストが足りない
+		if( f.used.stat.food.now<co_ && bm_.index>1000 ) return false;
+		if( f.used.stat.energy.now<co_ && bm_.index<1000 ) return false;
+		
+		dm("char_works_stat_condition2 %d.%d.%d".sprintf(f.used.stat.energy.now,f.used.stat.energy.now<co_,co_));
+		
+		//メダリオンが足りない
+		var rt= false;
+		for(var i= 0; i<f.used.medalion.count; i++ ){
+			if(f.used.medalion[i]<gt.medalioncost[i] && gt.medalioncost[i]!=0) rt= true;
+		}
+		if(rt) return false;
+		
+		//既に雇用済み
+		if( bm_.troopsNo>-2 ) return false;
+		
+		//雇用枠がいっぱい
+		var fn= _getLiteralf( _CHAR_DATA_TYPE, bm_.type, 1 )[0];
+		if(setArray_zoneSrc(f.used.view.chview,fn)==-1) return false;
+		
+		return true;
+	}
+	
+	//雇用評価
+	function char_works_stat(ch_){
+		
+		//var ch= gf.get(_id,gf.char);
+		
+		//初期値
+		var t= 0;
+		
+		//曜日評価マトリクス
+		var tmat= [
+			[ 3,-2, 2,-1, 1, 0, 2,-1],
+			[-2, 3,-1, 2, 0, 1,-1, 2],
+			[ 2,-1, 3,-2, 2,-1, 1, 0],
+			[-1, 2,-2, 3,-1, 2, 0, 1],
+			[ 1, 0, 2,-1, 3,-2, 2,-1],
+			[ 0, 1,-1, 2,-2, 3,-1, 2],
+			[ 2,-1, 1, 0, 2,-1, 3,-2],
+			[-1, 2, 0, 1,-1, 2,-2, 3]
+		];
+		
+		//加護をindexに変換
+		var fn= _getLiteralf( _CHAR_DATA_DIVINE, ch_.divine, 1 )[0];
+		
+		//dm("char_works_stat= "+ch_.divine+" "+_CHAR_DATA_DIVINE[0]);
+		
+		//曜日の評価を追加
+		t+= tmat[fn][f.used.time.zone];
+		
+		//昼夜の評価の追加
+ 		if(ch_.index<1000){
+ 			if(f.used.time.day) t+=0;
+ 			else t+=2;
+ 		}else{
+ 			if(f.used.time.day) t+=2;
+ 			else t+=0;
+		}
+		
+		//リミッタ
+		t= (int)t;
+		if(t<0) t=0;
+		if(t>4) t=4;
+		
+		dm("char_works_stat(%d)=%d".sprintf(ch_.index,t));
+		return t;
+	}
+	
+	//等級
+	function char_grade_cost(nf1=0,nf2=0){
+		//称号データ
+		var rk= 10+ gf.list.nameset[nf1].rank+ gf.list.nameset[nf2].rank;
+		
+		//リミッタ
+		rk= (int)rk;
+		if(rk<0) rk= 0;
+		
+		return rk;
+	}
+	
+	//コスト基礎値//報酬基準値
+	function char_rank_cost(ch){
+		//ch.rank,ch.cost
+		//雇用時のコスト基礎値＝等級値×補充コスト
+		var rk= ch.rank+5;
+		var co= (ch.cost+2)*(ch.cost+2);
+		var lv= ch.level*5;
+		return (int)( ((rk*co)/10)+lv );
+		//return (int)((((ch.rank+5)*(ch.cost+2))*(ch.cost+2))/10)+(ch.level*5);
+		//return (int)((((ch.rank+5)*(ch.cost+2))*(ch.cost+2))/10);
+	}
+	
+	//カオスロウ判定
+	function char_stat_caoslow(ch_){
+		if(ch_<1000) return 1;
+		else return 0;
+	}
+	
+	//雇用コスト
+	function char_works_cost_setp(ch_){
+		
+		var po=0,de=0,sp=0,mo=0,fn=true,vt=0;
+		
+		//等級
+		ch_.rank= char_grade_cost(ch_.prefixID,ch_.suffixID);
+		
+		//雇用時のコスト基礎値＝等級値×補充コスト
+		var co= char_rank_cost(ch_);
+		var sts= co;
+		
+		var evl= char_works_stat(ch_);
+		
+		switch(evl){
+			case 0: co*=3;   po=-8; de=-8; sp=-8; mo=-8; fn=false; break;
+			case 1: co*=2;   po=-4; de=-4; sp=-4; mo=-1; fn=false; break;
+			case 2: co*=1.5;                             fn=true;  break;
+			case 3: co*=1.2; po=2;  de=2;  sp=2;         fn=true;  break;
+			case 4:          po=4;  de=4;  sp=4;  mo=1;  fn=true;  break;
+		}
+		
+		co= (int)co;
+		
+		vt= char_stat_caoslow(ch_.index);
+		
+		return %[ cost:co, pow:po, def:de, spd:sp, mor:mo, fn:fn, vt:vt, sts:sts, evl:evl ];
+	}
+	
+	//メダリオンから付けられる称号を取得
+	function medalion_select_name(md_,i_){
+		
+		var a= [];
+		
+		if(md_==0) a.add( %[text:"", id:0 ] );
+		
+		for( var i=1; i<gf.list.nameset.count; i++) {
+			var mt= games.booleanValDec(gf.list.nameset[i].recipe);
+			if(mt[md_]==1){
+				if(gf.list.nameset[i].set==0 || gf.list.nameset[i].set==i_ || i_==0 ){
+					a.add( %[text:gf.list.nameset[i].name, id:i, cat:gf.list.nameset[i].set ] );
+				}
+			}
+		}
+		//dm("medalion_select_name.count="+a.count);
+		return a;
+	}
+	
+	//報酬修正
+	function char_statick_cost(co_,ch_){
+		return (int)(co_*((125-ch_)*0.01));
+	}
+	
+	//所有メダルから所有グループを検索
+	function medalion_get_rank(){
+		
+		var a= [ 1,0,0,0,0,0 ];
+		var tk= [ 8, 10, 4, 2, 2, 1 ];
+		var t= 0;
+		
+		for(var i= 0; i<5; i++ ){
+			t= 0;
+			for(var ii= tk[i]; ii<tk[i+1]; ii++ ){
+				t+= f.used.medalionopen[_MEDALION_POS[ii]];
+			}
+			if(t>0) a[i+1]= 1;
+		}
+		return a;
+	}
+	
+	//キャラクターオープン
+	function medalion_get_charopen(sl_){
+		
+		var a= [];
+		for(var i= 0; i<24; i++ ) {
+			var cn= _CHAR_OPEN[i+2+(25*sl_)];
+			var md= _CHAR_OPEN_MEDALION[i+2+(25*sl_)]-1;
+			//dm("medalion_get_charopen= %d".sprintf(cn));
+			if(cn==0){
+				a.add( %[ file:"df_9999", bt:false, ev:false, tn:-2 ] );
+			}else {
+			//dm("medalion_get_charopen= %d".sprintf(cn));
+				var ch= gf.get(cn,gf.char);
+				//dm("medalion_get_charopen3= %d".sprintf(ch.troopsNo));
+				if(f.used.medalionopen[md]!=0){
+					a.add( %[ file:ch.image[4].file, bt:true, ev:false, tn:ch.troopsNo ] );
+				} else {
+					a.add( %[ file:"df_9999", bt:true, ev:true, tn:ch.troopsNo ] );
+				}
+			}
+		}
+		
+// 		for( var i=0; i<a.count; i++) {
+// 			//dm("medalion_select_name="+a[i].file);
+// 		}
+		return a;
+	}
+	
+	
+	//メダリオンから付けられる称号を取得
+	function medalion_drug_set(m_){
+		var a;
+		switch(m_){
+			case "S": a= [ 1,1,1,1,1,1, 1,1,1,1,1,1, 1,1,1,1,1,1, 1,1,1,1,1,1, 1,1,1,1,0,0 ]; break;
+			case "A": a= [ 1,1,1,1,1,1, 1,1,1,1,1,1, 1,1,1,1,1,1, 1,1,1,1,1,1, 1,1,0,0,0,0 ]; break;
+			case "B": a= [ 1,1,1,1,1,1, 1,1,1,1,1,1, 0,1,1,1,1,1, 1,1,1,1,1,1, 1,0,0,0,0,0 ]; break;
+			case "C": a= [ 1,1,1,1,1,1, 1,1,1,1,1,0, 0,1,1,1,1,1, 1,1,1,1,1,1, 0,0,0,0,0,0 ]; break;
+			case "D": a= [ 1,1,1,1,1,1, 1,1,0,0,0,0, 0,1,1,1,1,1, 1,1,1,1,1,0, 0,0,0,0,0,0 ]; break;
+			case "E": a= [ 1,1,1,0,0,0, 0,0,0,0,0,0, 0,1,1,1,1,1, 0,0,0,0,0,0, 0,0,0,0,0,0 ]; break;
+			case "F": a= [ 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0 ]; break;
+			case "G": a= [ 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0 ]; break;
+		}
+		
+		return a;
+	}
+
+	//ボーナス
+	//function char_bonus_cost(cs_){
+	function char_bonus_cost(co_,ch_){
+		
+		var po=0,de=0,sp=0,mo=0;
+		
+		po= (int)((ch_-25)/2/co_);
+		de= (int)((ch_-25)/2/co_);
+		
+		return %[ pow:po, def:de, spd:sp, mor:mo ];
+	}
+
+	//////////
+	//アイテム購入系
+	//
+	//アイテムラッパー
+	function item_getdata(id_){
+		var cc= gf.get(id_,gf.list.item);
+		var cn= gf.get2(id_,gf.list.item)-1;
+		return %[ d:cc, n:cn, i:id_ ];
+	}
+	
+	//購入
+	function item_buy_get_gold(id_,c_){
+		var dd= item_getdata(id_);
+		
+		//所有数を増やす
+		f.used.itemcount[dd.n]+=c_;
+		
+		//料金を徴収
+		f.used.stat.gold.now-= dd.d.price*c_;
+		
+		//在庫を減らす
+		if( dd.d.rarity>2 ){
+			 f.used.itemstockMat[dd.d.rarity-3]-=c_*10;
+		}
+	}
+	
+	//売却
+	function item_sales_get_gold(id_,c_){
+		var dd= item_getdata(id_);
+		//所有数を減らす
+		f.used.itemcount[dd.n]-=c_;
+		
+		//料金を増やす
+		f.used.stat.gold.now+= (dd.d.price\2)*c_;
+		
+	}
+	
+	//鉱石を追加
+	function item_set_addstock(id_,c_){
+		var dd= item_getdata(id_);
+		if( dd.d.type==11 && dd.d.rarity>2 ){
+			f.used.itemstockMat[dd.d.rarity-3]+= c_;
+		}
+	}
+	
+	
+	//アイテムを使用
+	function item_sales_get_used(id_,c_){
+		var dd= item_getdata(id_);
+		//所有数を減らす
+		f.used.itemcount[dd.n]-=c_;
+		
+		var chv= [];
+		for( var i=0; i<f.used.view.chview.count; i++) {
+			if(f.used.view.chview!=0) chv.add(f.used.view.chview[i]);
+			if(f.used.view.cmview!=0) chv.add(f.used.view.cmview[i]);
+		}
+		
+		switch(dd.d.index){
+		
+			//勇者養成エクササイズ。全部隊経験＋１００
+			case 1110:
+				for( var j=0; j<c_; j++) {
+					for( var i=0; i<chv.count; i++) {
+						//gf.get(chv[i],gf.char).experience+= 50;
+						add_exp_char(chv[i],100);
+					}
+				}
+				break;
+				
+			//全雇用ユニットのＨＰを２００回復。
+			case 1111:
+				for( var j=0; j<c_; j++) {
+					for( var i=0; i<chv.count; i++) {
+						add_hp_char(chv[i],200);
+						//add_hp_char(chv[i],f.used.stat.company.hp+_STANDARD_ADDHP[f.used.difficulty]);//自動治癒値分回復
+					}
+				}
+			break;
+			
+			//全雇用ユニットのＨＰを６００回復。
+			case 1112:
+				for( var j=0; j<c_; j++) {
+					for( var i=0; i<chv.count; i++) {
+						add_hp_char(chv[i],600);
+						//add_hp_char(chv[i],f.used.stat.company.hp+_STANDARD_ADDHP[f.used.difficulty]);//自動治癒値分回復
+					}
+				}
+			break;
+			
+			//魔界の蒸留酒。全ユニットの忠誠度＋５。
+			case 1113:
+				for( var j=0; j<c_; j++) {
+					for( var i=0; i<chv.count; i++) {
+						//gf.get(chv[i],gf.char).loyalty+= 5;
+						add_loyalty_char(chv[i],5);
+					}
+				}
+			break;
+
+			//全雇用ユニットのＨＰを２４００回復。
+			case 1114:
+				for( var j=0; j<c_; j++) {
+					for( var i=0; i<chv.count; i++) {
+						add_hp_char(chv[i],2400);
+						//add_hp_char(chv[i],f.used.stat.company.hp+_STANDARD_ADDHP[f.used.difficulty]);//自動治癒値分回復
+					}
+				}
+			break;
+
+			//ユグドラシルの心臓
+			//不変ボーナスがＯＮの時、次のターンにユニットの入れ替え可能な選択イベントを出す
+			case 1115:
+				f.運命の鍵 = 1;
+			break;
+
+			//テスト用。全部隊経験＋１０００００００／忠誠ＭＡＸ
+			case 1116:
+				for( var j=0; j<c_; j++) {
+					for( var i=0; i<chv.count; i++) {
+						//gf.get(chv[i],gf.char).experience+= 50;
+						add_exp_char(chv[i],10000000);
+					}
+				}
+
+				for( var j=0; j<c_; j++) {
+					for( var i=0; i<chv.count; i++) {
+						//gf.get(chv[i],gf.char).loyalty+= 5;
+						add_loyalty_char(chv[i],100);
+					}
+				}
+				break;
+
+		}
+		
+		chardata_update();
+	}
+	
+	
+	//在庫を返す
+	function item_get_stock(id_){
+		var dd= item_getdata(id_);
+		var a= 0;
+		
+		switch(dd.d.rarity){
+			case  1: a= 9999; break;
+			case  2: a= 9999; break;
+			case  3: a= f.used.itemstockMat[0]; break;
+			case  4: a= f.used.itemstockMat[1]; break;
+			case  5: a= f.used.itemstockMat[2]; break;
+			case  6: a= f.used.itemstockMat[3]; break;
+			case  7: a= f.used.itemstockMat[4]; break;
+			case  8: a= f.used.itemstockMat[5]; break;
+			case  9: a= f.used.itemstockMat[6]; break;
+			case 10: a= f.used.itemstockMat[7]; break;
+			case 11: a= f.used.itemstockMat[8]; break;
+			case 12: a= f.used.itemstockMat[9]; break;
+		}
+		
+		return a;
+	}
+	
+	//在庫の更新
+// 	function item_stock_update()
+// 	{
+// 		for(var i= 0; i<10; i++ ){
+// 			for(var ii= 0; ii<30; ii++ ){
+// 				if( f.used.itemstockMat[i]>=10 ){
+// 					if(f.used.itemstock[i]==-1) f.used.itemstock[i]==0;
+// 					f.used.itemstock[i]++;
+// 					f.used.itemstockMat[i]-=10;
+// 				}
+// 			}
+// 		}
+// 	}
+	
+	//在庫状況により判定
+	function item_show_stock(id_){
+		var dd= item_getdata(id_);
+		
+		//例外
+		if( id_==0 ) return true;
+		
+		//所有数が０以上
+		if( f.used.itemcount[dd.n]>0 ) return true;
+		
+		//所有数が０以上
+		if( f.used.itemusedcount[dd.n]>0 ) return true;
+		
+		//在庫が10以上
+		if( ca.item_get_stock(id_)>=0 ) return true;
+		
+		return false;
+		//return true;
+	}
+	
+	//アイテムを購入できるか？
+	function buy_items_check(id,i)
+	{
+		var dd= item_getdata(id);
+		
+		//金が足りるか
+		if((dd.d.price*i)>f.used.stat.gold.now ) return false;
+		
+		//在庫があるか
+		if(item_get_stock(dd.i)<i*10 ) return false;
+		
+		//所有数がlimit以下
+		if( f.used.itemcount[dd.n]+ f.used.itemusedcount[dd.n]+i>dd.d.limit ) return false;
+		
+		//鉱石は買えない
+		if(dd.d.type==11) return false;
+		
+		return true;
+	}
+	
+	//アイテムを売却できるか？
+	function sales_items_check(id,i)
+	{
+		var dd= item_getdata(id);
+		
+		//持っているか 売却できるか？
+		//if( f.used.itemcount[dd.n]>=i && dd.d.saled==1 ) return true;
+		if( f.used.itemcount[dd.n]<i ) return false;
+		
+		//売却できるか？
+		if( dd.d.saled==0 ) return false;
+		
+		return true;
+	}
+	
+	//アイテムを使用？
+	function used_items_check(id)
+	{
+		var dd= item_getdata(id);
+		
+		//消費アイテムじゃない
+		if( dd.d.type!=12 ) return false;
+		
+		//持っているか 売却できるか？
+		if( f.used.itemcount[dd.n]<1 ) return false;
+		
+		return true;
+	}
+	
+	//装備判定
+	function item_set_chars(id,i,ch){
+		var dd= item_getdata(id);
+		var che= item_set_chars_type(ch);
+		
+		//装備種別
+		//var wa= [ 1,1,1,1,1,1, 2,2,2,2,2, 3 ];
+		
+		//装備種別が合わない
+		if( i==1 ) if( dd.d.type!=che.w ) return false;
+		if( i==2 ) if( dd.d.type!=che.a ) return false;
+		
+		dm("testment= %d,%d".sprintf(dd.d.type,che.w));
+		
+		//所有数が０以上
+		if( f.used.itemcount[dd.n]<=0 ) return false;
+		
+		return true;
+		
+	}
+	
+	//キャラごとに装備可能か
+	function item_set_chars_type(ch_)
+	{
+		var ch= gf.get(ch_,gf.char);
+// 		var tt= [ "片手", "両手", "射撃", "杖", "鞭", "爪", "盾", "鎧", "獣装", "法衣", "道具", "素材" ];
+// 		var w= tt.find(ch.equipment.weapon);
+// 		var a= tt.find(ch.equipment.armor);
+		var w= get_item_type_to_index(ch.equipment.weapon);
+		var a= get_item_type_to_index(ch.equipment.armor);
+		return %[ w:w, a:a ];
+	}
+	
+	//キャラごとに装備可能か
+	function get_item_type_to_index(ty)
+	{
+		var tt= [ "片手", "両手", "射撃", "杖", "鞭", "爪", "盾", "鎧", "獣装", "法衣", "道具", "素材" ];
+		return tt.find(ty);
+	}
+	
+	//装備
+	function item_set_char_stats( dd, ch, i )
+	{
+		
+		switch(i){
+			case 1:
+				ch.equipedID.weapon= dd.i;
+				ch.equiped.weapon= dd.d.name;
+				break;
+			case 2:
+				ch.equipedID.armor= dd.i;
+				ch.equiped.armor= dd.d.name;
+				break;
+		}
+		
+		item_set_char_stats_add( dd, ch );
+	}
+	
+	//装備解除
+	function item_reset_char_stats( dd, ch, i )
+	{
+		switch(i){
+			case 1:
+				ch.equipedID.weapon= 0;
+				ch.equiped.weapon= "";
+				break;
+			case 2:
+				ch.equipedID.armor= 0;
+				ch.equiped.armor= "";
+				break;
+		}
+		
+		item_set_char_stats_add( dd, ch );
+	}
+	
+	//装備修正
+	function item_set_char_stats_add( dd, ch )
+	{
+		ch.equipedADD.pow= 0;
+		ch.equipedADD.def= 0;
+		ch.equipedADD.spd= 0;
+		ch.equipedADD.mor= 0;
+		
+		ch.skill[8].name=  "";
+		ch.skill[8].value= 0;
+		ch.skill[9].name=  "";
+		ch.skill[9].value= 0;
+		ch.skill[10].name=  "";
+		ch.skill[10].value= 0;
+		ch.skill[11].name=  "";
+		ch.skill[11].value= 0;
+		
+		//装備能力補正
+		if(ch.equipedID.weapon!=0) {
+			dd= ca.item_getdata(ch.equipedID.weapon);
+			ch.equipedADD.pow+= dd.d.pow;
+			ch.equipedADD.def+= dd.d.def;
+			ch.equipedADD.spd+= dd.d.spd;
+			ch.equipedADD.mor+= dd.d.mor;
+			ch.skill[8].name=  dd.d.attach[0].name;
+			ch.skill[8].value= dd.d.attach[0].value;
+			ch.skill[9].name=  dd.d.attach[1].name;
+			ch.skill[9].value= dd.d.attach[1].value;
+		}
+		
+		if(ch.equipedID.armor!=0) {
+			dd= ca.item_getdata(ch.equipedID.armor);
+			ch.equipedADD.pow+= dd.d.pow;
+			ch.equipedADD.def+= dd.d.def;
+			ch.equipedADD.spd+= dd.d.spd;
+			ch.equipedADD.mor+= dd.d.mor;
+			ch.skill[10].name=  dd.d.attach[0].name;
+			ch.skill[10].value= dd.d.attach[0].value;
+			ch.skill[11].name=  dd.d.attach[1].name;
+			ch.skill[11].value= dd.d.attach[1].value;
+		}
+	}
+	
+	//////////
+	//ライフ系
+	//
+	//回復ライフを集計
+	function get_char_life()
+	{
+		var tt= [];
+		var ct=0;
+		
+		for(var i= 0; i<10; i++ ){
+			for(var c= 0; c<6; c++ ){
+				var cc= f.used.party[i].division[c];
+				var ch= gf.get(cc,gf.char);
+				
+				tt[i+1]+= (ch.HP.max-ch.HP.now)*ch.cost;
+			}
+			ct+= tt[i+1];
+		}
+		tt[0]= ct;
+		
+		return tt;
+	}
+	
+	//キャラを回復
+	function set_char_lifemax(n)
+	{
+		var ch= gf.get(n,gf.char);
+		var lf= (ch.HP.max-ch.HP.now);
+		
+		dm("set_char_lifemax= %d->%d=%d(%d)".sprintf(ch.HP.now,ch.HP.max,lf,n));
+		
+		if(lf!=0){
+			for(var i= 0; i<lf; i++ ){
+					//コストが足りない
+					if(ch.cost>f.used.stat.gold.now) return false;
+					
+					//ライフを回復する
+					ch.HP.now++;
+					
+					//お金を引く
+					f.used.stat.gold.now-=ch.cost;
+			}
+		}
+		return true;
+	}
+	
+	//師団を回復
+	function set_char_line_lifemax(n)
+	{
+		for(var i= 0; i<6; i++ ){
+			var cc= f.used.party[n].division[i];
+			set_char_lifemax(cc);
+			
+			//お金がない
+			if(f.used.stat.gold.now==0) return false;
+		}
+		return true;
+	}
+	
+	//全師団を回復
+	function set_char_allline_lifemax()
+	{
+		for(var i= 0; i<10; i++ ){
+			set_char_line_lifemax(i);
+			
+			//お金がない
+			if(f.used.stat.gold.now==0) return false;
+		}
+		return true;
+	}
+	
+	//全軍回復
+	function set_char_all_lifemax()
+	{
+		for(var i= 0; i<999900; i++ ){
+			var tf= true;
+			for(var i= 0; i<f.used.view.chview.count; i++ ){
+				//一般
+				if(f.used.view.chview[i]!=0){
+					var ch= gf.get(f.used.view.chview[i],gf.char);
+					var lf= (ch.HP.max-ch.HP.now);
+				
+					//コストが足りない
+					if(ch.cost>f.used.stat.gold.now) return false;
+				
+					//ライフを回復する
+					if(lf!=0){
+						f.used.stat.gold.now-=ch.cost;
+						ch.HP.now++;
+						tf= false;
+					}
+				}
+			
+				//武将
+				if(f.used.view.cmview[i]!=0){
+					var ch= gf.get(f.used.view.cmview[i],gf.char);
+					var lf= (ch.HP.max-ch.HP.now);
+				
+					//コストが足りない
+					if(ch.cost>f.used.stat.gold.now) return false;
+				
+					//ライフを回復する
+					if(lf!=0){
+						f.used.stat.gold.now-=ch.cost;
+						ch.HP.now++;
+						tf= false;
+					}
+				}
+			}
+			if(tf) return true;
+		}
+		return true;
+	}
+	
+	//師団の必要コストを集計
+	function get_char_totalcost()
+	{
+	/*
+		var cofe= [];
+		for(var i= 0; i<10; i++ ){
+			cofe[i]= %[ fd:0, eg:0 ];
+		}
+		
+		for(var n= 0; n<10; n++ ){
+			if(f.used.party[n].status>0){
+				var pt= f.used.party[n];
+				
+				for(var i= 0; i<6; i++ ){
+				
+					//if(pt.division[i]!=0){
+						
+						var ch= gf.get(pt.division[i],gf.char);
+						
+						if(ch.index>1000){
+							cofe[n].fd+= ch.statickcost;
+						}else{
+							cofe[n].eg+= ch.statickcost;
+						}
+					//}
+				}
+				
+			}
+		}
+		return cofe;
+	}
+	*/
+	
+		var tt= [];
+		var ct=0;
+		
+		for(var i= 0; i<10; i++ ){
+			var fd= 0,eg= 0;
+			for(var c= 0; c<6; c++ ){
+				var cc= f.used.party[i].division[c];
+				var ch= gf.get(cc,gf.char);
+				
+				switch(ch.paytype){
+					case 0: fd+= ch.statickcost; break;
+					case 2: eg+= ch.statickcost; break;
+				}
+				
+// 				if(ch.index>1000){
+// 					fd+= ch.statickcost;
+// 				}else{
+// 					eg+= ch.statickcost;
+// 				}
+				
+				//tt[i+1]+= (ch.HP.max-ch.HP.now)*ch.cost;
+			}
+			tt.add(%[ fd:fd, eg:eg ]);
+			//ct+= tt[i+1];
+		}
+		
+		return tt;
+	}
+
+	//////////
+	//準備系
+	//
+	//選択した敵を先頭に
+// 	function standby_set_enemys_arr(v){
+// 		var t= tf.EncountL[n];
+// 		tf.EncountL.erase(n);
+// 		tf.EncountL.unshift(t);
+// 	}
+	
+	//駐屯情報から敵を生成
+	function standby_set_enemys_arr(v){
+		var t= [];
+		var m= f.used.stat.atackmodemap;
+		for(var i= 0; i<8; i++ ){
+			if( gf.map[m].post.division[i]!=0 ) t.add(gf.map[m].post.division[i]);
+		}
+	}
+	
+// 	//選択した敵を先頭に
+// 	function standby_set_enemys(n){
+// 		var t= tf.EncountL[n];
+// 		tf.EncountL.erase(n);
+// 		tf.EncountL.unshift(t);
+// 	}
+// 	
+// 	//選択した軍を先頭に
+// 	function standby_set_players(n){
+// 		var t=[];
+// 		
+// 		//先頭に追加
+// 		t.add(n);
+// 		
+// 		//d.stat.atackmode
+// 		
+// 		//選択した軍を先頭に
+// 		for(var i= 0; i<10; i++ ){
+// 			if( f.used.party[i].order.state==2 && i!=n ) t.add(i);
+// 		}
+// 		
+// 		for(var i= 0; i<10; i++ ){
+// 			if( f.used.party[i].order.state==1 && i!=n ) t.add(i);
+// 		}
+// 		
+// 		tf.EncountR= t;
+// 	}
+	
+	//領地idからデータを生成
+// 	function map_battle_setting_enemy_data(n){
+// 		
+// 		var er= [];
+// 		var em= n;
+// 		
+// 		//tf.EncountL= gf.map[n].post.division;//右table
+// 		var el= gf.map[n].post.division;//右table
+// 		
+// 		//var t= [];
+// // 		for(var i= 0; i<10; i++ ){
+// // 			if( f.used.party[i].order.state==2 ) t.add(i);
+// // 		}
+// // 		for(var i= 0; i<10; i++ ){
+// // 			if( f.used.party[i].order.state==1 ) t.add(i);
+// // 		}
+// 		
+// // 		for(var i= 0; i<10; i++ ){
+// // 			if(f.used.party[i].status>1) er.add(i);
+// // 			//er.add(i);
+// // 		}
+// 		
+// 		for(var i= 0; i<10; i++ ) er.add(i);
+// 		
+// 		//tf.EncountR= t;//右table
+// 		//tf.EncountR= t;//右table
+// 		
+// 		//tf.EncountCountMax= Math.min(tf.EncountL.count,tf.EncountR.count);
+// 		
+// 		var ex= Math.min(el.count,er.count);
+// 		
+// 		
+// 		
+// // 		t= [];
+// // 		for(var i= 0; i<tf.EncountCountMax; i++ ){
+// // 			t.add(n);
+// // 		}
+// // 		tf.EncountL= 
+// 		
+// 		//dm("map_battle_setting_enemy_data %d.%d.%d.%d".sprintf(tf.EncountL.count,tf.EncountR.count,tf.EncountM.count,tf.EncountCountMax));
+// 	}
+	
+// 	function map_battle_setting_enemy_data(n){
+// 		
+// 		var er= [];
+// 		var em= n;
+// 		
+// 		var el= gf.map[n].post.division;//右table
+// 		
+// 		return %[ el:el, em:em, ex:ex ];
+// 	}
+	
+	//プレイヤー側の振り分け
+	function map_battle_setting_enemy_pl(ii){
+		var ea= [],eb= [];
+		ea.add(ii);
+		for(var i= 0; i<10; i++ ){
+			if(f.used.party[i].order.state==2 && f.used.party[i].status==2 && ii!=i ) ea.add(i);
+			if(f.used.party[i].order.state==1 && f.used.party[i].status==2 && ii!=i ) eb.add(i);
+		}
+		return [ ea, eb ];
+	}
+	
+	//バトル初期設定
+	function map_battle_setting_enemy_data_init(m,si){
+		
+		//選択したマップがない場合先頭に追加
+		//if(f.used.stat.enemyattacks.find(m)==-1 || f.used.stat.enemyattacks.count==0 ) {
+		//クリックした先が敵の領地
+		if( gf.map[m].frag!=0 ) f.used.stat.attackmode= 1;
+		else f.used.stat.attackmode= 2;
+		
+		var enmtp= [];
+		enmtp.assign(f.used.stat.enemyattacks);
+		
+		//if( gf.map[m].frag!=0 ) {
+		//	enmtp.unshift(m);
+			//f.used.stat.attackmode= 1; //= 3;
+		//}
+		
+		//選択したマップを先頭に
+		//if(enmtp.count>1) standby_set_enemys_ma
+		
+		
+		//選択したマップがある場合消去
+		var ff= enmtp.find(m);
+		if(ff!=-1){
+			enmtp.erase(ff);
+		}
+		
+		//選択したマップを追加
+		enmtp.unshift(m);
+		
+		//スタックされたマップ情報から師団データを生成
+		var tt= [];
+		for(var i= 0; i<enmtp.count; i++ ){
+			tt.add(gf.map[enmtp[i]].post.division);
+		}
+		tf.EncountL= tt;
+		
+		//プレーヤー側の師団設定
+		tt= [];
+		for(var i= 0; i<10; i++ ){
+			if(f.used.party[i].status==2) tt.add(i);
+		}
+		tf.EncountR= [tt,[]];
+		
+		//対戦場所
+		tf.EncountM= enmtp;
+		
+		//初期選択プレイヤー
+		for(var i= 0; i<10; i++ ){
+			//if(f.used.party[i].order.state==2 && f.used.party[i].status>1 ){ tf.allysSelectNumber= i; break; }
+			if(f.used.party[i].status==2){ tf.allysSelectNumber= i; break; }
+		}
+		
+		//初期選択敵
+		tf.enemySelectNumber= si;
+		
+	}
+	
+	//バトル決定
+	function map_battle_setting_enemy_data_exe(){
+		
+		//選択した軍を先頭に
+		var tt= tf.EncountL[0][tf.enemySelectNumber];
+		tf.EncountL[0].erase(tf.enemySelectNumber);
+		tf.EncountL[0].unshift(tt);
+		
+		//プレイヤー師団を振り分け
+		tf.EncountR= map_battle_setting_enemy_pl(tf.allysSelectNumber);
+	}
+	
+	//バトル勝利時
+	function map_battle_setting_enemy_data_win(){
+		
+		//tf.EncountM[0];
+	}
+	
+	//選択したマップを先頭に
+	function standby_set_enemys_maps(m){
+		//var t= [];
+		var ff= f.used.stat.enemyattacks.find(m);
+		if(ff!=-1 && ff!=0 ){
+			var t= f.used.stat.enemyattacks[ff];
+			f.used.stat.enemyattacks.erase(ff);
+			f.used.stat.enemyattacks.unshift(t);
+		}
+		
+	}
+	
+	//選択したマップを先頭に
+	function standby_set_enemys_maps_return(){
+		if(f.used.stat.attackmode) {
+			f.used.stat.attackmode= 0;
+			//f.used.stat.enemyattacks.erase(0);
+		}
+	}
+	
+	//プレイヤー側の振り分け
+	function standby_set_enemys_reattack() {
+	
+		for(var i= 10; i<f.used.party.count; i++ ) {
+			
+			//移動できる敵師団のみ
+			if(f.used.party[i].role>0) {
+			
+				//全滅している
+				if(f.used.party[i].status==0) {
+					//再生値をセット
+					f.used.party[i].attack= -f.used.reattackwait;
+					
+					//通常へ
+					f.used.party[i].status=1;
+					
+					//ライフを全回復
+					for(var ix= 0; ix<6; ix++ ) {
+						if(f.used.party[i].dev[ix].mhp!=0) f.used.party[i].dev[ix].hp= f.used.party[i].dev[ix].mhp;
+					}
+				}
+			}
+		}
+	}
+	////////////////////
+	//
+	//軍にキャラを追加
+	//add_commander_char(職業タイプ,キャラindex)
+	function add_commander_char(i_,c_){
+		var ch= gf.get(c_,gf.char);
+		
+		//軍に追加
+		ca.setArray_zoneA( f.used.view.cmview, i_, c_ );
+		
+		//体力をマックスに
+		ch.HP.now= ch.HP.max;
+		
+		//追加状態に
+		ch.troopsNo= -1;
+	}
+	
+	//軍からキャラをはずす
+	//del_commander_char(職業タイプ,キャラindex,装備をはずすか)
+	function del_commander_char(i_,c_,d_=false,cj_=0){
+		var ch= gf.get(c_,gf.char);
+		
+		//▲あまりにもエラー停止する機会が多すぎるので、
+		//▲雇用状態が-2（非雇用）になっていたらユニット離脱処理を行わないという回避処理を追加。
+		//▲byけま／ver1.13から
+		//if( gf.get( c_,gf.char).troopsNo != -2 ) {
+		if( ch.troopsNo != -2 ) {
+		
+			//パーティーからはずす。
+			//if(ch.troopsNo!=-1){
+			//ここが-2だとエラーが出るのではないか？
+			if( ch.troopsNo>-1 ) {
+				var ff= f.used.party[ch.troopsNo].division.find(c_);
+				if(ff!=-1) f.used.party[ch.troopsNo].division[ff]= 0;
+				
+				//師団が空なら解散
+				if(get_troops_party(ch.troopsNo)==0) f.used.party[ch.troopsNo].status= 0;
+			}
+		
+			//軍からはずす
+			if(cj_==0){
+				var cf= f.used.view.cmview.find(c_);
+				f.used.view.cmview[cf]= 0;
+				ca.setArray_zoneA( f.used.view.cmview, cf\12, 0 );
+			}else{
+				var cf= f.used.view.chview.find(c_);
+				f.used.view.chview[cf]= 0;
+				ca.setArray_zoneA( f.used.view.chview, cf\12, 0 );
+			}
+			
+			
+			//解雇状態に
+			ch.troopsNo= -2;
+			
+			//装備をはずして倉庫に放り込む
+			if(d_ == 1) {
+			
+				var dd;
+			
+				//武器
+				if(ch.equipedID.weapon!=0){
+					dd= item_getdata(ch.equipedID.weapon);
+					f.used.itemcount[dd.n]++;
+					f.used.itemusedcount[dd.n]--;
+				}
+			
+				if(ch.equipedID.armor!=0){
+					dd= item_getdata(ch.equipedID.armor);
+					f.used.itemcount[dd.n]++;
+					f.used.itemusedcount[dd.n]--;
+				}
+			
+				ch.equipedID.weapon= 0; ch.equiped.weapon= "";
+				ch.equipedID.armor= 0; ch.equiped.armor= "";
+			
+				ch.equipedADD.pow= 0;
+				ch.equipedADD.def= 0;
+				ch.equipedADD.spd= 0;
+				ch.equipedADD.mor= 0;
+			
+				//スキル
+				ch.skill[8].name=  ""; ch.skill[8].value= 0;
+				ch.skill[9].name=  ""; ch.skill[9].value= 0;
+				ch.skill[10].name=  ""; ch.skill[10].value= 0;
+				ch.skill[11].name=  ""; ch.skill[11].value= 0;
+			}
+
+			//▲けま改造
+			//装備をはずして消滅させる（キャラを変化させてコピーしたとき用。複製デュープ対策）
+			if(d_ == 2){
+				var dd;
+			
+				//武器
+				if(ch.equipedID.weapon!=0){
+					//dd= item_getdata(ch.equipedID.weapon);
+					//▲f.used.itemcount[dd.n]++;
+					//▲f.used.itemusedcount[dd.n]--;
+				}
+			
+				if(ch.equipedID.armor!=0){
+					//dd= item_getdata(ch.equipedID.armor);
+					//▲f.used.itemcount[dd.n]++;
+					//▲f.used.itemusedcount[dd.n]--;
+				}
+			
+				ch.equipedID.weapon= 0; ch.equiped.weapon= "";
+				ch.equipedID.armor= 0; ch.equiped.armor= "";
+			
+				ch.equipedADD.pow= 0;
+				ch.equipedADD.def= 0;
+				ch.equipedADD.spd= 0;
+				ch.equipedADD.mor= 0;
+			
+				//スキル
+				ch.skill[8].name=  ""; ch.skill[8].value= 0;
+				ch.skill[9].name=  ""; ch.skill[9].value= 0;
+				ch.skill[10].name=  ""; ch.skill[10].value= 0;
+				ch.skill[11].name=  ""; ch.skill[11].value= 0;
+			}
+		}
+
+	}
+	
+	//キャラの一部のパラメータをコピー
+	//copy_commander_char(元キャラindex,先キャラindex)
+	function copy_commander_char(c1_,c2_){
+		var ch1= gf.get(c1_,gf.char);
+		var ch2= gf.get(c2_,gf.char);
+		
+		ch2.experience= ch1.experience;
+		
+		ch2.equipedID.weapon= ch1.equipedID.weapon;
+		ch2.equiped.weapon=   ch1.equiped.weapon;
+		ch2.equipedID.armor=  ch1.equipedID.armor;
+		ch2.equiped.armor=    ch1.equiped.armor;
+		
+		ch2.equipedADD.pow= ch1.equipedADD.pow;
+		ch2.equipedADD.def= ch1.equipedADD.def;
+		ch2.equipedADD.spd= ch1.equipedADD.spd;
+		ch2.equipedADD.mor= ch1.equipedADD.mor;
+		
+		ch2.skill[8].name=   ch1.skill[8].name;
+		ch2.skill[8].value=  ch1.skill[8].value;
+		ch2.skill[9].name=   ch1.skill[9].name;
+		ch2.skill[9].value=  ch1.skill[9].value;
+		ch2.skill[10].name=  ch1.skill[10].name;
+		ch2.skill[10].value= ch1.skill[10].value;
+		ch2.skill[11].name=  ch1.skill[11].name;
+		ch2.skill[11].value= ch1.skill[11].value;
+	
+	}
+	
+	//キャラに経験値をセット
+	//add_exp_char(キャラindex,加算数)
+	function add_exp_char(c_,n_){
+		var ch= gf.get(c_,gf.char);
+		ch.experience+= n_;
+		switch(ch.growth){
+			case "S": if(ch.experience>222010) ch.experience= 222010; break;
+			case "A": if(ch.experience>193210) ch.experience= 193210; break;
+			case "B": if(ch.experience>166410) ch.experience= 166410; break;
+			case "C": if(ch.experience>141610) ch.experience= 141610; break;
+			case "D": if(ch.experience>118810) ch.experience= 118810; break;
+			case "E": if(ch.experience>98010) ch.experience= 98010; break;
+			case "F": if(ch.experience>79210) ch.experience= 79210; break;
+			case "G": if(ch.experience>62410) ch.experience= 62410; break;
+		}
+		if(ch.experience<0) ch.experience= 0;
+		chardata_update2(ch);
+	}
+	
+	//キャラにライフをセット
+	//add_hp_char(キャラindex,加算数)
+	function add_hp_char(c_,n_,m_=false){
+		var ch= gf.get(c_,gf.char);
+		ch.HP.now+= n_;
+		if(ch.HP.now>ch.HP.max || m_) ch.HP.now= ch.HP.max;
+		if(ch.HP.now<0) ch.HP.now= 0;
+	}
+	
+	function add_loyalty_char(c_,n_,m_=false){
+		var ch= gf.get(c_,gf.char);
+		ch.loyalty+= n_;
+		if(ch.loyalty>100 || m_) ch.loyalty= 100;
+		if(ch.loyalty<1) ch.loyalty= 1;
+	}
+	
+	//編成されているか
+	//get_troops_char(キャラindex)
+	function get_troops_char(c_){
+		var ch= gf.get(c_,gf.char);
+		if(ch.troopsNo>-1) return true;
+		return false;
+	}
+	
+	//編成されているか
+	//get_troops_party(パーティーindex)
+	function get_troops_party(c_) {
+		var rc= 0;
+		for(var i= 0; i<6; i++ ){
+			if(f.used.party[c_].division[i]>0) rc++;
+		}
+		return rc;
+	}
+	
+	//編成されているか
+	//get_troops_party(パーティーindex)
+	function get_troops_party2() {
+		var rc= 0;
+		for(var i= 0; i<10; i++ ){
+			if(f.used.party[i].status>0) rc++;
+		}
+		return rc;
+	}
+	
+	//防衛が一人でもいるか
+	//get_troops_party(パーティーindex)
+	function get_troops_party3() {
+		var rc= false;
+		for(var i= 0; i<10; i++ ){
+			if(f.used.party[i].order.state==1) {
+				rc= true;
+				break;
+			}
+		}
+		return rc;
+	}
+	
+	//マップに師団をセット
+	//set_troops_party_map(マップindex,勢力index(1-15),師団配列[0,0,0,])
+	//ca.set_troops_party_map(3,10,[50,51,52,53]);
+	function set_troops_party_map(n_,e_=void,c_){
+	
+		gf.map[n_].post.division= c_;
+		
+		if(e_!=void){
+			gf.map[n_].frag= e_-1;
+			for(var i= 0; i<c_.count; i++ ){
+				gf.enemy[c_[i]].troopsNo= e_;
+				map_set_enemy_status_update(c_[i]);
+			}
+		}
+	}
+	
+	//キャラにライフをセット
+	//add_enemy_hp_char(キャラindex,加算数)
+	function add_enemy_hp_char(c_,n_,m_=false){
+		for(var i= 0; i<6; i++ ){
+			//dm("add_enemy_hp_char %d.%d.%d".sprintf(gf.enemy[c_].dev[i].hp,0,gf.enemy[c_].dev[i].mhp));
+			if(gf.enemy[c_].dev[i].mhp!=0) gf.enemy[c_].dev[i].hp+= n_;
+			if(gf.enemy[c_].dev[i].hp>gf.enemy[c_].dev[i].mhp || m_) gf.enemy[c_].dev[i].hp= gf.enemy[c_].dev[i].mhp;
+		}
+	}
+	
+	//キャラのコスト払い
+	//payment_char(キャラindex)
+	function payment_char(c_){
+		var ch= gf.get(c_,gf.char);
+		
+		var ret= true;
+		var now= 0;
+		switch(ch.paytype){
+			case 0: now= f.used.stat.food.now; break;
+			case 1: now= f.used.stat.resource.now; break;
+			case 2: now= f.used.stat.energy.now; break;
+			case 3: now= f.used.stat.gold.now; break;
+		}
+		//var pay= ch.statickcost;
+		
+		if(now<ch.statickcost){
+			//コストが足りない
+			now-= ch.statickcost;
+			f.used.stat.gold.now+= now;
+			now= 0;
+			
+			//現金も足りない
+			if(f.used.stat.gold.now<0){
+				ret= false;
+			}
+			
+		}else {
+			//コストが支払える
+			now-= ch.statickcost;
+		}
+		
+		switch(ch.paytype){
+			case 0: f.used.stat.food.now= now; break;
+			case 1: f.used.stat.resource.now= now; break;
+			case 2: f.used.stat.energy.now= now; break;
+			case 3: f.used.stat.gold.now= now; break;
+		}
+		
+		dm("payment_char %d.%d.%d".sprintf(now,ch.statickcost,ch.paytype));
+		return ret;
+	}
+	
+	//軍勢力を集計
+	//get_enemy_status_power(勢力番号)
+	function get_enemy_status_power(n_){
+		var pp= 0;
+		var cc= 0;
+		var hp= 0;
+		for(var i= 0; i<gf.map.count; i++ ){
+			if(gf.map[i].frag==n_){
+				if(gf.map[i].type.category==0) pp+= 1;
+				if(gf.map[i].type.category==1) pp+= 1;
+				if(gf.map[i].type.category==2) pp+= 3;
+				cc++;
+				if(gf.map[i].type.building==10) hp+= 10;
+				if(gf.map[i].type.building==21) hp+= 5;
+			}
+		}
+		return %[ power:pp, count:cc, hp:hp ];
+	}
+	
+	//軍勢力を集計を代入
+	//set2_enemy_status_power(勢力番号)
+	function set2_enemy_status_power(){
+		f.get_enemy_status_power= [%[ power:0, count:0 ]];
+		for(var i= 1; i<15; i++ ){
+			f.get_enemy_status_power[i]= get_enemy_status_power(i);
+		}
+	}
+	
+	//前方の空白をつめつつ一番後ろにセット
+	function setArray_zoneA(va_,i_,n_)
+	{
+		var st= i_*12;
+		
+		//切り出し
+		var aa= [];
+		for(var i= 0; i<12; i++ ){
+			if(va_[st+i]!=0) aa.add(va_[st+i]);
+		}
+		
+		if(n_!=0) aa.add(n_);
+		
+		for(var i= 0; i<12; i++ ){
+			if(aa[i]!==void) va_[st+i]= aa[i];
+			else va_[st+i]= 0;
+		}
+		
+	}
+	
+	//空きがあるかチェック
+	function setArray_zoneSrc(va_,i_)
+	{
+		var st= i_*12;
+		var oi=-1;
+		
+		for(var i= 0; i<12; i++ ){
+			if(va_[st+i]==0){ oi= i; break; }
+		}
+		return oi;
+	}
+	
+	//////////
+	//
+	//フラグの有無をチェック
+	//avg_ck(フラグ)
+	function avg_ck(s_){
+		return f.used.stat.readflag.find(s_)!=-1;
+	}
+	
+	//フラグを追加
+	//avg_ck_add(フラグ)
+	function avg_ck_add(s_){
+		f.used.stat.readflag.add(s_);
+	}
+	
+	//フラグを削除
+	//avg_ck_del(フラグ)
+	function avg_ck_del(s_){
+		f.used.stat.readflag.erase(f.used.stat.readflag.find(s_));
+	}
+	
+	//フラグを評価してジャンプ先を返す
+	//avg_return_check(スイッチ)
+	function avg_return_check(c_)
+	{
+		var r= void;
+		for(var i= 0; i<_ADV_CALLBACK.count; i+=6 ){
+			if(Scripts.eval(_ADV_CALLBACK[i]) && _ADV_CALLBACK[i+2+c_]==1){
+				r= _ADV_CALLBACK[i+1];
+				dm("avg_return_check %s.%s.%s".sprintf(_ADV_CALLBACK[i+1],_ADV_CALLBACK[i+6],_ADV_CALLBACK[i]));
+			}
+		}
+		return r;
+	}
+	
+	//フラグを評価してジャンプ先を返す
+	//avg_return_check(スイッチ)
+	function call_return_check(c_,t_,j_)
+	{
+		var v= false;
+		for(var i= 0; i<_CALL_CALLBACK.count; i+=8 ) {
+			if( Scripts.eval(_CALL_CALLBACK[i]) && _CALL_CALLBACK[i+2+c_]==1 ) {
+				j_[_CALL_CALLBACK[i+7]]= _CALL_CALLBACK[i+1];
+				t_[_CALL_CALLBACK[i+7]]= _CALL_CALLBACK[i+6];
+				v= true;
+				dm("call_return_check %s.%s.%s".sprintf(_CALL_CALLBACK[i+1],_CALL_CALLBACK[i+6],_CALL_CALLBACK[i]));
+				dm("call_return_check %s.%s".sprintf(j_[_CALL_CALLBACK[i+7]],t_[_CALL_CALLBACK[i+7]]));
+			}
+		}
+		return v;
+		//return %[ cap:t_, jmp:j_, en:v ];
+	}
+	
+	function call_event_reset(n_)
+	{
+		f.used.stat.callchar[n_]= "";
+		f.used.stat.calljump[n_]= "";
+	}
+	
+	//BGM設定
+	//条件によってBGMファイル名を返す
+	function slg_bgm_start()
+	{
+		//昼間デフォルト
+		var r= _SLGBGM[0];
+		
+		//夜間デフォルト
+		if(f.used.time.day==false) r= _SLGBGM[1];
+		
+		//例外
+		for(var i= 2; i<_SLGBGM.count; i+=2 ){
+			//dm("slg_bgm_start %d.%d".sprintf(_SLGBGM[i],_SLGBGM[i+1]));
+			if(Scripts.eval(_SLGBGM[i])) r= _SLGBGM[i+1];
+		}
+		
+		return r;
+	}
+	
+	//セーブデータテンプレート
+	function get_savedata_temp_creat(n_)
+	{
+		return %[
+					clear: n_.user.used.stat.clearcount,
+					story: n_.user.used.stat.story,
+					turn: (n_.user.used.time.turn\2)+1,
+					diff: _DIFF_TEXTNAME[n_.user.used.difficulty],
+					terr: n_.user.used.mapf.territory.count,
+					cost1: n_.user.used.stat.food.now,
+					cost2: n_.user.used.stat.resource.now,
+					cost3: n_.user.used.stat.energy.now,
+					cost4: n_.user.used.stat.gold.now
+				];
+	}
+	
+	//勢力を上書き
+	//exchenge_teritory_maps(n_,f_);
+	function exchenge_teritory_maps(n_,f_=void)
+	{
+	//▲修正しますた！	  var n= f.used.mapf.territory.find(n_);
+		  if(n_!=-1)f.used.mapf.territory.remove(n_);
+	//▲修正しますた！	  if(n!=-1)f.used.mapf.territory.erase(n);
+		  
+		  if(f_!==void) {
+		  	gf.map[n_].frag= f_;
+		  	if( f_==0 ) _add_mapf_territory(n);
+		  	gf.map[n_].post.division= [];
+		  }
+		   
+// 		  if(f_!==void) {
+// 		  	gf.map[n_].frag= f_;
+// 		  	if( f_==0 ) _add_mapf_territory(n);
+// 		  	gf.map[n_].post.division= [];
+// 		  }
+	}
+	
+	//まとめて勢力を主人公(0)に上書き
+	//exchenge_teritory_maps_alls(n_);
+	function exchenge_teritory_maps_alls(n_)
+	{
+		for(var i= 0; i<gf.map.count; i++ ){
+			if(gf.map[i].frag==n_ ) {
+				//gf.map[i].frag= 0;
+				//f.used.mapf.territory.add(i);
+				_add_mapf_territory(i);
+			}
+		}
+	}
+	
+	//自領土追加wapper
+	function _add_mapf_territory(n_,p_=0)
+	{
+		if(f.used.mapf.territory.find(n_)==-1 ) {
+			gf.map[n_].frag= p_;
+			f.used.mapf.territory.add(n_);
+		}
+	}
+	
+	//自軍の領土から特定の軍を排除
+	function delete_teritory_maps_enemy(n_)
+	{
+		for(var i= 0; i<f.used.mapf.territory.count; i++ ) {
+			//何かが駐屯している
+			var delenem= -1;
+			var ten= gf.map[f.used.mapf.territory[i]].post.division;
+			if( ten.count>0 ) {
+				//引数の軍を消去
+				for(var j= 0; j<ten.count; j++ ) {
+					dm("--------------------------ten.count=%d %d %d %d %d".sprintf(ten.count,ten[j],gf.enemy[ten[j]].troopsNo-1,n_,f.used.mapf.territory[i]) );
+					//if( gf.enemy[ten[j]].frag==n_ ) {
+					if( gf.enemy[ten[j]].troopsNo-1==n_ ) {
+						ten.erase(j);
+						delenem= f.used.mapf.territory[i];
+					}
+				}
+				
+				if( delenem!=-1 ) dm("----------------------------ten.count"+ten.count);
+				
+				//移動待機中も排除
+				if( delenem!=-1 && ten.count==0 ) f.used.stat.enemyattacks.remove(delenem);
+				//if( delenem!=-1 ) f.used.stat.enemyattacks.remove(delenem);
+			
+			}
+		}
+	}
+	
+	//フレンドシップ判定
+	function enabled_friendship_check(n_)
+	{
+		if(n_==0) return 0;
+		else return f.used.enemyfriendship.find(n_)!=-1;
+	}
+	
+	//フレンドシップ判定
+	function enabled_friendship_check2(n_)
+	{
+		if(gf.enemy[n_].troopsNo-1>0) {
+			return f.used.enemyfriendship.find(gf.enemy[n_].troopsNo-1)!=-1;
+		} return false;
+	}
+	
+	//自動回復集計
+	function players_uphp_pays2(cn,rt= %[ hp:0, exp:0, fc:0, texp:0 ])
+	{
+		var ch= gf.get(cn,gf.char);
+		if(cn!=0){
+			if(ch.troopsNo>-1){
+				if(f.used.party[ch.troopsNo].status==2){
+					//全回復
+					rt.hp+= f.used.stat.company.hp+_STANDARD_ADDHP[f.used.difficulty];
+					rt.exp+= f.used.stat.company.exp+_STANDARD_ADDEXP[f.used.difficulty];
+					rt.fc+= 0;
+				} else {
+					rt.exp+= f.used.stat.company.exp+_STANDARD_ADDEXP[f.used.difficulty];
+				}
+			}else{
+				//半分回復
+				rt.hp+= f.used.stat.company.hp+_STANDARD_ADDHP[f.used.difficulty];
+				rt.exp+= f.used.stat.company.exp+_STANDARD_ADDEXP[f.used.difficulty];
+				rt.fc+= 0;
+			}
+			rt.texp+= ch.experience;
+		}
+	}
+	
+	//引継ぎ用設定
+	function save_transfer_initial() {
+	
+		core2.gameLoop.mainLoopReStart();
+		
+		//マップと敵を初期化
+		//core2.games.data.map= core2.games.gameLoadDatasZ( "mapdata" );
+		//core2.games.data.enemy= core2.games.gameLoadDatasZ( "partyenemy" );
+		
+		//f.usedを部分的に初期化
+		//core2.games.base.setGameCoreBase2(f.used);
+		
+	}
+	
+	//敵操作ラッパー
+	function map_set_enemy_status_update2( index_, lv_=0 ) {
+	
+		for( var i=0; i<6; i++) {
+		
+			if( gf.enemy[index_].dev[i].id>0 && lv_!=0 ) {
+			
+				//レベルをセット
+				gf.enemy[index_].dev[i].level+= lv_;
+			}
+		}
+		
+		map_set_enemy_status_update(index_);
+	}
+	
+	//地形効果
+	function map_set_viewMapEffecter( index_, mmp=true ) {
+	
+		var rtxt= [ '男','女','人','魔','神','聖','器','竜','獣','海','飛','火','氷','雷','樹','毒','死','騎','夜','超' ];
+		var ret= [];
+		
+		var mr= void;
+		if( mmp ) mr= gf.mapRevise[gf.map[index_].image[2].revise];
+		else mr= gf.mapRevise[gf.map[index_].image[3].revise];
+		
+		for( var i=0; i<mr.revise.count; i++ ) {
+			if( mr.revise[i] != 0 && i !=5 && i !=19 ) {
+				ret.add(rtxt[i]);
+				ret.add(mr.revise[i]);
+			}
+		}
+		
+		return ret;
+	}
+
+	//▲▲▲変性時のEXP最大オーバー超え補正の前処理
+	function changeUnit_exp_shifter1( index_=void ) {
+			//ロキINDEX…200／善ﾃｨﾙｶINDEX…206／善ﾌﾚｲﾔINDEX…209／善ﾄｰﾙINDEX…212／善ﾘｸﾞﾚｯﾄINDEX…215／善ｵｰﾃﾞｨﾝINDEX…218
+			//変性前の経験値処理をするキャラのINDEX
+			tf.CH_index = index_;
+			tf.CH_index2 = tf.CH_index;
+
+		if( tf.CH_index == 200){
+			//------------------------------------------------------------
+			//ロキ系用前処理
+			//武将のexpをバックアップする
+			tf.backup_exp0 = gf.char[tf.CH_index+0].experience;//ロキ
+			tf.backup_exp1 = gf.char[tf.CH_index+1].experience;//覇王ロキ
+			tf.backup_exp2 = gf.char[tf.CH_index+2].experience;//ヴェズ
+			tf.backup_exp3 = gf.char[tf.CH_index+3].experience;//魔王ヴェズ
+			//EXPの最大値をとる
+			tf.backup_expMAX = tf.backup_exp0;
+			if(tf.backup_expMAX < tf.backup_exp1){tf.backup_expMAX = tf.backup_exp1;}
+			if(tf.backup_expMAX < tf.backup_exp2){tf.backup_expMAX = tf.backup_exp2;}
+			if(tf.backup_expMAX < tf.backup_exp3){tf.backup_expMAX = tf.backup_exp3;}
+			//------------------------------------------------------------
+		}else{
+			//------------------------------------------------------------
+			//女神用前処理
+			//武将のexpをバックアップする
+			tf.backup_exp善 = gf.char[tf.CH_index+0].experience;//善
+			tf.backup_exp悪 = gf.char[tf.CH_index+1].experience;//悪
+if( tf.CH_index != 218){tf.backup_exp狂 = gf.char[tf.CH_index+2].experience;}//狂
+			//EXPの最大値をとる
+			tf.backup_expMAX = tf.backup_exp善;
+			if(tf.backup_expMAX < tf.backup_exp悪){tf.backup_expMAX = tf.backup_exp悪;}
+if( tf.CH_index != 218){if(tf.backup_expMAX < tf.backup_exp狂){tf.backup_expMAX = tf.backup_exp狂;}}
+			//------------------------------------------------------------
+		}
+
+	}
+
+
+	//▲△▲変性時のEXP最大オーバー超え補正のうけ処理
+	function changeUnit_exp_shifter2( index_=void ){
+
+		if( index_ !== void){
+			//変性前の経験値処理をするキャラのINDEX
+			tf.CH_index = tf.CH_index2;
+		}
+		
+		if( tf.CH_index !== void){
+			if( tf.CH_index == 200){
+				//------------------------------------------------------------
+				//ロキ系用処理のうけ
+				//EXPの最大値を成長上限をロキではSに、ヴェズではAに制限する。
+				tf.backup_exp0 = tf.backup_expMAX;
+				tf.backup_exp1 = tf.backup_expMAX;
+				tf.backup_exp2 = tf.backup_expMAX;
+				tf.backup_exp3 = tf.backup_expMAX;
+				if(tf.backup_exp0 > 220110){tf.backup_exp0 = 222010;}
+				if(tf.backup_exp1 > 220110){tf.backup_exp1 = 222010;}
+				if(tf.backup_exp2 > 193210){tf.backup_exp2 = 193210;}
+				if(tf.backup_exp3 > 193210){tf.backup_exp3 = 193210;}
+				//EXPの最大値を配分する。
+				gf.char[tf.CH_index+0].experience = tf.backup_exp0;
+				gf.char[tf.CH_index+1].experience = tf.backup_exp1;
+				gf.char[tf.CH_index+2].experience = tf.backup_exp2;
+				gf.char[tf.CH_index+3].experience = tf.backup_exp3;
+
+				//擬似的にEXP0を足してEXP上限に補正しなおす
+				add_exp_char( getCharacterIndexArray(tf.CH_index+0),0 );
+				add_exp_char( getCharacterIndexArray(tf.CH_index+1),0 );
+				add_exp_char( getCharacterIndexArray(tf.CH_index+2),0 );
+				add_exp_char( getCharacterIndexArray(tf.CH_index+3),0 );
+				//------------------------------------------------------------
+			}else{
+				//------------------------------------------------------------
+				//女神用処理のうけ
+				//EXPの最大値を成長上限を悪ではBに、狂ではEに制限する。（おでんだけ狂を共有しないように注意）
+				if( tf.CH_index != 218){
+					tf.backup_exp善 = tf.backup_expMAX;
+					tf.backup_exp悪 = tf.backup_expMAX;
+					tf.backup_exp狂 = tf.backup_expMAX;
+					if(tf.backup_exp善 > 220110){tf.backup_exp善 = 222010;}
+					if(tf.backup_exp悪 > 166410){tf.backup_exp悪 = 166410;}
+					if(tf.backup_exp狂 >  98010){tf.backup_exp狂 =  98010;}
+					//EXPの最大値を配分する。（おでんだけ狂を共有しないように注意）
+					gf.char[tf.CH_index+0].experience = tf.backup_exp善;
+					gf.char[tf.CH_index+1].experience = tf.backup_exp悪;
+					gf.char[tf.CH_index+2].experience = tf.backup_exp狂;
+					//擬似的にEXP0を足してEXP上限に補正しなおす
+					add_exp_char( getCharacterIndexArray(tf.CH_index+0),0 );
+					add_exp_char( getCharacterIndexArray(tf.CH_index+1),0 );
+					add_exp_char( getCharacterIndexArray(tf.CH_index+2),0 );
+				}else{
+					//おでんは善が成長A、悪が成長C
+					tf.backup_exp善 = tf.backup_expMAX;
+					tf.backup_exp悪 = tf.backup_expMAX;
+					if(tf.backup_exp善 > 193210){tf.backup_exp善 = 193210;}
+					if(tf.backup_exp悪 > 141610){tf.backup_exp悪 = 141610;}
+					//EXPの最大値を配分する。（おでんだけ狂を共有しないように注意）
+					gf.char[tf.CH_index+0].experience = tf.backup_exp善;
+					gf.char[tf.CH_index+1].experience = tf.backup_exp悪;
+					//擬似的にEXP0を足してEXP上限に補正しなおす
+					add_exp_char( getCharacterIndexArray(tf.CH_index+0),0 );
+					add_exp_char( getCharacterIndexArray(tf.CH_index+1),0 );
+				}
+				//------------------------------------------------------------
+			}
+		}
+
+		tf.CH_index     = void;
+		tf.CH_index2    = void;
+		tf.backup_exp善 = void;
+		tf.backup_exp悪 = void;
+		tf.backup_exp狂 = void;
+		tf.backup_expMAX= void;
+
+		tf.backup_exp0  = void;
+		tf.backup_exp1  = void;
+		tf.backup_exp2  = void;
+		tf.backup_exp3  = void;
+
+				//メモ
+				//S	222010（149ｘ149ｘ10）善・ロキ
+				//A	193210（139ｘ139ｘ10）ヴェズ
+				//B	166410（129ｘ129ｘ10）悪
+				//C	141610（119ｘ119ｘ10）
+				//D	118810（109ｘ109ｘ10）
+				//E	 98010（ 99ｘ 99ｘ10）狂
+	}
+
+	//ティルカのINDEX　206→2050　とかにする関数
+	function getCharacterIndexArray(index_){
+		for(var i=0;i<gf.char.count;i++){
+			if(i == index_){return gf.char[i].index;}
+		}
+	}
+
+	//▲不正な雇用状態になっている武将の雇用データ・リストを修復する関数
+	function error_leader_repair_list(x_index=9999,y_=0){
+		tf.test  = x_index;//武将リストにいるか調べたいユニット番号
+		tf.type  = y_;//その武将の兵種番号
+		tf.test1 = 0;//xiのカウント数
+		tf.test2 = 0;//武将リスト内のカウント数
+		tf.test3 = 0;//師団リスト内のカウント数
+		tf.test4 = 0;//処置を行ったかどうか１
+		tf.test5 = -1;//第何師団に組み込まれているか（複数不正に登録されていた場合は、最初の１体がどこの師団にいるか）
+		tf.troopsNo = 0;//雇用情報のバックアップ
+		//----------------------------------------------------
+		//武将リストの補正開始
+		for(var xi=0 ; xi < 72 ; xi++){
+			tf.test1 += 1 ;
+//			System.inform(tf.test1);
+			if(f.used.view.cmview[xi] == tf.test){
+				tf.test2 += 1 ;
+				tf.type = xi\12;
+				if( tf.test2 >= 2 ){
+					//雇用情報をバックアップ
+					tf.troopsNo = gf.get(tf.test,gf.char).troopsNo;
+					//不正に２つ以上並んでるから、２つ目以降は解雇して補正する
+					del_commander_char(tf.type,tf.test,0);//▲装備解除しないで排除（この時点で残っていてもいなくても、雇用状態－２になってしまう）
+					//雇用情報を書き戻す
+					gf.get(tf.test,gf.char).troopsNo = tf.troopsNo;
+					tf.test4 += 1;
+					//キャラを解雇した時に前詰めされるので、１つ前から再度見直す
+					xi--;
+				}
+			}
+		}
+		//tf.test2 の値が１ならば、そのユニットが武将リストの中に載っていた。２以上ならば、不正に２つ以上並んでいたということ。
+		//----------------------------------------------------
+		//師団リストの補正開始
+		for(var xj=0 ; xj < 10 ; xj++){
+			for(var xk=0 ; xk < 6 ; xk++){
+				if( f.used.party[xj].division[xk] == tf.test ){
+					tf.test3 += 1 ;
+
+					if( tf.test3 == 1 ){
+						//最初に見つけた師団登録番号を保持する
+						tf.test5 = xj;
+					}
+					if( tf.test3 >= 2 ){
+						//２つめの不正な登録を見つけたので２つ目以降は０を入れて削除する
+						f.used.party[xj].division[xk] = 0;
+					}
+				}
+			}
+		}
+		//tf.test5 の値が０以上ならば、そのユニットがどこの師団に入っていたかを表す
+		//----------------------------------------------------
+		//武将リストに載っていて……
+		if( tf.test2 >= 1 ){
+			//雇用情報が非雇用（－２）だとやばいので、雇用情報を正常に戻す
+			if( gf.get(tf.test,gf.char).troopsNo == -2 || gf.get(tf.test,gf.char).troopsNo === void){
+				if( tf.test5 >= 0){
+					//組み込まれている師団の番号を返す
+					gf.get(tf.test,gf.char).troopsNo = tf.test5;
+				}else{
+					//師団にはいないので、雇用中（－１）の値だけ返す
+					gf.get(tf.test,gf.char).troopsNo = tf.test5;
+				}
+			}
+			//----------------------------------------------------
+			//師団リストにもいて、かつ雇用情報が不正（例えばドラッグ可能の－１）の場合、雇用情報を補正しなおす
+			if( gf.get(tf.test,gf.char).troopsNo == -1 && tf.test5 >= 0 ){
+				gf.get(tf.test,gf.char).troopsNo = tf.test5;
+			}
+			//----------------------------------------------------
+			//師団リストにもいて、かつ雇用情報が不正（雇用情報≠実際の組み込まれてる師団）の場合、雇用情報を補正しなおす
+			if( gf.get(tf.test,gf.char).troopsNo >= 0  && tf.test5 >= 0 && gf.get(tf.test,gf.char).troopsNo != tf.test5 ){
+				gf.get(tf.test,gf.char).troopsNo = tf.test5;
+			}
+			//----------------------------------------------------
+		}else{
+		//武将リストに載っていなくて、雇用状態になっているものは、－２で強制排除
+			if( gf.get(tf.test,gf.char).troopsNo >= -1 || gf.get(tf.test,gf.char).troopsNo === void ){
+				gf.get(tf.test,gf.char).troopsNo = -2;
+			}
+		}
+		//----------------------------------------------------
+	}
+
+
+	//▲基本キャラが一人もいないという状況を修復する関数
+	function error_leader_repair_nothing(n_=9999){
+		if( n_ = 2010){
+			//----------------------------------------------------
+			//ロキ系が誰もいないという状況は変性時にかなりヤバイので、ロキ系だけは最低でも基本状態だけはいることにする
+			if( gf.get(n_,gf.char).troopsNo == -2 && gf.get(n_+1,gf.char).troopsNo == -2 && gf.get(n_+10,gf.char).troopsNo == -2 && gf.get(n_+11,gf.char).troopsNo == -2 ){
+				gf.get(n_,gf.char).troopsNo = -1;
+			}
+		}
+		if( n_ = 2050){
+			//----------------------------------------------------
+			//ティルカ系が誰もいないという状況で変性などが起こると面倒なので、最低でも善はいるようにする
+			if( gf.get(n_,gf.char).troopsNo == -2 && gf.get(n_+1,gf.char).troopsNo == -2 && gf.get(n_+2,gf.char).troopsNo == -2 ){
+				gf.get(n_,gf.char).troopsNo = -1;
+			}
+		}
+		if( n_ = 2060){
+			//----------------------------------------------------
+			//フレイヤ系が誰もいないという状況で変性などが起こると面倒なので、最低でも善はいるようにする
+			if( gf.get(n_,gf.char).troopsNo == -2 && gf.get(n_+1,gf.char).troopsNo == -2 && gf.get(n_+2,gf.char).troopsNo == -2 ){
+				gf.get(n_,gf.char).troopsNo = -1;
+			}
+		}
+		if( n_ = 2070){
+			//----------------------------------------------------
+			//トール系が誰もいないという状況で変性などが起こると面倒なので、最低でも善はいるようにする
+			if( gf.get(n_,gf.char).troopsNo == -2 && gf.get(n_+1,gf.char).troopsNo == -2 && gf.get(n_+2,gf.char).troopsNo == -2 ){
+				gf.get(n_,gf.char).troopsNo = -1;
+			}
+		}
+		if( n_ = 2080){
+			//----------------------------------------------------
+			//リグレット系が誰もいないという状況で変性などが起こると面倒なので、最低でも善はいるようにする
+			if( gf.get(n_,gf.char).troopsNo == -2 && gf.get(n_+1,gf.char).troopsNo == -2 && gf.get(n_+2,gf.char).troopsNo == -2 ){
+				gf.get(n_,gf.char).troopsNo = -1;
+			}
+		}
+		if( n_ = 2090){
+			//----------------------------------------------------
+			//オーディン系が誰もいないという状況で変性などが起こると面倒なので、最低でも善はいるようにする
+			if( gf.get(n_,gf.char).troopsNo == -2 && gf.get(n_+1,gf.char).troopsNo == -2 ){
+				gf.get(n_,gf.char).troopsNo = -1;
+			}
+		}
+
+		if( n_ = 2051){
+			//----------------------------------------------------
+			//ティルカ系が誰もいないという状況で変性などが起こると面倒なので、最低でも悪はいるようにする
+			if( gf.get(n_-1,gf.char).troopsNo == -2 && gf.get(n_,gf.char).troopsNo == -2 && gf.get(n_+1,gf.char).troopsNo == -2 ){
+				gf.get(n_,gf.char).troopsNo = -1;
+			}
+		}
+		if( n_ = 2061){
+			//----------------------------------------------------
+			//フレイヤ系が誰もいないという状況で変性などが起こると面倒なので、最低でも悪はいるようにする
+			if( gf.get(n_-1,gf.char).troopsNo == -2 && gf.get(n_,gf.char).troopsNo == -2 && gf.get(n_+1,gf.char).troopsNo == -2 ){
+				gf.get(n_,gf.char).troopsNo = -1;
+			}
+		}
+		if( n_ = 2071){
+			//----------------------------------------------------
+			//トール系が誰もいないという状況で変性などが起こると面倒なので、最低でも悪はいるようにする
+			if( gf.get(n_-1,gf.char).troopsNo == -2 && gf.get(n_,gf.char).troopsNo == -2 && gf.get(n_+1,gf.char).troopsNo == -2 ){
+				gf.get(n_,gf.char).troopsNo = -1;
+			}
+		}
+		if( n_ = 2081){
+			//----------------------------------------------------
+			//リグレット系が誰もいないという状況で変性などが起こると面倒なので、最低でも悪はいるようにする
+			if( gf.get(n_-1,gf.char).troopsNo == -2 && gf.get(n_,gf.char).troopsNo == -2 && gf.get(n_+1,gf.char).troopsNo == -2 ){
+				gf.get(n_,gf.char).troopsNo = -1;
+			}
+		}
+	}
+}
+

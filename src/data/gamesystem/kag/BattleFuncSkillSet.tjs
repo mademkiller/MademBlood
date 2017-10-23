@@ -1,0 +1,858 @@
+//=============================
+//¡ƒoƒgƒ‹ƒV[ƒ“—pŠeíŠÖ”
+//=============================
+// battleFuncs‚©‚çƒAƒNƒZƒX
+//kag.fore.message[n].font.mapPrerenderedFont( "uppg12.tft" );
+
+global.battleFuncSkillSet= new battleFuncSkillSet();
+
+//ƒoƒgƒ‹—pŠÖ”ŒQ
+class battleFuncSkillSet
+{
+	//ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+	function battleFuncSkillSet(){
+	}
+	
+	//finalize
+	function finalize(){
+	}
+
+	//“Á’èƒXƒLƒ‹ƒT[ƒ`
+	function searchSkill(i,skill,side){
+		var search = new Array();
+		var SkillValue =  new Array();
+		if(side == 'right'){search = tf.rightParty;}
+		               else{search = tf.leftParty;}
+		if(search[i].id != 0 || search[i].HP.now > 0){
+			for(var j=0;j<search[i].skill.count;j++){
+				if(search[i].skill[j].name == skill){SkillValue[0] = 1;SkillValue[1] += search[i].skill[j].value;}
+			}
+//dm("<searchSkill:"+i+"> Skill:"+SkillValue[0]+"/Value="+SkillValue[1]);
+		}else{
+			SkillValue[0] = 0;SkillValue[1] = 0;
+		}
+		return SkillValue;
+	}
+
+	//‘®«•ª‰ğ
+	function getAttribute(i,side){
+		var search    = new Array();
+		var Attribute = new Array();
+		var Value     = new Dictionary();
+		if(side == 'right'){search = tf.rightParty;}
+		               else{search = tf.leftParty;}
+dm(side+"["+search[i].uniqueName+"].id="+search[i].id);
+dm(side+"["+search[i].uniqueName+"].hp="+search[i].HP.now);
+dm(side+"["+search[i].uniqueName+"].sp="+search[i].attribute);
+		if(search[i].id != 0 || search[i].HP.now > 0){
+			for(var j=0;j<search[i].attribute.length;j++){
+				if(search[i].attribute.substring(j,1) == '’j'){Value.’j += 1;dm("‘®«-’j:"+Value.’j);}
+				if(search[i].attribute.substring(j,1) == '—'){Value.— += 1;dm("‘®«-—:"+Value.—);}
+				if(search[i].attribute.substring(j,1) == 'l'){Value.l += 1;dm("‘®«-l:"+Value.l);}
+				if(search[i].attribute.substring(j,1) == '–‚'){Value.–‚ += 1;dm("‘®«-–‚:"+Value.–‚);}
+				if(search[i].attribute.substring(j,1) == '_'){Value._ += 1;dm("‘®«-_:"+Value._);}
+				if(search[i].attribute.substring(j,1) == '¹'){Value.¹ += 1;dm("‘®«-¹:"+Value.¹);}
+				if(search[i].attribute.substring(j,1) == 'Ší'){Value.Ší += 1;dm("‘®«-Ší:"+Value.Ší);}
+				if(search[i].attribute.substring(j,1) == '—³'){Value.—³ += 1;dm("‘®«-—³:"+Value.—³);}
+				if(search[i].attribute.substring(j,1) == 'b'){Value.b += 1;dm("‘®«-b:"+Value.b);}
+				if(search[i].attribute.substring(j,1) == 'ŠC'){Value.ŠC += 1;dm("‘®«-ŠC:"+Value.ŠC);}
+				if(search[i].attribute.substring(j,1) == '”ò'){Value.”ò += 1;dm("‘®«-”ò:"+Value.”ò);}
+				if(search[i].attribute.substring(j,1) == '‰Î'){Value.‰Î += 1;dm("‘®«-‰Î:"+Value.‰Î);}
+				if(search[i].attribute.substring(j,1) == '—‹'){Value.—‹ += 1;dm("‘®«-—‹:"+Value.—‹);}
+				if(search[i].attribute.substring(j,1) == '÷'){Value.÷ += 1;dm("‘®«-÷:"+Value.÷);}
+				if(search[i].attribute.substring(j,1) == '“Å'){Value.“Å += 1;dm("‘®«-“Å:"+Value.“Å);}
+				if(search[i].attribute.substring(j,1) == '•X'){Value.•X += 1;dm("‘®«-•X:"+Value.•X);}
+				if(search[i].attribute.substring(j,1) == '€'){Value.€ += 1;dm("‘®«-€:"+Value.€);}
+				if(search[i].attribute.substring(j,1) == '‹R'){Value.‹R += 1;dm("‘®«-‹R:"+Value.‹R);}
+				if(search[i].attribute.substring(j,1) == '–é'){Value.–é += 1;dm("‘®«-–é:"+Value.–é);}
+				if(search[i].attribute.substring(j,1) == '’´'){Value.’´ += 1;dm("‘®«-’´:"+Value.’´);}
+			}
+		}
+		Attribute.assign(Value);
+		return Attribute;
+	}
+
+	//“ÁUƒXƒLƒ‹ƒT[ƒ`
+	function searchSpecialskill(i,side){
+		var search  = new Array();
+		var tactics = new Array();
+		var Special =  new Array();
+		var Value   =  new Dictionary();
+		var c=0;
+		if(side == 'right'){search = tf.rightParty;tactics = tf.tacticsSkillCountR;}
+		               else{search = tf.leftParty; tactics = tf.tacticsSkillCountL;}
+		if(search[i].id != 0 || search[i].HP.now > 0){
+			//ƒXƒLƒ‹“ÁU
+			for(var j=0;j<search[i].skill.count;j++){
+				if(search[i].skill[j].name == '’j«“ÁU'){Value.’j += search[i].skill[j].value;dm("S“ÁU-’j:"+Value.’j);}
+				if(search[i].skill[j].name == '—«“ÁU'){Value.— += search[i].skill[j].value;dm("S“ÁU-—:"+Value.—);}
+				if(search[i].skill[j].name == 'lŠÔ“ÁU'){Value.l += search[i].skill[j].value;dm("S“ÁU-l:"+Value.l);}
+				if(search[i].skill[j].name == '–‚‘°“ÁU'){Value.–‚ += search[i].skill[j].value;dm("S“ÁU-–‚:"+Value.–‚);}
+				if(search[i].skill[j].name == '_‘°“ÁU'){Value._ += search[i].skill[j].value;dm("S“ÁU-_:"+Value._);}
+				if(search[i].skill[j].name == '¹E“ÁU'){Value.¹ += search[i].skill[j].value;dm("S“ÁU-¹:"+Value.¹);}
+				if(search[i].skill[j].name == 'Ší•º“ÁU'){Value.Ší += search[i].skill[j].value;dm("S“ÁU-Ší:"+Value.Ší);}
+				if(search[i].skill[j].name == '—³‘°“ÁU'){Value.—³ += search[i].skill[j].value;dm("S“ÁU-—³:"+Value.—³);}
+				if(search[i].skill[j].name == '–‚b“ÁU'){Value.b += search[i].skill[j].value;dm("S“ÁU-b:"+Value.b);}
+				if(search[i].skill[j].name == '…±“ÁU'){Value.ŠC += search[i].skill[j].value;dm("S“ÁU-ŠC:"+Value.ŠC);}
+				if(search[i].skill[j].name == '”òs“ÁU'){Value.”ò += search[i].skill[j].value;dm("S“ÁU-”ò:"+Value.”ò);}
+				if(search[i].skill[j].name == '‰Î—ì“ÁU'){Value.‰Î += search[i].skill[j].value;dm("S“ÁU-‰Î:"+Value.‰Î);}
+				if(search[i].skill[j].name == '•X—ì“ÁU'){Value.•X += search[i].skill[j].value;dm("S“ÁU-•X:"+Value.•X);}
+				if(search[i].skill[j].name == '—‹—ì“ÁU'){Value.—‹ += search[i].skill[j].value;dm("S“ÁU-—‹:"+Value.—‹);}
+				if(search[i].skill[j].name == '÷—ì“ÁU'){Value.÷ += search[i].skill[j].value;dm("S“ÁU-÷:"+Value.÷);}
+				if(search[i].skill[j].name == '“Å«“ÁU'){Value.“Å += search[i].skill[j].value;dm("S“ÁU-“Å:"+Value.“Å);}
+				if(search[i].skill[j].name == '•s€“ÁU'){Value.€ += search[i].skill[j].value;dm("S“ÁU-€:"+Value.€);}
+				if(search[i].skill[j].name == '‹Rm“ÁU'){Value.‹R += search[i].skill[j].value;dm("S“ÁU-‹R:"+Value.‹R);}
+				if(search[i].skill[j].name == '–és“ÁU'){Value.–é += search[i].skill[j].value;dm("S“ÁU-–é:"+Value.–é);}
+				if(search[i].skill[j].name == '’´‰z“ÁU'){Value.’´ += search[i].skill[j].value;dm("S“ÁU-’´:"+Value.’´);}
+			}
+			//ƒ†ƒjƒbƒg“ÁU
+			for(var j=0;j<search[i].special.length;j++){
+				if(search[i].special.substring(j,1) == '’j'){Value.’j += 1;dm("U“ÁU-’j:"+Value.’j);}
+				if(search[i].special.substring(j,1) == '—'){Value.— += 1;dm("U“ÁU-—:"+Value.—);}
+				if(search[i].special.substring(j,1) == 'l'){Value.l += 1;dm("U“ÁU-l:"+Value.l);}
+				if(search[i].special.substring(j,1) == '–‚'){Value.–‚ += 1;dm("U“ÁU-–‚:"+Value.–‚);}
+				if(search[i].special.substring(j,1) == '_'){Value._ += 1;dm("U“ÁU-_:"+Value._);}
+				if(search[i].special.substring(j,1) == '¹'){Value.¹ += 1;dm("U“ÁU-¹:"+Value.¹);}
+				if(search[i].special.substring(j,1) == 'Ší'){Value.Ší += 1;dm("U“ÁU-Ší:"+Value.Ší);}
+				if(search[i].special.substring(j,1) == '—³'){Value.—³ += 1;dm("U“ÁU-—³:"+Value.—³);}
+				if(search[i].special.substring(j,1) == 'b'){Value.b += 1;dm("U“ÁU-b:"+Value.b);}
+				if(search[i].special.substring(j,1) == 'ŠC'){Value.ŠC += 1;dm("U“ÁU-ŠC:"+Value.ŠC);}
+				if(search[i].special.substring(j,1) == '”ò'){Value.”ò += 1;dm("U“ÁU-”ò:"+Value.”ò);}
+				if(search[i].special.substring(j,1) == '‰Î'){Value.‰Î += 1;dm("U“ÁU-‰Î:"+Value.‰Î);}
+				if(search[i].special.substring(j,1) == '—‹'){Value.—‹ += 1;dm("U“ÁU-—‹:"+Value.—‹);}
+				if(search[i].special.substring(j,1) == '÷'){Value.÷ += 1;dm("U“ÁU-÷:"+Value.÷);}
+				if(search[i].special.substring(j,1) == '“Å'){Value.“Å += 1;dm("U“ÁU-“Å:"+Value.“Å);}
+				if(search[i].special.substring(j,1) == '•X'){Value.•X += 1;dm("U“ÁU-•X:"+Value.•X);}
+				if(search[i].special.substring(j,1) == '€'){Value.€ += 1;dm("U“ÁU-€:"+Value.€);}
+				if(search[i].special.substring(j,1) == '‹R'){Value.‹R += 1;dm("U“ÁU-‹R:"+Value.‹R);}
+				if(search[i].special.substring(j,1) == '–é'){Value.–é += 1;dm("U“ÁU-–é:"+Value.–é);}
+				if(search[i].special.substring(j,1) == '’´'){Value.’´ += 1;dm("U“ÁU-’´:"+Value.’´);}
+			}
+			//íp•t—^“ÁU
+			for(var j=0;j<tactics.count;j++){
+				if(tactics[j].substring(0,1) == '’j'){Value.’j += 1;dm("T“ÁU-’j:"+Value.’j);}
+				if(tactics[j].substring(0,1) == '—'){Value.— += 1;dm("T“ÁU-—:"+Value.—);}
+				if(tactics[j].substring(0,1) == 'l'){Value.l += 1;dm("T“ÁU-l:"+Value.l);}
+				if(tactics[j].substring(0,1) == '–‚'){Value.–‚ += 1;dm("T“ÁU-–‚:"+Value.–‚);}
+				if(tactics[j].substring(0,1) == '_'){Value._ += 1;dm("T“ÁU-_:"+Value._);}
+				if(tactics[j].substring(0,1) == '¹'){Value.¹ += 1;dm("T“ÁU-¹:"+Value.¹);}
+				if(tactics[j].substring(0,1) == 'Ší'){Value.Ší += 1;dm("T“ÁU-Ší:"+Value.Ší);}
+				if(tactics[j].substring(0,1) == '—³'){Value.—³ += 1;dm("T“ÁU-—³:"+Value.—³);}
+				if(tactics[j].substring(0,1) == 'b'){Value.b += 1;dm("T“ÁU-b:"+Value.b);}
+				if(tactics[j].substring(0,1) == 'ŠC'){Value.ŠC += 1;dm("T“ÁU-ŠC:"+Value.ŠC);}
+				if(tactics[j].substring(0,1) == '”ò'){Value.”ò += 1;dm("T“ÁU-”ò:"+Value.”ò);}
+				if(tactics[j].substring(0,1) == '‰Î'){Value.‰Î += 1;dm("T“ÁU-‰Î:"+Value.‰Î);}
+				if(tactics[j].substring(0,1) == '—‹'){Value.—‹ += 1;dm("T“ÁU-—‹:"+Value.—‹);}
+				if(tactics[j].substring(0,1) == '÷'){Value.÷ += 1;dm("T“ÁU-÷:"+Value.÷);}
+				if(tactics[j].substring(0,1) == '“Å'){Value.“Å += 1;dm("T“ÁU-“Å:"+Value.“Å);}
+				if(tactics[j].substring(0,1) == '•X'){Value.•X += 1;dm("T“ÁU-•X:"+Value.•X);}
+				if(tactics[j].substring(0,1) == '€'){Value.€ += 1;dm("T“ÁU-€:"+Value.€);}
+				if(tactics[j].substring(0,1) == '‹R'){Value.‹R += 1;dm("T“ÁU-‹R:"+Value.‹R);}
+				if(tactics[j].substring(0,1) == '–é'){Value.–é += 1;dm("T“ÁU-–é:"+Value.–é);}
+				if(tactics[j].substring(0,1) == '’´'){Value.’´ += 1;dm("T“ÁU-’´:"+Value.’´);}
+			}
+		}	
+		Special.assign(Value);
+		return Special;
+	}
+
+	//Šˆ«‰»ƒXƒLƒ‹ˆ—
+	function setActivity(name,value,side,unit){
+		var activity = new Array();
+		if(side == 'right'){activity = tf.rightParty;}
+		               else{activity = tf.leftParty;}
+dm("##### setActivity ["+unit+":"+name+"("+value+")]#####");
+		for(var i=0;i<6;i++){
+			if(i != unit && activity[i].id != 0){
+//dm(i+":"+activity[i].unitName+"["+activity[i].attribute+"]");
+				if( name == '’j«Šˆ«' && activity[i].attribute.indexOf('’j') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == '—«Šˆ«' && activity[i].attribute.indexOf('—') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == 'lŠÔŠˆ«' && activity[i].attribute.indexOf('l') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == '–‚‘°Šˆ«' && activity[i].attribute.indexOf('–‚') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == '_‘°Šˆ«' && activity[i].attribute.indexOf('_') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == '¹EŠˆ«' && activity[i].attribute.indexOf('¹') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == 'Ší•ºŠˆ«' && activity[i].attribute.indexOf('Ší') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == '—³‘°Šˆ«' && activity[i].attribute.indexOf('—³') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == '–‚bŠˆ«' && activity[i].attribute.indexOf('b') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == '…±Šˆ«' && activity[i].attribute.indexOf('ŠC') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == '”òsŠˆ«' && activity[i].attribute.indexOf('”ò') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == '‰Î—ìŠˆ«' && activity[i].attribute.indexOf('‰Î') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == '—‹—ìŠˆ«' && activity[i].attribute.indexOf('—‹') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == '÷—ìŠˆ«' && activity[i].attribute.indexOf('÷') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == '“Å«Šˆ«' && activity[i].attribute.indexOf('“Å') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == '•X—ìŠˆ«' && activity[i].attribute.indexOf('•X') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == '•s€Šˆ«' && activity[i].attribute.indexOf('€') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == '‹RmŠˆ«' && activity[i].attribute.indexOf('‹R') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == '–ésŠˆ«' && activity[i].attribute.indexOf('–é') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == '’´‰zŠˆ«' && activity[i].attribute.indexOf('’´') != -1){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;}
+				if( name == 't’cwŠö'                                             ){activity[i].revise.pow += value; activity[i].revise.def += value; activity[i].revise.spd += value; activity[i].revise.mor += value\4;dm("*YES!! ["+name+"("+value+")]");}
+			}
+		}
+	}
+
+	//ã‘Ì‰»ƒLƒ‹ˆ—
+	function setWeaken(name,value,side,unit){
+		var weaken = new Array();
+		if(side == 'right'){weaken = tf.leftParty;}
+		               else{weaken = tf.rightParty;}
+dm("##### setWeaken ["+unit+":"+name+"("+value+")]#####");
+		for(var i=0;i<6;i++){
+			if(weaken[i].id != 0 && weaken[i].HP.now > 0){
+//dm(i+":"+weaken[i].unitName+"["+weaken[i].attribute+"]");
+				if( name == '’j«ã‘Ì' && weaken[i].attribute.indexOf('’j') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == '—«ã‘Ì' && weaken[i].attribute.indexOf('—') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == 'lŠÔã‘Ì' && weaken[i].attribute.indexOf('l') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == '–‚‘°ã‘Ì' && weaken[i].attribute.indexOf('–‚') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == '_‘°ã‘Ì' && weaken[i].attribute.indexOf('_') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == '¹Eã‘Ì' && weaken[i].attribute.indexOf('¹') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == 'Ší•ºã‘Ì' && weaken[i].attribute.indexOf('Ší') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == '—³‘°ã‘Ì' && weaken[i].attribute.indexOf('—³') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == '–‚bã‘Ì' && weaken[i].attribute.indexOf('b') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == '…±ã‘Ì' && weaken[i].attribute.indexOf('ŠC') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == '”òsã‘Ì' && weaken[i].attribute.indexOf('”ò') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == '‰Î—ìã‘Ì' && weaken[i].attribute.indexOf('‰Î') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == '—‹—ìã‘Ì' && weaken[i].attribute.indexOf('—‹') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == '÷—ìã‘Ì' && weaken[i].attribute.indexOf('÷') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == '“Å«ã‘Ì' && weaken[i].attribute.indexOf('“Å') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == '•X—ìã‘Ì' && weaken[i].attribute.indexOf('•X') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == '•s€ã‘Ì' && weaken[i].attribute.indexOf('€') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == '‹Rmã‘Ì' && weaken[i].attribute.indexOf('‹R') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == '–ésã‘Ì' && weaken[i].attribute.indexOf('–é') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == '’´‰zã‘Ì' && weaken[i].attribute.indexOf('’´') != -1){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == 't’cã‘Ì'                                           ){weaken[i].revise.pow -= value; weaken[i].revise.def -= value; weaken[i].revise.spd -= value; weaken[i].revise.mor -= value\4;}
+				if( name == 'UŒ‚ã‘Ì'                                           ){weaken[i].revise.pow -= value;dm("*Noon. ["+name+"("+value+")]");}
+				if( name == '–hŒäã‘Ì'                                           ){weaken[i].revise.def -= value;dm("*Noon. ["+name+"("+value+")]");}
+				if( name == '‘¬“xã‘Ì'                                           ){weaken[i].revise.spd -= value;dm("*Noon. ["+name+"("+value+")]");}
+				if( name == 'm‹Cã‘Ì'                                           ){weaken[i].revise.mor -= value;dm("*Noon. ["+name+"("+value+")]");}
+			}
+		}
+	}
+
+	//ƒ^[ƒ“ƒGƒ“ƒhƒXƒLƒ‹ˆ—
+	function setTurnEndSkill(){
+		tf.R_personal = [];
+		tf.L_personal = [];
+		for(var i=0;i<6;i++){tf.R_personal[i] = %[];tf.L_personal[i] = %[];}
+		tf.R_Division = [];
+		tf.L_Division = [];
+		for(var i=0;i<6;i++){tf.R_Division[i] = %[];tf.L_Division[i] = %[];}
+dm("## ƒ^[ƒ“ƒGƒ“ƒhƒXƒLƒ‹ˆ— ##");
+dm("ƒGƒ“ƒhƒXƒLƒ‹ƒT[ƒ`");
+		for(var i=0;i<6;i++){
+			if(tf.rightParty[i].id != 0 && tf.rightParty[i].HP.now > 1){
+				//ƒGƒ“ƒhƒAƒ“ƒ`ƒ_ƒ[ƒW(‰E)
+				var SkillValue = searchSkill(i,'‘Îpá•Ç','right');//–{l
+				if(SkillValue[0] == 1){tf.R_personal[i].‘Îpá•Ç = 1;tf.R_personal[i].‘Îpá•Ç’l += SkillValue[1];dm(tf.rightParty[i].unitName+":‘Îpá•Ç="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘ÎpŒ‹ŠE','right');//‘S‘Ì
+				if(SkillValue[0] == 1){tf.R_Division[i].‘ÎpŒ‹ŠE = 1;tf.R_Division[i].‘ÎpŒ‹ŠE’l += SkillValue[1];dm(tf.rightParty[i].unitName+":‘ÎpŒ‹ŠE="+SkillValue[1]);}
+
+				//ƒGƒ“ƒhƒ_ƒ[ƒWŒn
+				//‘Î’P‘Ìi‰Ej
+				var SkillValue = searchSkill(i,'‰Î‰Š•úË','right');if(SkillValue[0] == 1){tf.R_personal[i].‰Î‰Š•úË = 1;tf.R_personal[i].‰Î‰Š•úË’l += SkillValue[1];dm(tf.rightParty[i].unitName+":‰Î‰Š•úË="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'…—¬•úË','right');if(SkillValue[0] == 1){tf.R_personal[i].…—¬•úË = 1;tf.R_personal[i].…—¬•úË’l += SkillValue[1];dm(tf.rightParty[i].unitName+":…—¬•úË="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'•XŒ‚•úË','right');if(SkillValue[0] == 1){tf.R_personal[i].•XŒ‚•úË = 1;tf.R_personal[i].•XŒ‚•úË’l += SkillValue[1];dm(tf.rightParty[i].unitName+":•XŒ‚•úË="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'—‹Œ‚•úË','right');if(SkillValue[0] == 1){tf.R_personal[i].—‹Œ‚•úË = 1;tf.R_personal[i].—‹Œ‚•úË’l += SkillValue[1];dm(tf.rightParty[i].unitName+":—‹Œ‚•úË="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'_p•úË','right');if(SkillValue[0] == 1){tf.R_personal[i]._p•úË = 1;tf.R_personal[i]._p•úË’l += SkillValue[1];dm(tf.rightParty[i].unitName+":_p•úË="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'–‚p•úË','right');if(SkillValue[0] == 1){tf.R_personal[i].–‚p•úË = 1;tf.R_personal[i].–‚p•úË’l += SkillValue[1];dm(tf.rightParty[i].unitName+":–‚p•úË="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'“Å‹C•úË','right');if(SkillValue[0] == 1){tf.R_personal[i].“Å‹C•úË = 1;tf.R_personal[i].“Å‹C•úË’l += SkillValue[1];dm(tf.rightParty[i].unitName+":“Å‹C•úË="+SkillValue[1]);}
+				//‘Î‘S‘Ìi‰Ej
+				var SkillValue = searchSkill(i,'‘å‰Î‰Šw','right');if(SkillValue[0] == 1){tf.R_Division[i].‘å‰Î‰Šw = 1;tf.R_Division[i].‘å‰Î‰Šw’l += SkillValue[1];dm(tf.rightParty[i].unitName+":‘å‰Î‰Šw="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘å…—¬w','right');if(SkillValue[0] == 1){tf.R_Division[i].‘å…—¬w = 1;tf.R_Division[i].‘å…—¬w’l += SkillValue[1];dm(tf.rightParty[i].unitName+":‘å…—¬w="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘å•XŒ‚w','right');if(SkillValue[0] == 1){tf.R_Division[i].‘å•XŒ‚w = 1;tf.R_Division[i].‘å•XŒ‚w’l += SkillValue[1];dm(tf.rightParty[i].unitName+":‘å•XŒ‚w="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘å—‹Œ‚w','right');if(SkillValue[0] == 1){tf.R_Division[i].‘å—‹Œ‚w = 1;tf.R_Division[i].‘å—‹Œ‚w’l += SkillValue[1];dm(tf.rightParty[i].unitName+":‘å—‹Œ‚w="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘å_pw','right');if(SkillValue[0] == 1){tf.R_Division[i].‘å_pw = 1;tf.R_Division[i].‘å_pw’l += SkillValue[1];dm(tf.rightParty[i].unitName+":‘å_pw="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘å–‚pw','right');if(SkillValue[0] == 1){tf.R_Division[i].‘å–‚pw = 1;tf.R_Division[i].‘å–‚pw’l += SkillValue[1];dm(tf.rightParty[i].unitName+":‘å–‚pw="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘å“Å‹Cw','right');if(SkillValue[0] == 1){tf.R_Division[i].‘å“Å‹Cw = 1;tf.R_Division[i].‘å“Å‹Cw’l += SkillValue[1];dm(tf.rightParty[i].unitName+":‘å“Å‹Cw="+SkillValue[1]);}
+
+				//‰ñ•œŒn
+				//’P‘Ì(‰E)
+				var SkillValue = searchSkill(i,'©ŒÈ¡–ü','right');if(SkillValue[0] == 1){tf.R_personal[i].©ŒÈ¡–ü = 1;tf.R_personal[i].©ŒÈ¡–ü’l += SkillValue[1];dm(tf.rightParty[i].unitName+":©ŒÈ¡–ü="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘ÎÛ¡–ü','right');if(SkillValue[0] == 1){tf.R_personal[i].‘ÎÛ¡–ü = 1;tf.R_personal[i].‘ÎÛ¡–ü’l += SkillValue[1];dm(tf.rightParty[i].unitName+":‘ÎÛ¡–ü="+SkillValue[1]);}
+				//‘S‘Ì(‰E)
+				var SkillValue = searchSkill(i,'‘S‘Ì¡–ü','right');if(SkillValue[0] == 1){tf.R_Division[i].‘S‘Ì¡–ü = 1;tf.R_Division[i].‘S‘Ì¡–ü’l += SkillValue[1];dm(tf.rightParty[i].unitName+":‘S‘Ì¡–ü="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'•½“™¡–ü','right');if(SkillValue[0] == 1){tf.R_Division[i].•½“™¡–ü = 1;tf.R_Division[i].•½“™¡–ü’l += SkillValue[1];dm(tf.rightParty[i].unitName+":•½“™¡–ü="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'–‚‘°ˆã—Ã','right');if(SkillValue[0] == 1){tf.R_Division[i].–‚‘°ˆã—Ã = 1;tf.R_Division[i].–‚‘°ˆã—Ã’l += SkillValue[1];dm(tf.rightParty[i].unitName+":–‚‘°ˆã—Ã="+SkillValue[1]);}
+
+				//ó‘Ô‰ñ•œŒn(‰E)
+				var SkillValue = searchSkill(i,'‰ğ“Å¡—Ã','right');if(SkillValue[0] == 1){tf.R_Division[i].‰ğ“Å¡—Ã = 1;dm(tf.rightParty[i].unitName+":‰ğ“Å¡—Ã="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‰ğô¡—Ã','right');if(SkillValue[0] == 1){tf.R_Division[i].‰ğô¡—Ã = 1;dm(tf.rightParty[i].unitName+":‰ğô¡—Ã="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'–ƒáƒ¡—Ã','right');if(SkillValue[0] == 1){tf.R_Division[i].–ƒáƒ¡—Ã = 1;dm(tf.rightParty[i].unitName+":–ƒáƒ¡—Ã="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'íŒ¸¡—Ã','right');if(SkillValue[0] == 1){tf.R_Division[i].íŒ¸¡—Ã = 1;dm(tf.rightParty[i].unitName+":íŒ¸¡—Ã="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'â‘Î¡—Ã','right');if(SkillValue[0] == 1){tf.R_Division[i].â‘Î¡—Ã = 1;dm(tf.rightParty[i].unitName+":â‘Î¡—Ã="+SkillValue[1]);}
+
+				//ƒXƒLƒ‹”½Ë‹zû(‰E)
+				var SkillValue = searchSkill(i,'‘Îp”½Ë','right');if(SkillValue[0] == 1){tf.R_personal[i].‘Îp”½Ë = 1;tf.R_personal[i].‘Îp”½Ë’l += SkillValue[1];dm(tf.rightParty[i].unitName+":‘Îp”½Ë="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘Îp‹zû','right');if(SkillValue[0] == 1){tf.R_personal[i].‘Îp‹zû = 1;tf.R_personal[i].‘Îp‹zû’l += SkillValue[1];dm(tf.rightParty[i].unitName+":‘Îp‹zû="+SkillValue[1]);}
+			}
+
+			if(tf.leftParty[i].id != 0 && tf.leftParty[i].HP.now > 1){
+				//ƒGƒ“ƒhƒAƒ“ƒ`ƒ_ƒ[ƒW(¶)
+				var SkillValue = searchSkill(i,'‘Îpá•Ç','left');//–{l
+				if(SkillValue[0] == 1){tf.L_personal[i].‘Îpá•Ç = 1;tf.L_personal[i].‘Îpá•Ç’l += SkillValue[1];dm(tf.leftParty[i].unitName+":‘Îpá•Ç="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘ÎpŒ‹ŠE','left');//‘S‘Ì
+				if(SkillValue[0] == 1){tf.L_Division[i].‘ÎpŒ‹ŠE = 1;tf.L_Division[i].‘ÎpŒ‹ŠE’l += SkillValue[1];dm(tf.leftParty[i].unitName+":‘ÎpŒ‹ŠE="+SkillValue[1]);
+				}
+
+				//ƒGƒ“ƒhƒ_ƒ[ƒWŒn
+				//‘Î’P‘Ìi¶j
+				var SkillValue = searchSkill(i,'‰Î‰Š•úË','left');if(SkillValue[0] == 1){tf.L_personal[i].‰Î‰Š•úË = 1;tf.L_personal[i].‰Î‰Š•úË’l += SkillValue[1];dm(tf.leftParty[i].unitName+":‰Î‰Š•úË="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'…—¬•úË','left');if(SkillValue[0] == 1){tf.L_personal[i].…—¬•úË = 1;tf.L_personal[i].…—¬•úË’l += SkillValue[1];dm(tf.leftParty[i].unitName+":…—¬•úË="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'•XŒ‚•úË','left');if(SkillValue[0] == 1){tf.L_personal[i].•XŒ‚•úË = 1;tf.L_personal[i].•XŒ‚•úË’l += SkillValue[1];dm(tf.leftParty[i].unitName+":•XŒ‚•úË="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'—‹Œ‚•úË','left');if(SkillValue[0] == 1){tf.L_personal[i].—‹Œ‚•úË = 1;tf.L_personal[i].—‹Œ‚•úË’l += SkillValue[1];dm(tf.leftParty[i].unitName+":—‹Œ‚•úË="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'_p•úË','left');if(SkillValue[0] == 1){tf.L_personal[i]._p•úË = 1;tf.L_personal[i]._p•úË’l += SkillValue[1];dm(tf.leftParty[i].unitName+":_p•úË="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'–‚p•úË','left');if(SkillValue[0] == 1){tf.L_personal[i].–‚p•úË = 1;tf.L_personal[i].–‚p•úË’l += SkillValue[1];dm(tf.leftParty[i].unitName+":–‚p•úË="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'“Å‹C•úË','left');if(SkillValue[0] == 1){tf.L_personal[i].“Å‹C•úË = 1;tf.L_personal[i].“Å‹C•úË’l += SkillValue[1];dm(tf.leftParty[i].unitName+":“Å‹C•úË="+SkillValue[1]);}
+				//‘Î‘S‘Ìi¶j
+				var SkillValue = searchSkill(i,'‘å‰Î‰Šw','left');if(SkillValue[0] == 1){tf.L_Division[i].‘å‰Î‰Šw = 1;tf.L_Division[i].‘å‰Î‰Šw’l += SkillValue[1];dm(tf.leftParty[i].unitName+":‘å‰Î‰Šw="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘å…—¬w','left');if(SkillValue[0] == 1){tf.L_Division[i].‘å…—¬w = 1;tf.L_Division[i].‘å…—¬w’l += SkillValue[1];dm(tf.leftParty[i].unitName+":‘å…—¬w="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘å•XŒ‚w','left');if(SkillValue[0] == 1){tf.L_Division[i].‘å•XŒ‚w = 1;tf.L_Division[i].‘å•XŒ‚w’l += SkillValue[1];dm(tf.leftParty[i].unitName+":‘å•XŒ‚w="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘å—‹Œ‚w','left');if(SkillValue[0] == 1){tf.L_Division[i].‘å—‹Œ‚w = 1;tf.L_Division[i].‘å—‹Œ‚w’l += SkillValue[1];dm(tf.leftParty[i].unitName+":‘å—‹Œ‚w="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘å_pw','left');if(SkillValue[0] == 1){tf.L_Division[i].‘å_pw = 1;tf.L_Division[i].‘å_pw’l += SkillValue[1];dm(tf.leftParty[i].unitName+":‘å_pw="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘å–‚pw','left');if(SkillValue[0] == 1){tf.L_Division[i].‘å–‚pw = 1;tf.L_Division[i].‘å–‚pw’l += SkillValue[1];dm(tf.leftParty[i].unitName+":‘å–‚pw="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘å“Å‹Cw','left');if(SkillValue[0] == 1){tf.L_Division[i].‘å“Å‹Cw = 1;tf.L_Division[i].‘å“Å‹Cw’l += SkillValue[1];dm(tf.leftParty[i].unitName+":‘å“Å‹Cw="+SkillValue[1]);}
+
+				//‰ñ•œŒn
+				//’P‘Ì(¶)
+				var SkillValue = searchSkill(i,'©ŒÈ¡–ü','left');if(SkillValue[0] == 1){tf.L_personal[i].©ŒÈ¡–ü = 1;tf.L_personal[i].©ŒÈ¡–ü’l += SkillValue[1];dm(tf.leftParty[i].unitName+":©ŒÈ¡–ü="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘ÎÛ¡–ü','left');if(SkillValue[0] == 1){tf.L_personal[i].‘ÎÛ¡–ü = 1;tf.L_personal[i].‘ÎÛ¡–ü’l += SkillValue[1];dm(tf.leftParty[i].unitName+":‘ÎÛ¡–ü="+SkillValue[1]);}
+				//‘S‘Ì(¶)
+				var SkillValue = searchSkill(i,'‘S‘Ì¡–ü','left');if(SkillValue[0] == 1){tf.L_Division[i].‘S‘Ì¡–ü = 1;tf.L_Division[i].‘S‘Ì¡–ü’l += SkillValue[1];dm(tf.leftParty[i].unitName+":‘S‘Ì¡–ü="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'•½“™¡–ü','left');if(SkillValue[0] == 1){tf.L_Division[i].•½“™¡–ü = 1;tf.L_Division[i].•½“™¡–ü’l += SkillValue[1];dm(tf.leftParty[i].unitName+":•½“™¡–ü="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'–‚‘°ˆã—Ã','left');if(SkillValue[0] == 1){tf.L_Division[i].–‚‘°ˆã—Ã = 1;tf.L_Division[i].–‚‘°ˆã—Ã’l += SkillValue[1];dm(tf.leftParty[i].unitName+":–‚‘°ˆã—Ã="+SkillValue[1]);}
+
+				//ó‘Ô‰ñ•œŒn(¶)
+				var SkillValue = searchSkill(i,'‰ğ“Å¡—Ã','left');if(SkillValue[0] == 1){tf.L_Division[i].‰ğ“Å¡—Ã = 1;dm(tf.leftParty[i].unitName+":‰ğ“Å¡—Ã="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‰ğô¡—Ã','left');if(SkillValue[0] == 1){tf.L_Division[i].‰ğô¡—Ã = 1;dm(tf.leftParty[i].unitName+":‰ğô¡—Ã="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'–ƒáƒ¡—Ã','left');if(SkillValue[0] == 1){tf.L_Division[i].–ƒáƒ¡—Ã = 1;dm(tf.leftParty[i].unitName+":–ƒáƒ¡—Ã="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'íŒ¸¡—Ã','left');if(SkillValue[0] == 1){tf.L_Division[i].íŒ¸¡—Ã = 1;dm(tf.leftParty[i].unitName+":íŒ¸¡—Ã="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'â‘Î¡—Ã','left');if(SkillValue[0] == 1){tf.L_Division[i].â‘Î¡—Ã = 1;dm(tf.leftParty[i].unitName+":â‘Î¡—Ã="+SkillValue[1]);}
+
+				//ƒXƒLƒ‹”½Ë‹zû(¶)
+				var SkillValue = searchSkill(i,'‘Îp”½Ë','left');if(SkillValue[0] == 1){tf.L_personal[i].‘Îp”½Ë = 1;tf.L_personal[i].‘Îp”½Ë’l += SkillValue[1];dm(tf.leftParty[i].unitName+":‘Îp”½Ë="+SkillValue[1]);}
+				var SkillValue = searchSkill(i,'‘Îp‹zû','left');if(SkillValue[0] == 1){tf.L_personal[i].‘Îp‹zû = 1;tf.L_personal[i].‘Îp‹zû’l += SkillValue[1];dm(tf.leftParty[i].unitName+":‘Îp‹zû="+SkillValue[1]);}
+			}
+		}
+	}
+
+	function calcTurnEndSkill(){
+		var Rdamage    = [];var Ldamage    = [];
+		var Rrecovery  = [];var Lrecovery  = [];
+		var RdamageP   = [];var LdamageP   = [];
+		var RfortAttack= [];var LfortAttack= [];
+		var RfortRepair= [];var LfortRepair= [];
+		for(var i=0;i<6;i++){
+			if(tf.leftParty[i].id == 0){continue;}
+			//UŒ‚
+		dm("--’PUŒ‚(‘Î¶)--");
+			//‘ÎÛF“G(¶)ƒ^[ƒQƒbƒg
+			if( tf.allyTarget == i){
+				for(var n=0;n<6;n++){
+					//‰Î‰Š•úË
+					if(tf.R_personal[n].‰Î‰Š•úË == 1 && tf.leftParty[i].attribute.indexOf('‰Î') == -1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+						Ldamage[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_personal[n].‰Î‰Š•úË’l);
+						dm(tf.leftParty[i].unitName+":Ldamage["+i+"]="+Ldamage[i]+"/‰Î‰Š•úË");
+					}
+					//…—¬•úË
+					if(tf.R_personal[n].…—¬•úË == 1 && tf.leftParty[i].attribute.indexOf('ŠC') == -1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+						Ldamage[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_personal[n].…—¬•úË’l);
+						dm(tf.leftParty[i].unitName+":Ldamage["+i+"]="+Ldamage[i]+"/…—¬•úË");
+					}
+					//•XŒ‚•úË
+					if(tf.R_personal[n].•XŒ‚•úË == 1 && tf.leftParty[i].attribute.indexOf('•X') == -1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+						Ldamage[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_personal[n].•XŒ‚•úË’l);
+						dm(tf.leftParty[i].unitName+":Ldamage["+i+"]="+Ldamage[i]+"/•XŒ‚•úË");
+					}
+					//—‹Œ‚•úË
+					if(tf.R_personal[n].—‹Œ‚•úË == 1 && tf.leftParty[i].attribute.indexOf('—‹') == -1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+						Ldamage[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_personal[n].—‹Œ‚•úË’l);
+						dm(tf.leftParty[i].unitName+":Ldamage["+i+"]="+Ldamage[i]+"/—‹Œ‚•úË");
+					}
+					//_p•úË
+					if(tf.R_personal[n]._p•úË == 1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+						Ldamage[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_personal[n]._p•úË’l);
+						dm(tf.leftParty[i].unitName+":Ldamage["+i+"]="+Ldamage[i]+"/_p•úË");
+					}
+					//–‚p•úË
+					if(tf.R_personal[n].–‚p•úË == 1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+						Ldamage[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_personal[n].–‚p•úË’l);
+						dm(tf.leftParty[i].unitName+":Ldamage["+i+"]="+Ldamage[i]+"/–‚p•úË");
+					}
+					//“Å‹C•úË(ŒyŒ¸•s‰Â)
+					if(tf.R_personal[n].“Å‹C•úË == 1 && (tf.leftParty[i].attribute.indexOf('“Å') == -1 && tf.leftParty[i].attribute.indexOf('€') == -1 && tf.leftParty[i].attribute.indexOf('Ší') == -1) && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+						LdamageP[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_personal[n].“Å‹C•úË’l);
+						dm(tf.leftParty[i].unitName+":LdamageP["+i+"]="+LdamageP[i]+"/“Å‹C•úË");
+					}
+				}
+			}
+
+		dm("--‘SUŒ‚(‘Î¶)--");
+			//‘ÎÛF“G‘S‘Ì(¶)
+			for(var n=0;n<6;n++){
+				//‘å‰Î‰Šw
+				if(tf.R_Division[n].‘å‰Î‰Šw == 1 && tf.leftParty[i].attribute.indexOf('‰Î') == -1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+					Ldamage[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_Division[n].‘å‰Î‰Šw’l);
+					dm(tf.leftParty[i].unitName+":Ldamage["+i+"]="+Ldamage[i]+"/‘å‰Î‰Šw");
+				}
+				//‘å…—¬w
+				if(tf.R_Division[n].‘å…—¬w == 1 && tf.leftParty[i].attribute.indexOf('ŠC') == -1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+					Ldamage[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_Division[n].‘å…—¬w’l);
+					dm(tf.leftParty[i].unitName+":Ldamage["+i+"]="+Ldamage[i]+"/‘å…—¬w");
+				}
+				//‘å•XŒ‚w
+				if(tf.R_Division[n].‘å•XŒ‚w == 1 && tf.leftParty[i].attribute.indexOf('•X') == -1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+					Ldamage[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_Division[n].‘å•XŒ‚w’l);
+					dm(tf.leftParty[i].unitName+":Ldamage["+i+"]="+Ldamage[i]+"/‘å•XŒ‚w");
+				}
+				//‘å—‹Œ‚w
+				if(tf.R_Division[n].‘å—‹Œ‚w == 1 && tf.leftParty[i].attribute.indexOf('—‹') == -1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+					Ldamage[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_Division[n].‘å—‹Œ‚w’l);
+					dm(tf.leftParty[i].unitName+":Ldamage["+i+"]="+Ldamage[i]+"/‘å—‹Œ‚w");
+				}
+				//‘å_pw
+				if(tf.R_Division[n].‘å_pw == 1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+					Ldamage[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_Division[n].‘å_pw’l);
+					dm(tf.leftParty[i].unitName+":Ldamage["+i+"]="+Ldamage[i]+"/‘å_pw");
+				}
+				//‘å–‚pw
+				if(tf.R_Division[n].‘å–‚pw == 1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+					Ldamage[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_Division[n].‘å–‚pw’l);
+					dm(tf.leftParty[i].unitName+":Ldamage["+i+"]="+Ldamage[i]+"/‘å–‚pw");
+				}
+				//‘å“Å‹Cw
+				if(tf.R_Division[n].‘å“Å‹Cw == 1 && (tf.leftParty[i].attribute.indexOf('“Å') == -1 && tf.leftParty[i].attribute.indexOf('€') == -1 && tf.leftParty[i].attribute.indexOf('Ší') == -1) && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+					LdamageP[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_Division[n].‘å“Å‹Cw’l);
+					dm(tf.leftParty[i].unitName+":LdamageP["+i+"]="+LdamageP[i]+"/‘å“Å‹Cw");
+				}
+			}
+
+		dm("--’P‰ñ•œ(‘Î¶)--");
+			//‘ÎÛF©ŒÈ(¶)
+			//©ŒÈ¡–ü
+			if(tf.L_personal[i].©ŒÈ¡–ü == 1 && tf.leftParty[i].curse < 1 && (tf.leftParty[i].seal < 1 && tf.leftParty[i].charm < 1)){
+				 Lrecovery[i] += calc.turnEndSkillCalc(tf.leftParty[i].HP.now,tf.L_personal[i].©ŒÈ¡–ü’l);
+				dm(tf.leftParty[i].unitName+":Lrecovery["+i+"]="+Lrecovery[i]+"/©ŒÈ¡–ü");
+			}
+			//‘ÎÛFƒ^[ƒQƒbƒg(¶)
+			//‘ÎÛ¡–ü
+			if( tf.allyTarget == i){
+				for(var n=0;n<6;n++){
+					if(tf.L_personal[n].‘ÎÛ¡–ü == 1 && tf.leftParty[i].curse < 1 && tf.leftParty[i].attribute.indexOf('€') == -1 && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){
+						 Lrecovery[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_personal[n].‘ÎÛ¡–ü’l);
+						dm(tf.leftParty[i].unitName+":Lrecovery["+i+"]="+Lrecovery[i]+"/‘ÎÛ¡–ü");dm("À¹Ş="+tf.allyTarget);
+					}
+				}
+			}
+
+		dm("--‘S‰ñ•œ(‘Î¶)--");
+			//‘ÎÛF©‘S‘Ì(¶)
+			for(var n=0;n<6;n++){
+				//‘S‘Ì¡–ü
+				if(tf.L_Division[n].‘S‘Ì¡–ü == 1 && tf.leftParty[i].curse < 1 && tf.leftParty[i].attribute.indexOf('€') == -1 && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){
+					 Lrecovery[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_Division[n].‘S‘Ì¡–ü’l);
+					dm(tf.rightParty[n].unitName+"<-‘S‘Ì¡–ü");
+					dm(tf.leftParty[i].unitName+":Lrecovery["+i+"]="+Lrecovery[i]+"/‘S‘Ì¡–ü");
+				}
+				//•½“™¡–ü
+				if(tf.L_Division[n].•½“™¡–ü == 1 && tf.leftParty[i].curse < 1 && (tf.leftParty[i].seal < 1 && tf.leftParty[i].charm < 1)){
+					 Lrecovery[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_Division[n].•½“™¡–ü’l);
+					dm(tf.rightParty[n].unitName+"<-•½“™¡–ü");
+					dm(tf.leftParty[i].unitName+":Lrecovery["+i+"]="+Lrecovery[i]+"/•½“™¡–ü");
+				}
+				//–‚‘°ˆã—Ã
+				if(tf.L_Division[n].–‚‘°ˆã—Ã == 1 && tf.leftParty[i].curse < 1 && (tf.leftParty[i].attribute.indexOf('€') != -1 || tf.leftParty[i].attribute.indexOf('–‚') != -1) && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){
+					 Lrecovery[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_Division[n].–‚‘°ˆã—Ã’l);
+					dm(tf.rightParty[n].unitName+"<-–‚‘°ˆã—Ã");
+					dm(tf.leftParty[i].unitName+":Lrecovery["+i+"]="+Lrecovery[i]+"/–‚‘°ˆã—Ã");
+				}
+			}
+
+			//¡—Ã
+		dm("--¡—Ã(‘Î¶)--");
+			//‘ÎÛF“G‘S‘Ì(¶)
+			for(var n=0;n<6;n++){
+				//‰ğ“Å¡—Ã
+				if(tf.L_Division[n].‰ğ“Å¡—Ã == 1 && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){tf.leftParty[i].poison   = 0;}
+				//‰ğô¡—Ã
+				if(tf.L_Division[n].‰ğô¡—Ã == 1 && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){tf.leftParty[i].curse    = 0;}
+				//–ƒáƒ¡—Ã
+				if(tf.L_Division[n].–ƒáƒ¡—Ã == 1 && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){tf.leftParty[i].paralyze = 0;}
+				//íŒ¸¡—Ã
+				if(tf.L_Division[n].íŒ¸¡—Ã == 1 && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){
+					tf.leftParty[i].cutDown.pow = 0;
+					tf.leftParty[i].cutDown.def = 0;
+					tf.leftParty[i].cutDown.spd = 0;
+					tf.leftParty[i].cutDown.mor = 0;
+				}
+			}
+
+			//ˆÙí
+		dm("--ˆÙí(‘Î¶)--");
+			//“G©ŒÈ(¶)
+			if(tf.leftParty[i].poison > 0){
+				LdamageP[i] += (int)(tf.leftParty[i].HP.now * (tf.leftParty[i].poison / 100));
+				dm(tf.leftParty[i].unitName+":Ldamage["+i+"]="+Ldamage[i]+"/“Å‰»Œ¸Z");
+			}
+		}
+
+		for(var i=0;i<6;i++){
+			if(tf.rightParty[i].id == 0){continue;}
+			//UŒ‚
+		dm("--’PUŒ‚(‘Î‰E)--");
+			//‘ÎÛF“G(‰E)ƒ^[ƒQƒbƒg
+			if( tf.enemyTarget == i){
+				for(var n=0;n<6;n++){
+					//‰Î‰Š•úË
+					if(tf.L_personal[n].‰Î‰Š•úË == 1 && tf.rightParty[i].attribute.indexOf('‰Î') == -1 && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){
+						Rdamage[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_personal[n].‰Î‰Š•úË’l);
+						dm(tf.rightParty[i].unitName+":Rdamage["+i+"]="+Rdamage[i]+"/‰Î‰Š•úË");
+					}
+					//…—¬•úË
+					if(tf.L_personal[n].…—¬•úË == 1 && tf.rightParty[i].attribute.indexOf('ŠC') == -1 && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){
+						Rdamage[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_personal[n].…—¬•úË’l);
+						dm(tf.rightParty[i].unitName+":Rdamage["+i+"]="+Rdamage[i]+"/…—¬•úË");
+					}
+					//•XŒ‚•úË
+					if(tf.L_personal[n].•XŒ‚•úË == 1 && tf.rightParty[i].attribute.indexOf('•X') == -1 && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){
+						Rdamage[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_personal[n].•XŒ‚•úË’l);
+						dm(tf.rightParty[i].unitName+":Rdamage["+i+"]="+Rdamage[i]+"/•XŒ‚•úË");
+					}
+					//—‹Œ‚•úË
+					if(tf.L_personal[n].—‹Œ‚•úË == 1 && tf.rightParty[i].attribute.indexOf('—‹') == -1 && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){
+						Rdamage[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_personal[n].—‹Œ‚•úË’l);
+						dm(tf.rightParty[i].unitName+":Rdamage["+i+"]="+Rdamage[i]+"/—‹Œ‚•úË");
+					}
+					//_p•úË
+					if(tf.L_personal[n]._p•úË == 1 && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){
+						Rdamage[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_personal[n]._p•úË’l);
+						dm(tf.rightParty[i].unitName+":Rdamage["+i+"]="+Rdamage[i]+"/_p•úË");
+					}
+					//–‚p•úË
+					if(tf.L_personal[n].–‚p•úË == 1 && (tf.leftParty[i].seal < 1 && tf.leftParty[i].charm < 1)){
+						Rdamage[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_personal[n].–‚p•úË’l);
+						dm(tf.rightParty[i].unitName+":Rdamage["+i+"]="+Rdamage[i]+"/–‚p•úË");
+					}
+					//“Å‹C•úË(ŒyŒ¸•s‰Â)
+					if(tf.L_personal[n].“Å‹C•úË == 1 && (tf.rightParty[i].attribute.indexOf('“Å') == -1 || tf.rightParty[i].attribute.indexOf('€') == -1 || tf.rightParty[i].attribute.indexOf('Ší') == -1) && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){
+						RdamageP[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_personal[n].“Å‹C•úË’l);
+						dm(tf.rightParty[i].unitName+":RdamageP["+i+"]="+RdamageP[i]+"/“Å‹C•úË");
+					}
+				}
+			}
+
+		dm("--‘SUŒ‚(‘Î‰E)--");
+			//‘ÎÛF©‘S‘Ì(‰E)
+			for(var n=0;n<6;n++){
+				//‘å‰Î‰Šw
+				if(tf.L_Division[n].‘å‰Î‰Šw == 1 && tf.rightParty[i].attribute.indexOf('‰Î') == -1 && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){
+					Rdamage[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_Division[n].‘å‰Î‰Šw’l);
+					dm(tf.rightParty[i].unitName+":Rdamage["+i+"]="+Rdamage[i]+"/‘å‰Î‰Šw");
+				}
+				//‘å…—¬w
+				if(tf.L_Division[n].‘å…—¬w == 1 && tf.rightParty[i].attribute.indexOf('ŠC') == -1 && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){
+					Rdamage[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_Division[n].‘å…—¬w’l);
+					dm(tf.rightParty[i].unitName+":Rdamage["+i+"]="+Rdamage[i]+"/‘å…—¬w");
+				}
+				//‘å•XŒ‚w
+				if(tf.L_Division[n].‘å•XŒ‚w == 1 && tf.rightParty[i].attribute.indexOf('•X') == -1 && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){
+					Rdamage[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_Division[n].‘å•XŒ‚w’l);
+					dm(tf.rightParty[i].unitName+":Rdamage["+i+"]="+Rdamage[i]+"/‘å•XŒ‚w");
+				}
+				//‘å—‹Œ‚w
+				if(tf.L_Division[n].‘å—‹Œ‚w == 1 && tf.rightParty[i].attribute.indexOf('—‹') == -1 && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){
+					Rdamage[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_Division[n].‘å—‹Œ‚w’l);
+					dm(tf.rightParty[i].unitName+":Rdamage["+i+"]="+Rdamage[i]+"/‘å—‹Œ‚w");
+				}
+				//‘å_pw
+				if(tf.L_Division[n].‘å_pw == 1 && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){
+					Rdamage[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_Division[n].‘å_pw’l);
+					dm(tf.rightParty[i].unitName+":Rdamage["+i+"]="+Rdamage[i]+"/‘å_pw");
+				}
+				//‘å–‚pw
+				if(tf.L_Division[n].‘å–‚pw == 1 && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){
+					Rdamage[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_Division[n].‘å–‚pw’l);
+					dm(tf.rightParty[i].unitName+":Rdamage["+i+"]="+Rdamage[i]+"/‘å–‚pw");
+				}
+				//‘å“Å‹Cw
+				if(tf.L_Division[n].‘å“Å‹Cw == 1 && (tf.rightParty[i].attribute.indexOf('“Å') == -1 || tf.rightParty[i].attribute.indexOf('€') == -1 || tf.rightParty[i].attribute.indexOf('Ší') == -1) && (tf.leftParty[n].seal < 1 && tf.leftParty[n].charm < 1)){
+					RdamageP[i] += calc.turnEndSkillCalc(tf.leftParty[n].HP.now,tf.L_Division[n].‘å“Å‹Cw’l);
+					dm(tf.rightParty[i].unitName+":RdamageP["+i+"]="+RdamageP[i]+"/‘å“Å‹Cw");
+				}
+			}
+
+			//¡–ü
+		dm("--’P¡–ü(‘Î‰E)--");
+			//‘ÎÛF©ŒÈ(‰E)
+			//©ŒÈ¡–ü
+			if(tf.R_personal[i].©ŒÈ¡–ü == 1 && tf.rightParty[i].curse < 1 && (tf.rightParty[i].seal < 1 && tf.rightParty[i].charm < 1)){
+				 Rrecovery[i] += calc.turnEndSkillCalc(tf.rightParty[i].HP.now,tf.R_personal[i].©ŒÈ¡–ü’l);
+				dm(tf.rightParty[i].unitName+":Rrecovery["+i+"]="+Rrecovery[i]+"/©ŒÈ¡–ü");
+			}
+			//‘ÎÛFƒ^[ƒQƒbƒg(‰E)
+			//‘ÎÛ¡–ü
+			if( tf.enemyTarget == i){
+				for(var n=0;n<6;n++){
+					if(tf.R_personal[n].‘ÎÛ¡–ü == 1 && tf.rightParty[i].curse < 1 && tf.rightParty[i].attribute.indexOf('€') == -1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+						 Rrecovery[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_personal[n].‘ÎÛ¡–ü’l);
+						dm(tf.rightParty[i].unitName+":Rrecovery["+i+"]="+Rrecovery[i]+"/‘ÎÛ¡–ü");
+					}
+				}
+			}
+
+		dm("--‘S’P¡–ü(‘Î‰E)--");
+			//‘ÎÛF©‘S‘Ì(‰E)
+			for(var n=0;n<6;n++){
+				//‘S‘Ì¡–ü
+				if(tf.R_Division[n].‘S‘Ì¡–ü == 1 && tf.rightParty[i].curse < 1 && tf.rightParty[i].attribute.indexOf('€') == -1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+					Rrecovery[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_Division[n].‘S‘Ì¡–ü’l);
+					dm(tf.rightParty[n].unitName+"<-‘S‘Ì¡–ü");
+					dm(tf.rightParty[i].unitName+":Rrecovery["+i+"]="+Rrecovery[i]+"/‘S‘Ì¡–ü");
+				}
+				//•½“™¡–ü
+				if(tf.R_Division[n].•½“™¡–ü == 1 && tf.rightParty[i].curse < 1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+					Rrecovery[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_Division[n].•½“™¡–ü’l);
+					dm(tf.rightParty[n].unitName+"<-•½“™¡–ü");
+					dm(tf.rightParty[i].unitName+":Rrecovery["+i+"]="+Rrecovery[i]+"/•½“™¡–ü");
+				}
+				//–‚‘°ˆã—Ã
+				if(tf.R_Division[n].–‚‘°ˆã—Ã == 1 && tf.rightParty[i].curse < 1 && (tf.rightParty[i].attribute.indexOf('€') != -1 || tf.rightParty[i].attribute.indexOf('–‚') != -1) && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+					Rrecovery[i] += calc.turnEndSkillCalc(tf.rightParty[n].HP.now,tf.R_Division[n].–‚‘°ˆã—Ã’l);
+					dm(tf.rightParty[n].unitName+"<-–‚‘°ˆã—Ã");
+					dm(tf.rightParty[i].unitName+":Rrecovery["+i+"]="+Rrecovery[i]+"/–‚‘°ˆã—Ã");
+				}
+			}
+
+			//¡—Ã
+		dm("--¡—Ã(‘Î‰E)--");
+			//‘ÎÛF©‘S‘Ì(‰E)
+			for(var n=0;n<6;n++){
+				//‰ğ“Å¡—Ã
+				if(tf.R_Division[n].‰ğ“Å¡—Ã == 1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){tf.rightParty[i].poison   = 0;}
+				//‰ğô¡—Ã
+				if(tf.R_Division[n].‰ğô¡—Ã == 1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){tf.rightParty[i].curse    = 0;}
+				//–ƒáƒ¡—Ã
+				if(tf.R_Division[n].–ƒáƒ¡—Ã == 1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){tf.rightParty[i].paralyze = 0;}
+				//íŒ¸¡—Ã
+				if(tf.R_Division[n].íŒ¸¡—Ã == 1 && (tf.rightParty[n].seal < 1 && tf.rightParty[n].charm < 1)){
+					tf.rightParty[i].cutDown.pow = 0;
+					tf.rightParty[i].cutDown.def = 0;
+					tf.rightParty[i].cutDown.spd = 0;
+					tf.rightParty[i].cutDown.mor = 0;
+				}
+			}
+
+			//ˆÙí
+		dm("--ˆÙí(‘Î‰E)--");
+			//ó‘ÔˆÙí(“Å)
+			//©©ŒÈ(‰E)
+			if(tf.rightParty[i].poison > 0){
+				RdamageP[i] += (int)(tf.rightParty[i].HP.now * (tf.rightParty[i].poison / 100));
+				dm(tf.rightParty[i].unitName+":RdamageP["+i+"]="+RdamageP[i]+"/“Å‰»Œ¸Z");
+			}
+		}
+
+		for(var i=0;i<6;i++){
+			var tmp;
+			//”½Ë
+			dm("--”½Ë(¶)--");
+			//‘ÎÛF“Gƒ^[ƒQƒbƒg
+			if(tf.L_personal[i].‘Îp”½Ë == 1 && (tf.leftParty[i].seal < 1 || tf.leftParty[i].charm < 1)){
+				Rdamage[tf.enemyTarget] += (int)(Ldamage[i] * (tf.L_personal[i].‘Îp”½Ë’l / 100));
+				tmp = 1;
+				dm(tf.leftParty[i].unitName+"<-‘Îp”½Ë");
+				dm(tf.rightParty[tf.enemyTarget].unitName+":Rdamage["+tf.enemyTarget+"]="+Rdamage[tf.enemyTarget]+"/‘Îp”½Ë");
+			}
+
+			//‹zû
+			dm("--‹zû(¶)--");
+			//‘ÎÛF©•ª
+			if(tf.L_personal[i].‘Îp‹zû == 1 && (tf.leftParty[i].seal < 1 || tf.leftParty[i].charm < 1)){
+				Lrecovery[i] += (int)(Ldamage[i] * (tf.L_personal[i].‘Îp‹zû’l / 100));//‹zû’l
+				tmp = 1;
+				dm(tf.leftParty[i].unitName+"<-‘Îp‹zû");
+				dm(tf.leftParty[i].unitName+":Lrecovery["+i+"]="+Lrecovery[i]+"/‘Îp‹zû");
+			}
+
+			//ƒ_ƒ[ƒW–³Œø‰»
+			if(tmp == 1){
+				Ldamage[i] = 0;
+			}
+		}
+
+		for(var i=0;i<6;i++){
+			var tmp;
+			//”½Ë
+			dm("--”½Ë(‰E)--");
+			//‘ÎÛF“Gƒ^[ƒQƒbƒg
+			if(tf.R_personal[i].‘Îp”½Ë == 1 && (tf.rightParty[i].seal < 1 || tf.rightParty[i].charm < 1)){
+				Ldamage[tf.allyTarget] += (int)(Rdamage[i] * (tf.R_personal[i].‘Îp”½Ë’l / 100));
+				tmp = 1;
+				dm(tf.rightParty[i].unitName+"<-‘Îp”½Ë");
+				dm(tf.leftParty[tf.allyTarget].unitName+":Ldamage["+tf.allyTarget+"]="+Ldamage[tf.allyTarget]+"/‘Îp”½Ë");
+			}
+
+			//‹zû
+			dm("--‹zû(‰E)--");
+			//‘ÎÛF©•ª
+			if(tf.R_personal[i].‘Îp‹zû == 1 && (tf.rightParty[i].seal < 1 || tf.rightParty[i].charm < 1)){
+				Rrecovery[i] += (int)(Rdamage[i] * (tf.R_personal[i].‘Îp‹zû’l / 100));//‹zû’l
+				tmp = 1;
+				dm(tf.rightParty[i].unitName+"<-‘Îp‹zû");
+				dm(tf.rightParty[i].unitName+":Rrecovery["+i+"]="+Rrecovery[i]+"/‘Îp‹zû");
+			}
+
+			//ƒ_ƒ[ƒW–³Œø‰»
+			if(tmp == 1){
+				Rdamage[i] = 0;
+			}
+		}
+
+		for(var i=0;i<6;i++){
+			if(tf.leftParty[i].id == 0){continue;}
+			//Œ¸Z
+			dm("--Œ¸Z(‘Î¶)--");
+			//‘ÎÛF“G©ŒÈ(¶)
+			if(tf.L_personal[i].‘Îpá•Ç == 1 && (tf.leftParty[i].seal < 1 || tf.leftParty[i].charm < 1)){
+dm("L.‘Îpá•Ç’l="+tf.L_personal[i].‘Îpá•Ç’l);
+				Ldamage[i] -= (int)(Ldamage[i] * (tf.L_personal[i].‘Îpá•Ç’l / 100));
+				dm(tf.leftParty[i].unitName+":Ldamage["+i+"]="+Ldamage[i]+"/‘Îpá•Ç");
+			}
+			//‘ÎÛF‘S‘Ì(¶)
+			for(var n=0;n<6;n++){
+				if(tf.L_Division[i].‘ÎpŒ‹ŠE == 1 && (tf.leftParty[n].seal < 1 || tf.leftParty[n].charm < 1)){
+					Ldamage[n] -= (int)(Ldamage[n] * (tf.L_Division[i].‘ÎpŒ‹ŠE’l / 100));
+					dm(tf.leftParty[n].unitName+":Ldamage["+n+"]="+Ldamage[n]+"/‘ÎpŒ‹ŠE");
+				}
+			}
+		}
+
+		for(var i=0;i<6;i++){
+			if(tf.rightParty[i].id == 0){continue;}
+			//Œ¸Z
+			dm("--Œ¸Z(‘Î‰E)--");
+			//‘ÎÛF©©ŒÈ(‰E)
+			if(tf.R_personal[i].‘Îpá•Ç == 1 && (tf.rightParty[i].seal < 1 || tf.rightParty[i].charm < 1)){
+dm("R.‘Îpá•Ç’l="+tf.R_personal[i].‘Îpá•Ç’l);
+				Rdamage[i] -= (int)(Rdamage[i] * (tf.R_personal[i].‘Îpá•Ç’l / 100));
+				dm(tf.rightParty[i].unitName+":Rdamage["+i+"]="+Rdamage[i]+"/‘Îpá•Ç");
+			}
+			//‘ÎÛF‘S‘Ì(‰E)
+			for(var n=0;n<6;n++){
+				if(tf.R_Division[i].‘ÎpŒ‹ŠE == 1 && (tf.rightParty[n].seal < 1 || tf.rightParty[n].charm < 1)){
+					Rdamage[n] -= (int)(Rdamage[n] * (tf.R_Division[i].‘ÎpŒ‹ŠE’l / 100));
+					dm(tf.rightParty[i].unitName+":Rdamage["+n+"]="+Rdamage[n]+"/‘ÎpŒ‹ŠE");
+				}
+			}
+		}
+
+		//‡ZŒ‹‰Ê
+		tf.turnEndDamageR   = [];tf.turnEndDamageL   = [];
+		tf.turnEndRecoveryR = [];tf.turnEndRecoveryL = [];
+		tf.fortAttackR = [];tf.fortAttackL = [];
+		tf.fortRepairR = [];tf.fortRepairL = [];
+		dm("--‡Z--");
+		for(var i=0;i<6;i++){
+			tf.turnEndDamageR[i] = Rdamage[i] + RdamageP[i];
+			tf.turnEndDamageL[i] = Ldamage[i] + LdamageP[i];
+
+			tf.turnEndRecoveryR[i] = Rrecovery[i];
+			tf.turnEndRecoveryL[i] = Lrecovery[i];
+			var SkillValue = searchSkill(i,'‹‘å‘Ì‹ë','right');
+			if(SkillValue[0] == 1){
+				if(SkillValue[1] > 80){SkillValue[1] = 80;}
+				tf.turnEndDamageR[i]   = (int)(tf.turnEndDamageR[i]   * ((100 - SkillValue[1]) /100));
+				tf.turnEndRecoveryR[i] = (int)(tf.turnEndRecoveryR[i] * ((100 - SkillValue[1]) /100));
+			}
+			var SkillValue = searchSkill(i,'‹‘å‘Ì‹ë','left');
+			if(SkillValue[0] == 1){
+				if(SkillValue[1] > 80){SkillValue[1] = 80;}
+				tf.turnEndDamageL[i]   = (int)(tf.turnEndDamageL[i]   * ((100 - SkillValue[1]) /100));
+				tf.turnEndRecoveryL[i] = (int)(tf.turnEndRecoveryL[i] * ((100 - SkillValue[1]) /100));
+			}
+
+			if(tf.rightParty[i].id !=0){
+				dm("---"+tf.rightParty[i].unitName+"---");
+				dm("‘Îp="+Rdamage[i]);
+				dm("‘Î“Å="+RdamageP[i]);
+				dm("‘‡="+tf.turnEndDamageR[i]);
+				dm("‰ñ•œ="+tf.turnEndRecoveryR[i]);
+			}
+			if(tf.leftParty[i].id !=0){
+				dm("---"+tf.leftParty[i].unitName+"---");
+				dm("‘Îp="+Ldamage[i]);
+				dm("‘Î“Å="+LdamageP[i]);
+				dm("‘‡="+tf.turnEndDamageL[i]);
+				dm("‰ñ•œ="+tf.turnEndRecoveryL[i]);
+			}
+
+			//’nŒ`UŒ‚
+			tf.fortAttackR[i] = LfortAttack[i];
+			tf.fortAttackL[i] = RfortAttack[i];
+			tf.fortRepairR[i] = RfortRepair[i];
+			tf.fortRepairL[i] = LfortRepair[i];
+		}
+	}
+
+	//é•Çİ’è
+	function setLandVitality(){
+		//ƒXƒLƒ‹ƒ`ƒFƒbƒN
+		tf.LandR.•ö‚µ’l=0;tf.LandL.•ö‚µ’l=0;
+		tf.LandR.\’z’l=0;tf.LandL.\’z’l=0;
+		tf.LandR.•ö‚µ  =0;tf.LandL.•ö‚µ  =0;
+		tf.LandR.\’z  =0;tf.LandL.\’z  =0;
+		for(var i=0;i<6;i++){
+			//right
+			if(tf.rightParty[i].id != 0 && tf.rightParty[i].HP.now > 0){
+				//ƒXƒLƒ‹‘ÎÛ’nŒ`(‰E)
+				var SkillValue = searchSkill(i,'é•Ç•ö‚µ','right');if(SkillValue[0] == 1){tf.LandR.•ö‚µ = 1;tf.LandR.•ö‚µ’l += SkillValue[1];}
+				var SkillValue = searchSkill(i,'é•Ç\’z','right');if(SkillValue[0] == 1){tf.LandR.\’z = 1;tf.LandR.\’z’l += SkillValue[1];}
+			}
+			if(tf.leftParty[i].id != 0 && tf.leftParty[i].HP.now > 0){
+				//ƒXƒLƒ‹‘ÎÛ’nŒ`(¶)
+				var SkillValue = searchSkill(i,'é•Ç•ö‚µ','left');if(SkillValue[0] == 1){tf.LandL.•ö‚µ = 1;tf.LandL.•ö‚µ’l += SkillValue[1];}
+				var SkillValue = searchSkill(i,'é•Ç\’z','left');if(SkillValue[0] == 1){tf.LandL.\’z = 1;tf.LandL.\’z’l += SkillValue[1];}
+			}
+		}
+
+		//Œš•¨‘Ï‹v’l‘ã“ü
+		if(gf.map[tf.EncountM[tf.BattleField]].frag == 0){
+			tf.landBuildMaxR = gf.map[tf.EncountM[tf.BattleField]].HP.max;
+			tf.landBuildNowR = gf.map[tf.EncountM[tf.BattleField]].HP.now;
+			tf.landBuildMaxL = 0;
+			tf.landBuildNowL = 0;
+		}else{
+			tf.landBuildMaxL = gf.map[tf.EncountM[tf.BattleField]].HP.max;
+			tf.landBuildNowL = gf.map[tf.EncountM[tf.BattleField]].HP.now;
+			tf.landBuildMaxR = 0;
+			tf.landBuildNowR = 0;
+		}
+
+		//’nŒ`’l‚É‘ã“ü
+		tf.rightLndM= f.used.stat.Land[0] + f.used.stat.Lands[0] + tf.landBuildMaxR;
+		tf.rightLnd = f.used.stat.Land[0] + f.used.stat.Lands[0] + tf.landBuildNowR;
+		tf.leftLndM = tf.landBaceMaxL     + tf.landBuildMaxL;
+		tf.leftLnd  = tf.landBaceNowL     + tf.landBuildNowL;
+
+		//ƒXƒLƒ‹•â³
+		if(tf.LandR.\’z == 1){
+			tf.rightLndM += tf.LandR.\’z’l;
+			tf.rightLnd  += tf.LandR.\’z’l;
+		}
+		if(tf.LandR.•ö‚µ == 1){
+			tf.leftLnd   -= tf.LandR.•ö‚µ’l;
+		}
+		if(tf.LandL.\’z == 1){
+			tf.leftLndM  += tf.LandL.\’z’l;
+			tf.leftLnd   += tf.LandL.\’z’l;
+		}
+		if(tf.LandL.•ö‚µ == 1){
+			tf.rightLnd  -= tf.LandL.•ö‚µ’l;
+		}
+		if(tf.leftLnd  < 0){tf.leftLnd  = 0;}
+		if(tf.rightLnd < 0){tf.rightLnd = 0;}
+dm("tf.LandR.\’z’l:"+tf.LandR.\’z’l);
+dm("tf.LandR.•ö‚µ’l:"+tf.LandR.•ö‚µ’l);
+dm("tf.LandL.\’z’l:"+tf.LandL.\’z’l);
+dm("tf.LandL.•ö‚µ’l:"+tf.LandL.•ö‚µ’l);
+	}
+
+}

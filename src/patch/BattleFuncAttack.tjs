@@ -1,0 +1,1664 @@
+//=============================
+//■バトルシーン用各種関数
+//=============================
+// battleFuncsからアクセス
+//kag.fore.message[n].font.mapPrerenderedFont( "uppg12.tft" );
+
+global.battleFuncsAttack= new battleFuncsAttack();
+
+//バトル用関数群
+class battleFuncsAttack
+{
+
+	//コンストラクタ
+	function Tbattlefunctions(){
+	}
+	
+	//finalize
+	function finalize(){
+		invalidate unitImage;
+		invalidate Images;
+		invalidate panelImage;
+	}
+
+	//イニシアティブ計算
+	function initiative(){
+		var initiative = [];
+		var addAttack  = 0;
+		tf.attackList  = [];
+		for(var i=0;i<6;i++){
+			tf.attackList[i] = i;
+			initiative[i] = calc.initiativeCalc(calc.allStatusCalc(tf.rightParty[i].spd,tf.rightParty[i].revise.spd,i,'right','spd'),tf.rightParty[i].strategy.spd);
+		}
+		for(var i=6;i<12;i++){
+			tf.attackList[i] = i;
+			initiative[i] = calc.initiativeCalc(calc.allStatusCalc(tf.leftParty[i-6].spd,tf.leftParty[i-6].revise.spd,i-6,'left','spd'));
+		}
+
+		var initiativeTMP = [];
+		initiativeTMP.assignStruct(initiative);
+
+		for(var i=0;i<initiativeTMP.count;i++){
+			if(initiativeTMP[0]  <= initiativeTMP[1] ){initiativeTMP[0]  <-> initiativeTMP[1]; tf.attackList[0]  <-> tf.attackList[1]; }
+			if(initiativeTMP[2]  <= initiativeTMP[3] ){initiativeTMP[2]  <-> initiativeTMP[3]; tf.attackList[2]  <-> tf.attackList[3]; }
+			if(initiativeTMP[4]  <= initiativeTMP[5] ){initiativeTMP[4]  <-> initiativeTMP[5]; tf.attackList[4]  <-> tf.attackList[5]; }
+			if(initiativeTMP[6]  <= initiativeTMP[7] ){initiativeTMP[6]  <-> initiativeTMP[7]; tf.attackList[6]  <-> tf.attackList[7]; }
+			if(initiativeTMP[8]  <= initiativeTMP[9] ){initiativeTMP[8]  <-> initiativeTMP[9]; tf.attackList[8]  <-> tf.attackList[9]; }
+			if(initiativeTMP[10] <= initiativeTMP[11]){initiativeTMP[10] <-> initiativeTMP[11];tf.attackList[10] <-> tf.attackList[11];}
+
+			if(initiativeTMP[1]  <= initiativeTMP[2] ){initiativeTMP[1]  <-> initiativeTMP[2]; tf.attackList[1]  <-> tf.attackList[2]; }
+			if(initiativeTMP[3]  <= initiativeTMP[4] ){initiativeTMP[3]  <-> initiativeTMP[4]; tf.attackList[3]  <-> tf.attackList[4]; }
+			if(initiativeTMP[5]  <= initiativeTMP[6] ){initiativeTMP[5]  <-> initiativeTMP[6]; tf.attackList[5]  <-> tf.attackList[6]; }
+			if(initiativeTMP[7]  <= initiativeTMP[8] ){initiativeTMP[7]  <-> initiativeTMP[8]; tf.attackList[7]  <-> tf.attackList[8]; }
+			if(initiativeTMP[9]  <= initiativeTMP[10]){initiativeTMP[9]  <-> initiativeTMP[10];tf.attackList[9]  <-> tf.attackList[10];}
+		}
+
+		for(var i=0;i<tf.attackList.count;i++){
+			dm("add前No."+i+":tf.attackList="+tf.attackList[i]+"/VL="+initiativeTMP[i]);
+		}
+
+		//削除右
+		var attackListTMP = [];
+		attackListTMP.assignStruct(tf.attackList);
+		for(var n=0;n<6;n++){
+			for(var i=0;i<tf.attackList.count;i++){
+				if(tf.attackList[i] == n){
+					if(tf.rightParty[n].id == 0){
+dm("R-No:"+i+"/erase:"+n+" /.id="+tf.rightParty[n-6].id);
+						initiativeTMP.erase(i);
+						tf.attackList.erase(i);
+					}
+				}
+			}
+		}
+
+		//削除左
+		var attackListTMP = [];
+		attackListTMP.assignStruct(tf.attackList);
+		for(var n=6;n<12;n++){
+			for(var i=0;i<tf.attackList.count;i++){
+				if(tf.attackList[i] == n){
+					if(tf.leftParty[n-6].id == 0){
+dm("L-No:"+i+"/erase:"+n+" /.id="+tf.leftParty[n-6].id);
+						initiativeTMP.erase(i);
+						tf.attackList.erase(i);
+					}
+				}
+			}
+		}
+
+		//追加右
+		var attackListTMP = [];
+		attackListTMP.assignStruct(tf.attackList);
+		var alladd;
+		for(var i=0;i<6;i++){
+			addAttack = 0;
+			for(var j=0;j<tf.rightParty[i].skill.count;j++){
+				if(tf.rightParty[i].skill[j].name == '追加攻撃' || (tf.rightParty[i].skill[j].name == '行動増加' && tf.Encounter == 1)){
+					addAttack += tf.rightParty[i].skill[j].value;
+dm(tf.rightParty[i].unitName+"/"+i+":"+tf.rightParty[i].skill[j].name+"="+addAttack);
+				}
+			}
+			if(addAttack > 0){
+				attackListTMP = [];
+				attackListTMP.assignStruct(tf.attackList);
+				for(var k=0;k<attackListTMP.count;k++){
+					if(attackListTMP[k] == i){
+						for(var l=0;l<addAttack;l++){
+							initiativeTMP.insert(k,initiativeTMP[k]);
+							tf.attackList.insert(k,i);
+dm("ListNo:"+k+"/menber"+i+":"+attackListTMP[k]+"/add:"+(int)(l+1)+"/allAdd"+alladd);
+						}
+					}
+				}
+			}
+		}
+		//追加左
+		attackListTMP = [];
+		attackListTMP.assignStruct(tf.attackList);
+		var alladd;
+		for(var i=6;i<12;i++){
+			addAttack = 0;
+			for(var j=0;j<tf.leftParty[i-6].skill.count;j++){
+				if(tf.leftParty[i-6].skill[j].name == '追加攻撃' || (tf.leftParty[i-6].skill[j].name == '行動増加' && tf.Encounter == 1)){
+					addAttack += tf.leftParty[i-6].skill[j].value;
+dm(tf.leftParty[i-6].unitName+"/"+(int)(i-6)+":"+tf.leftParty[i-6].skill[j].name+"="+addAttack);
+				}
+			}
+			if(addAttack > 0){
+				attackListTMP = [];
+				attackListTMP.assignStruct(tf.attackList);
+				for(var k=0;k<attackListTMP.count;k++){
+					if(attackListTMP[k] == i){
+						for(var l=0;l<addAttack;l++){
+							initiativeTMP.insert(k,initiativeTMP[k]);
+							tf.attackList.insert(k,i);
+dm("ListNo:"+k+"/menber"+i+":"+attackListTMP[k]+"/add:"+(int)(l+1)+"/allAdd"+alladd);
+						}
+					}
+				}
+			}
+		}
+
+
+		for(var i=0;i<tf.attackList.count;i++){
+			dm("add後No."+i+":tf.attackList="+tf.attackList[i]+"/VL="+initiativeTMP[i]);
+		}
+	}
+
+
+	//ユニット描画
+	function setUnitImage(layer,n,side){
+		var x,y;
+		var unitImage = new Layer(kag, kag.fore.base);
+//dm(layer+"/"+n+"/"+side);
+		if(side == 'right'){
+			x=400;y=70;
+			unitImage.loadImages("bf_"+tf.rightParty[n].id.substring(1,4));
+			unitImage.setSizeToImageSize();
+			if(unitImage.imageWidth == 800){x = x + 100;}
+			
+			     if(tf.rightParty[n].seal        > 0){unitImage.adjustGamma(2.0,   0, 255, 2.0,   0, 255, 2.0,   0, 255);}
+			else if(tf.rightParty[n].charm       > 0){unitImage.adjustGamma(2.2,   0, 255, 2.2,   0, 255, 1.4,   0, 255);}
+			else if(tf.rightParty[n].paralyze    > 0){unitImage.adjustGamma(1.8,  64, 255, 1.8,  64, 255, 1.0,   0, 255);}
+			else if(tf.rightParty[n].poison      > 0){unitImage.adjustGamma(2.0,  64, 255, 1.0,   0, 255, 2.0,  64, 255);}
+			else if(tf.rightParty[n].curse       > 0){unitImage.adjustGamma(1.5, 255,   0, 1.5, 255,   0, 1.5, 255,   0);}
+			layer.operateRect(x, y, unitImage, 0, 0, unitImage.imageWidth, unitImage.imageHeight, omPsNormal,255);
+
+			if(tf.rightParty[n].charm > 0){
+				unitImage.loadImages("abnormalIcon_charm");
+				unitImage.setSizeToImageSize();
+				layer.operateRect(x, y, unitImage, 0, 0, unitImage.imageWidth, unitImage.imageHeight, omPsNormal,255);
+			}
+			if(tf.rightParty[n].poison > 0){
+				unitImage.loadImages("abnormalIcon_poison");
+				unitImage.setSizeToImageSize();
+				layer.operateRect(x, y, unitImage, 0, 0, unitImage.imageWidth, unitImage.imageHeight, omPsNormal,255);
+			}
+			if(tf.rightParty[n].curse > 0){
+				unitImage.loadImages("abnormalIcon_curse");
+				unitImage.setSizeToImageSize();
+				layer.operateRect(x, y, unitImage, 0, 0, unitImage.imageWidth, unitImage.imageHeight, omPsNormal,255);
+			}
+			if(tf.rightParty[n].seal > 0){
+				unitImage.loadImages("abnormalIcon_seal");
+				unitImage.setSizeToImageSize();
+				layer.operateRect(x, y, unitImage, 0, 0, unitImage.imageWidth, unitImage.imageHeight, omPsNormal,255);
+			}
+			if(tf.rightParty[n].paralyze > 1){
+				unitImage.loadImages("abnormalIcon_paralyze");
+				unitImage.setSizeToImageSize();
+				layer.operateRect(x, y, unitImage, 0, 0, unitImage.imageWidth, unitImage.imageHeight, omPsNormal,255);
+			}
+		}else{
+			x=0;y=70;
+			unitImage.loadImages("bf_"+tf.leftParty[n].id.substring(1,4));
+			unitImage.setSizeToImageSize();
+			unitImage.flipLR();//左側は反転
+			if(unitImage.imageWidth == 800){
+				x = x - 100;
+				if(tf.leftParty[n].id == 'm1700'){x = x - 200;}
+				if(tf.leftParty[n].id == 'm1701'){x = x - 200;}
+				if(tf.leftParty[n].id == 'm1703'){x = x - 200;}
+			}
+			     if(tf.leftParty[n].seal         > 0){unitImage.adjustGamma(2.0,   0, 255, 2.0,   0, 255, 2.0,   0, 255);}
+			else if(tf.leftParty[n].charm        > 0){unitImage.adjustGamma(2.2,   0, 255, 2.2,   0, 255, 1.4,   0, 255);}
+			else if(tf.leftParty[n].paralyze     > 0){unitImage.adjustGamma(1.8,  64, 255, 1.8,  64, 255, 1.0,   0, 255);}
+			else if(tf.leftParty[n].poison       > 0){unitImage.adjustGamma(2.0,  64, 255, 1.0,   0, 255, 2.0,  64, 255);}
+			else if(tf.leftParty[n].curse        > 0){unitImage.adjustGamma(1.5, 255,   0, 1.5, 255,   0, 1.5, 255,   0);}
+			layer.operateRect(x, y, unitImage, 0, 0, unitImage.imageWidth, unitImage.imageHeight, omPsNormal,255);
+
+			if(tf.leftParty[n].charm > 0){
+				unitImage.loadImages("abnormalIcon_charm");
+				unitImage.setSizeToImageSize();
+				unitImage.flipLR();//左側は反転
+				layer.operateRect(x, y, unitImage, 0, 0, unitImage.imageWidth, unitImage.imageHeight, omPsNormal,255);
+			}
+			if(tf.leftParty[n].poison > 0){
+				unitImage.loadImages("abnormalIcon_poison");
+				unitImage.setSizeToImageSize();
+				unitImage.flipLR();//左側は反転
+				layer.operateRect(x, y, unitImage, 0, 0, unitImage.imageWidth, unitImage.imageHeight, omPsNormal,255);
+			}
+			if(tf.leftParty[n].curse > 0){
+				unitImage.loadImages("abnormalIcon_curse");
+				unitImage.setSizeToImageSize();
+				unitImage.flipLR();//左側は反転
+				layer.operateRect(x, y, unitImage, 0, 0, unitImage.imageWidth, unitImage.imageHeight, omPsNormal,255);
+			}
+			if(tf.leftParty[n].seal > 0){
+				unitImage.loadImages("abnormalIcon_seal");
+				unitImage.setSizeToImageSize();
+				unitImage.flipLR();//左側は反転
+				layer.operateRect(x, y, unitImage, 0, 0, unitImage.imageWidth, unitImage.imageHeight, omPsNormal,255);
+			}
+			if(tf.leftParty[n].paralyze > 1){
+				unitImage.loadImages("abnormalIcon_paralyze");
+				unitImage.setSizeToImageSize();
+				unitImage.flipLR();//左側は反転
+				layer.operateRect(x, y, unitImage, 0, 0, unitImage.imageWidth, unitImage.imageHeight, omPsNormal,255);
+			}
+		}
+	}
+
+	//VS パネル描画
+	function setVsPanel(layer,side,r,l){
+		//パネルベース
+		var x,y;
+		var panelImage = new Layer(kag, kag.fore.base);
+		if(side == 'right'){
+			x=244;y=20;
+			panelImage.loadImages("btl_panelBattleR");
+			panelImage.setSizeToImageSize();
+			layer.operateRect(x, y, panelImage, 0, 0, panelImage.imageWidth, panelImage.imageHeight, omPsNormal,255);
+		}else{
+			x=188;y=20;
+			panelImage.loadImages("btl_panelBattleL");
+			panelImage.setSizeToImageSize();
+			layer.operateRect(x, y, panelImage, 0, 0, panelImage.imageWidth, panelImage.imageHeight, omPsNormal,255);
+		}
+		panelImage.fillRect(0, 0, panelImage.width, panelImage.height, 0x00000000);
+		panelImage.loadImages("un_type"+tf.rightParty[r].type+"R");
+		panelImage.setSizeToImageSize();
+		layer.operateRect(561, 73, panelImage, 0, 0, panelImage.imageWidth, panelImage.imageHeight, omPsNormal,255);
+		panelImage.loadImages("un_type"+tf.leftParty[l].type+"L");
+		panelImage.setSizeToImageSize();
+		layer.operateRect(349, 73, panelImage, 0, 0, panelImage.imageWidth, panelImage.imageHeight, omPsNormal,255);
+		panelImage.loadImages("btl_GaugeHPbase");//HP下地読込
+		layer.operateRect(562, 122,panelImage, 0, 0, 50,3,omPsNormal,255);//HP下地
+		layer.operateRect(350, 122,panelImage, 0, 0, 50,3,omPsNormal,255);//HP下地
+
+		battleFuncsView.gaugeDraw(tf.rightParty[r].HP.now,tf.rightParty[r].HP.max,50,'btl_GaugeHP',layer,562,122,'left');// HPバー
+		battleFuncsView.gaugeDraw(tf.leftParty[l].HP.now ,tf.leftParty[l].HP.max ,50,'btl_GaugeHP',layer,350,122,'right');// HPバー
+		battleFuncsView.numDraw(tf.rightParty[r].HP.now,'btl_Number0-9HP' ,layer,562,125,4);	//HP
+		battleFuncsView.numDraw(tf.leftParty[l].HP.now ,'btl_Number0-9HP' ,layer,350,125,4);	//HP
+
+		//能力値補正計算＋限界値(右)
+		var pow = calc.allStatusCalc(tf.rightParty[r].pow, tf.rightParty[r].revise.pow,r,'right','pow');
+		var def = calc.allStatusCalc(tf.rightParty[r].def, tf.rightParty[r].revise.def,r,'right','def');
+		var spd = calc.allStatusCalc(tf.rightParty[r].spd, tf.rightParty[r].revise.spd,r,'right','spd');
+		var mor = calc.allStatusCalc(tf.rightParty[r].mor, tf.rightParty[r].revise.mor,r,'right','mor');
+		//作戦補正加算
+			pow += tf.rightParty[r].strategy.pow;if(pow > 999){pow = 999;}
+			def += tf.rightParty[r].strategy.def;if(def > 999){def = 999;}
+			spd += tf.rightParty[r].strategy.spd;if(spd > 999){spd = 999;}
+			mor += tf.rightParty[r].strategy.mor;if(mor >  99){mor =  99;}
+		battleFuncsView.numDraw(pow, 'btl_Number0-9pow',layer,638, 76,3);	//pow
+		battleFuncsView.numDraw(def, 'btl_Number0-9def',layer,638, 94,3);	//def
+		battleFuncsView.numDraw(spd, 'btl_Number0-9spd',layer,638,112,3);	//spd
+		battleFuncsView.numDraw(mor, 'btl_Number0-9mor',layer,638,130,3);	//mor
+
+		//能力値補正計算＋限界(左)
+		var pow = calc.allStatusCalc(tf.leftParty[l].pow, tf.leftParty[l].revise.pow,l,'left','pow');
+		var def = calc.allStatusCalc(tf.leftParty[l].def, tf.leftParty[l].revise.def,l,'left','def');
+		var spd = calc.allStatusCalc(tf.leftParty[l].spd, tf.leftParty[l].revise.spd,l,'left','spd');
+		var mor = calc.allStatusCalc(tf.leftParty[l].mor, tf.leftParty[l].revise.mor,l,'left','mor');
+		battleFuncsView.numDraw(pow, 'btl_Number0-9pow',layer,310, 76,3);	//pow
+		battleFuncsView.numDraw(def, 'btl_Number0-9def',layer,310, 94,3);	//def
+		battleFuncsView.numDraw(spd, 'btl_Number0-9spd',layer,310,112,3);	//spd
+		battleFuncsView.numDraw(mor, 'btl_Number0-9mor',layer,310,130,3);	//mor
+	}
+
+	function criticalCalcs(a,d,side){
+		var criticalA  = new Array();
+		var criticalD  = new Array();
+		var Cr;
+		var dside;
+		var Rd = intrandom(0,99);
+		if(side == 'right'){criticalA = tf.rightParty;criticalD = tf.leftParty;dside ='left';}
+		               else{criticalD = tf.rightParty;criticalA = tf.leftParty;dside ='right';}
+dm("##### critical calc #####");
+		var SkillValue = battleFuncSkillSet.searchSkill(a,'必殺増加',side);
+		//Cr = (int)(5+ (3 * Math.sqrt(critical[a].spd+critical[a].revise.spd)+SkillValue[1]));
+dm("R-att"+Math.sqrt(calc.allStatusCalc(criticalA[a].spd, criticalA[a].revise.spd,a,side,'spd')) * 3);
+dm("L-def"+Math.sqrt(calc.allStatusCalc(criticalA[a].spd, criticalA[a].revise.spd,a,side,'spd')) * 3);
+		Cr = (int)(Math.sqrt(calc.allStatusCalc(criticalA[a].spd, criticalA[a].revise.spd,a,side,'spd')) * 3 - Math.sqrt(calc.allStatusCalc(criticalD[d].spd, criticalD[d].revise.spd,d,dside,'spd'))+SkillValue[1] + 5) ;
+		if(SkillValue[0] == 1){if(Cr > 75){Cr = 75;}}else{if(Cr > 50){Cr = 50;}}
+		if(Cr <  5){Cr =  5;}
+dm("ｸﾘ率="+Cr+":Rand="+Rd);
+		if(Rd < Cr){
+			if(side == 'right'){tf.criticalR = 1;}else{tf.criticalL = 1;}
+		}
+dm("criticalR:"+tf.criticalR+"/criticalL:"+tf.criticalL);
+dm("##### calc End ##########");
+	}
+
+	function damageCalcs(a,d,side){
+	//　→基本攻撃側攻撃DM値＝(2×攻撃側pow+5)×√(攻撃側現在ＨＰ)÷(防御側Def+1+√(防御側地形効果))
+	//　→基本防御側反撃DM値＝(2×防御側pow+5)×√(防御側現在ＨＰ)÷(攻撃側Def+1+√(攻撃側地形効果))÷3
+		var attackerDamageRate; 
+		var defenderDamageRate; 
+		var ApowALL, AdefALL;
+		var DpowALL, DdefALL;
+		var offensePanelCount = 0;
+		var defensePanelCount = 0;
+		var SkillValue  = new Array();
+		var Images = new Layer(kag, kag.fore.base);
+		tf.AD = 0;
+		if(side == 'right' ){
+			ApowALL = calc.allStatusCalc(tf.rightParty[a].pow, tf.rightParty[a].revise.pow,a,'right','pow');
+			AdefALL = calc.allStatusCalc(tf.rightParty[a].def, tf.rightParty[a].revise.def,a,'right','def');
+			DpowALL = calc.allStatusCalc(tf.leftParty[d].pow, tf.leftParty[d].revise.pow,d,'left','pow');
+			DdefALL = calc.allStatusCalc(tf.leftParty[d].def, tf.leftParty[d].revise.def,d,'left','def');
+			//作戦補正
+			ApowALL += tf.rightParty[a].strategy.pow;
+			AdefALL += tf.rightParty[a].strategy.def;
+			//致命必殺(右)
+			if(tf.criticalR == 1){
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.attacker,'致命必殺','right');
+				if(SkillValue[0] == 1){
+					tf.offenseR.致命値 = SkillValue[1];
+					//if(tf.offenseR.致命値 > 100){tf.offenseR.致命値 = 100;}
+					//DdefALL = DdefALL * (1 - tf.offenseR.致命値 * 0.005);
+					DdefALL = DdefALL * 0.75;
+					Images.loadImages("btl_panelCriticalSplash");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					offensePanelCount++;
+				}
+			}
+			//致命必殺(左)
+			if(tf.criticalL == 1 && (tf.offenseR.扇形 > 0 && tf.OriginalTarget == tf.defender)){
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'致命必殺','left');
+				if(SkillValue[0] == 1){
+					tf.defenseL.致命値 = SkillValue[1];
+					//if(tf.defenseL.致命値 > 100){tf.defenseL.致命値 = 100;}
+					//DdefALL = DdefALL * (1 - tf.defenseL.致命値 * 0.005);
+					DdefALL = DdefALL * 0.75;
+					Images.loadImages("btl_panelCriticalSplash");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+			}
+			//カブト割
+			if(tf.offenseR.兜割 == 1){
+				var Value = (100 - tf.offenseR.兜割値) / 100;
+				if(Value < 0.25){Value =0.25;}
+				DdefALL = (int)(DdefALL * Value);
+				Images.loadImages("btl_panelHelmClash");
+				Images.setSizeToImageSize();
+				popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+				offensePanelCount++;
+			}
+			//次元斬撃による防御補正
+			if(tf.offenseR.次元 == 1){
+				DdefALL = (int)(DdefALL * 0.25);
+				Images.loadImages("btl_panelDimension");
+				Images.setSizeToImageSize();
+				popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+				offensePanelCount++;
+			}
+			//側面攻撃
+			if(tf.offenseR.側面 == 1 && tf.defenseL.側面 == 0){
+				Images.loadImages("btl_panelSide");
+				Images.setSizeToImageSize();
+				popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+				offensePanelCount++;
+			}
+			defenderDamageRate = calc.defenderDamageCalc(DpowALL, tf.leftParty[d].HP.now,AdefALL,tf.rightLnd);//反撃側与ダメージ
+			if(tf.offenseR.次元 == 1 || (tf.offenseR.遠隔 == 1 && tf.defenseL.遠隔 == 0)){
+				//イベイド判定
+				defenderDamageRate = 0;//反撃無効
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'イベイド','left');
+				if(SkillValue[0] == 1 && intrandom(0,99) < SkillValue[1]){tf.defenseL.回避 = 1;tf.criticalR = 0;dm("### 回避成功!! イベイド L ###");}
+				//遠隔攻撃
+				if((tf.offenseR.次元 == 1 || tf.offenseR.遠隔 == 1) && tf.defenseL.回避 == 0){
+					Images.loadImages("btl_panelSnipe");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					offensePanelCount++;
+				}
+			}
+			attackerDamageRate = calc.attackerDamageCalc(ApowALL,tf.rightParty[a].HP.now,DdefALL,tf.leftLnd);//攻撃側与ダメージ
+			if(attackerDamageRate < 0){attackerDamageRate = 0;}
+			if(defenderDamageRate < 0){defenderDamageRate = 0;}
+dm("攻撃側="+attackerDamageRate+"/特攻R="+tf.magnitudeR+"+1");
+dm("防御側="+defenderDamageRate+"/特攻L="+tf.magnitudeL+"+1");
+
+			if(tf.criticalR == 1){
+dm("!!! attackerCritical -R- !!!");
+				attackerDamageRate = (int)((attackerDamageRate * 1.5) * (1 + tf.offenseR.致命値 / 100));
+				//attackerDamageRate = attackerDamageRate * 1.5;
+				Images.loadImages("btl_panelCritical");
+				Images.setSizeToImageSize();
+				if(attackerDamageRate > 0){popupPanel.operateRect( 218,432, Images, 0, 0, Images.imageWidth, Images.imageHeight);}
+			}else{
+				//パリング
+				if(tf.defenseL.回避 == 0){
+					if(tf.offenseR.次元 == 0){//次元斬撃(遠隔)じゃなければ
+						var SkillValue1 = battleFuncSkillSet.searchSkill(tf.defender,'パリング','left');
+						var SkillValue2 = battleFuncSkillSet.searchSkill(tf.defender,'次元斬撃','left');
+	dm("sf="+SkillValue1[0]+"/sv="+SkillValue1[1]);
+	dm("sf="+SkillValue2[0]+"/sv="+SkillValue2[1]);
+						if((SkillValue1[0] == 1 && intrandom(0,99) < SkillValue1[1]) || (SkillValue2[0] == 1 && intrandom(0,99) < SkillValue2[1]) ){
+	dm("!!! attackerPelling -L- !!!");
+							attackerDamageRate = 0;
+							if(tf.Encounter == 0){
+								Images.loadImages("btl_panelPelling");
+								Images.setSizeToImageSize();
+								popupPanel.operateRect( 218,432, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+								kag.tagHandlers.playse(%[buf:'4',storage:'se0503_武器弾き高音キュリィィン.ogg']);
+								kag.tagHandlers.shakes(%[layer:'3',time:100,hmax: 0,vmax:10]);
+								kag.tagHandlers.waitshakes(%[canskip:'false']);
+							}
+						}
+					}
+				}
+				if(tf.defenseL.回避 == 1 && tf.leftParty[tf.defender].paralyze < 2){//遠隔でイベイド発生(麻痺２以上は不可)
+dm("!!! attackerAvoid -L- !!!");
+					attackerDamageRate = 0;
+					if(tf.Encounter == 0){
+						Images.loadImages("btl_panelAvoid");
+						Images.setSizeToImageSize();
+						popupPanel.operateRect( 218,432, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+						kag.tagHandlers.playse(%[buf:'4',storage:'se0803_素振りビュン']);
+						kag.tagHandlers.shakes(%[layer:'3',time:100,hmax: 0,vmax:15]);
+						kag.tagHandlers.waitshakes(%[canskip:'false']);
+					}
+				}
+			}
+			if(tf.criticalL == 1 && (tf.offenseR.扇形 > 0 && tf.OriginalTarget == tf.defender)){
+dm("!!! counterCritical -L- !!!");
+				defenderDamageRate = (int)((defenderDamageRate * 1.5) * (1 + tf.defenseL.致命値 / 100));
+				//defenderDamageRate = defenderDamageRate * 1.5;
+				Images.loadImages("btl_panelCounterCritical");
+				Images.setSizeToImageSize();
+				if(defenderDamageRate > 0){popupPanel.operateRect( 562,432, Images, 0, 0, Images.imageWidth, Images.imageHeight);}
+			}else{
+				//パリング
+				if(tf.offenseR.遠隔 == 0){//遠隔は判定しない
+					var SkillValue1 = battleFuncSkillSet.searchSkill(tf.attacker,'パリング','right');
+					var SkillValue2 = battleFuncSkillSet.searchSkill(tf.attacker,'次元斬撃','right');
+	dm("sf="+SkillValue1[0]+"/sv="+SkillValue1[1]);
+	dm("sf="+SkillValue2[0]+"/sv="+SkillValue2[1]);
+					if((SkillValue1[0] == 1 && intrandom(0,99) < SkillValue1[1]) || (SkillValue2[0] == 1 && intrandom(1,100) < SkillValue2[1]) ){
+	dm("!!! counterPelling -R- !!!");
+						defenderDamageRate = 0;
+						if(tf.OriginalTarget == tf.defender){
+							if(tf.Encounter == 0){
+								Images.loadImages("btl_panelCounterPelling");
+								Images.setSizeToImageSize();
+								popupPanel.operateRect( 562,432, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+								kag.tagHandlers.playse(%[buf:'4',storage:'se0510_武器弾き高音カィィン（音小.ogg']);
+								kag.tagHandlers.shakes(%[layer:'2',time:100,hmax: 0,vmax: 6]);
+								kag.tagHandlers.waitshakes(%[canskip:'false']);
+							}
+						}
+					}
+				}
+			}
+			//＋貫通ダメージ
+			if(tf.offenseR.貫通 == 1 && tf.defenseL.貫通 == 0 && tf.defenseL.十字 == 0){
+				//attackerDamageRate = (int)(attackerDamageRate * tf.offenseR.貫通値 / 100);
+dm("OriginalTarget:"+tf.OriginalTarget);
+				if(tf.OriginalTarget != tf.defender){defenderDamageRate = 0;}//追加分は反撃ダメージ無効
+				Images.loadImages("btl_panelThrough");
+				Images.setSizeToImageSize();
+				popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+				offensePanelCount++;
+			}
+			//＋扇形ダメージ
+			if(tf.offenseR.扇形 > 0 && tf.defenseL.扇形 == 0 && tf.defenseL.十字 == 0 && tf.defenseL.全域 == 0){
+dm("ｵﾘｼﾞﾅﾙﾀｰｹﾞｯﾄ:"+tf.OriginalTarget);
+				//追加分は反撃ダメージ無効＆攻撃半減
+				if(tf.OriginalTarget != tf.defender){
+					defenderDamageRate = 0;
+					attackerDamageRate = (int)(attackerDamageRate / 2);
+				}
+				if(tf.offenseR.全域 > 0){Images.loadImages("btl_panelAlltype");}else{Images.loadImages("btl_panelFuntype");}
+				Images.setSizeToImageSize();
+				popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+				offensePanelCount++;
+			}
+			//状態異常(削減)
+			if(tf.leftParty[tf.defender].attribute.indexOf('超') != -1){tf.defenseL.削減 = 1;}
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'異常耐性','left');if(SkillValue[0] == 1){tf.defenseL.耐性 = 1;}
+dm("R.削攻1:"+tf.offenseR.削攻+"R.削防1:"+tf.offenseR.削防+"R.削速1:"+tf.offenseR.削速+"R.削士1:"+tf.offenseR.削士);
+dm("L.絶対0:"+tf.defenseL.絶対+"/L.耐性0:"+tf.defenseL.耐性+"/L.削減0:"+tf.defenseL.削減+"/L.回避0:"+tf.defenseL.回避);
+			if(tf.offenseR.削攻 == 1 || tf.offenseR.削防 == 1 || tf.offenseR.削速 == 1 ||tf.offenseR.削士 == 1){
+				if(tf.defenseL.絶対 == 0 && tf.defenseL.耐性 == 0 && tf.defenseL.削減 == 0 && tf.defenseL.回避 == 0){
+dm("ｵﾘﾀｹﾞ="+tf.OriginalTarget+"/ｱﾘﾀｹﾞ="+tf.allyTarget+"/ﾃﾞﾌｴﾀﾞ:"+tf.defender);
+					if(tf.offenseR.複異 == 1 || tf.OriginalTarget == tf.defender){//追加分は毒化無効(複数異常以外)
+						tf.rightParty[tf.attacker].effect = 105;
+						if(tf.offenseR.削攻 == 1){
+							tf.leftParty[tf.defender].cutDown.pow +=tf.offenseR.削攻値;
+							Images.loadImages("btl_panelCutPow");
+							Images.setSizeToImageSize();
+							popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+							offensePanelCount++;
+						}
+						if(tf.offenseR.削防 == 1){
+							tf.leftParty[tf.defender].cutDown.def +=tf.offenseR.削防値;
+							Images.loadImages("btl_panelCutDef");
+							Images.setSizeToImageSize();
+							popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+							offensePanelCount++;
+						}
+						if(tf.offenseR.削速 == 1){
+							tf.leftParty[tf.defender].cutDown.spd +=tf.offenseR.削速値;
+							Images.loadImages("btl_panelCutSpd");
+							Images.setSizeToImageSize();
+							popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+							offensePanelCount++;
+						}
+						if(tf.offenseR.削士 == 1){
+							tf.leftParty[tf.defender].cutDown.mor +=tf.offenseR.削士値;
+							Images.loadImages("btl_panelCutMor");
+							Images.setSizeToImageSize();
+							popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+							offensePanelCount++;
+						}
+					}
+				}
+			}
+			//状態異常(毒)
+			if(tf.leftParty[tf.defender].attribute.indexOf('毒') != -1 || tf.leftParty[tf.defender].attribute.indexOf('死') != -1 ||
+			   tf.leftParty[tf.defender].attribute.indexOf('器') != -1 || tf.leftParty[tf.defender].attribute.indexOf('超') != -1){tf.defenseL.毒化 = 1;}
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'異常耐性','left');if(SkillValue[0] == 1){tf.defenseL.耐性 = 1;}
+dm("R.毒化1:"+tf.offenseR.毒化+"/L.絶対0:"+tf.defenseL.絶対+"/L.耐性0:"+tf.defenseL.耐性+"/L.毒化0:"+tf.defenseL.毒化+"/L.回避0:"+tf.defenseL.回避);
+			if(tf.offenseR.毒化 == 1 && tf.defenseL.絶対 == 0 && tf.defenseL.耐性 == 0 && tf.defenseL.毒化 == 0 && tf.defenseL.回避 == 0){
+dm("ｵﾘﾀｹﾞ="+tf.OriginalTarget+"/ｱﾘﾀｹﾞ="+tf.allyTarget+"/ﾃﾞﾌｴﾀﾞ:"+tf.defender);
+				if(tf.offenseR.複異 == 1 || tf.OriginalTarget == tf.defender){//追加分は毒化無効(複数異常以外)
+					tf.leftParty[tf.defender].poison += tf.offenseR.毒化値;
+					if(tf.leftParty[tf.defender].poison > 50){tf.leftParty[tf.defender].poison = 50;}
+					Images.loadImages("btl_panelPoison");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					Images.loadImages("abnormalIcon_poison");
+					Images.setSizeToImageSize();
+					Images.flipLR();//左側は反転
+					popupPanel.operateRect(0, 70, Images, 0, 0, Images.imageWidth, Images.imageHeight, omPsNormal,255);
+					offensePanelCount++;
+					unitImageLeft.adjustGamma(2.5, 0, 255, 1.0, 0, 255, 2.5, 0, 255);//毒カラー
+					tf.rightParty[tf.attacker].effect = 100;
+				}
+			}
+			//状態異常(マヒ)
+			if(tf.leftParty[tf.defender].attribute.indexOf('雷') != -1 || tf.leftParty[tf.defender].attribute.indexOf('超') != -1){tf.defenseL.麻痺 = 1;}
+dm("R.麻痺1:"+tf.offenseR.麻痺+"/L.絶対0:"+tf.defenseL.絶対+"/L.耐性0:"+tf.defenseL.耐性+"/L.麻痺0:"+tf.defenseL.麻痺+"/L.回避0:"+tf.defenseL.回避);
+			if(tf.offenseR.麻痺 > 0 && tf.defenseL.絶対 == 0 && tf.defenseL.耐性 == 0 && tf.defenseL.麻痺 == 0 && tf.defenseL.回避 == 0){
+dm("ｵﾘﾀｹﾞ="+tf.OriginalTarget+"/ｱﾘﾀｹﾞ="+tf.allyTarget+"/ﾃﾞﾌｴﾀﾞ:"+tf.defender);
+				if(tf.offenseR.複異 == 1 || tf.OriginalTarget == tf.defender){//追加分は麻痺無効(複数異常以外)
+					tf.leftParty[tf.defender].paralyze += tf.offenseR.麻痺値;
+					Images.loadImages("btl_panelParalyze");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					offensePanelCount++;
+					unitImageLeft.adjustGamma(2.5, 150, 255, 2.5, 150, 255, 1.0, 0, 255);//麻痺カラー
+					tf.rightParty[tf.attacker].effect = 101;
+					if(tf.leftParty[tf.defender].paralyze > 1){
+						Images.loadImages("abnormalIcon_Paralyze");
+						Images.setSizeToImageSize();
+						Images.flipLR();//左側は反転
+						popupPanel.operateRect(0, 70, Images, 0, 0, Images.imageWidth, Images.imageHeight, omPsNormal,255);
+					}
+				}
+			}
+			//状態異常(呪い)
+			if(tf.leftParty[tf.defender].attribute.indexOf('聖') != -1 || tf.leftParty[tf.defender].attribute.indexOf('超') != -1){tf.defenseL.呪撃 = 1;}
+dm("R.呪撃1:"+tf.offenseR.呪撃+"/L.絶対0:"+tf.defenseL.絶対+"/L.耐性0:"+tf.defenseL.耐性+"/L.呪撃0:"+tf.defenseL.呪撃+"/L.回避0:"+tf.defenseL.回避);
+			if(tf.offenseR.呪撃 > 0 && tf.defenseL.絶対 == 0 && tf.defenseL.耐性 == 0 && tf.defenseL.呪撃 == 0 && tf.defenseL.回避 == 0){
+dm("ｵﾘﾀｹﾞ="+tf.OriginalTarget+"/ｱﾘﾀｹﾞ="+tf.allyTarget+"/ﾃﾞﾌｴﾀﾞ:"+tf.defender);
+				if(tf.offenseR.複異 == 1 || tf.OriginalTarget == tf.defender){//追加分は呪い無効(複数異常以外)
+					tf.leftParty[tf.defender].curse = 1;
+					if(tf.leftParty[tf.defender].curse > 10){tf.leftParty[tf.defender].curse = 9;}
+					Images.loadImages("btl_panelCurse");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					offensePanelCount++;
+					unitImageLeft.adjustGamma(1.5, 255, 0, 1.5, 255, 0, 1.5, 255, 0);//呪いカラー
+					tf.rightParty[tf.attacker].effect = 102;
+					Images.loadImages("abnormalIcon_Curse");
+					Images.setSizeToImageSize();
+					Images.flipLR();//左側は反転
+					popupPanel.operateRect(0, 70, Images, 0, 0, Images.imageWidth, Images.imageHeight, omPsNormal,255);
+				}
+			}
+			//状態異常(封印)
+			if(tf.leftParty[tf.defender].attribute.indexOf('超') != -1){tf.defenseL.封印 = 1;}
+dm("R.封印1:"+tf.offenseR.封印+"/L.絶対0:"+tf.defenseL.絶対+"/L.耐性0:"+tf.defenseL.耐性+"/L.封印0:"+tf.defenseL.封印+"/L.回避0:"+tf.defenseL.回避);
+			if(tf.offenseR.封印 > 0 && tf.defenseL.耐性 == 0 && tf.defenseL.封印 == 0 && tf.defenseL.回避 == 0){
+dm("ｵﾘﾀｹﾞ="+tf.OriginalTarget+"/ｱﾘﾀｹﾞ="+tf.allyTarget+"/ﾃﾞﾌｴﾀﾞ:"+tf.defender);
+				if(tf.offenseR.複異 == 1 || tf.OriginalTarget == tf.defender){//追加分は毒化無効(複数異常以外)
+					if(attackerDamageRate > 0){
+						tf.leftParty[tf.defender].seal = 1;
+						Images.loadImages("btl_panelSeal");
+						Images.setSizeToImageSize();
+						popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+						offensePanelCount++;
+						unitImageLeft.adjustGamma(2.0,   0, 255, 2.0,   0, 255, 2.0,   0, 255);//封印カラー
+						tf.rightParty[tf.attacker].effect = 103;
+						Images.loadImages("abnormalIcon_Seal");
+						Images.setSizeToImageSize();
+						Images.flipLR();//左側は反転
+						popupPanel.operateRect(0, 70, Images, 0, 0, Images.imageWidth, Images.imageHeight, omPsNormal,255);
+						//治療系・医療系を持っていたら解除
+						var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'全体治癒','left');if(SkillValue[0] == 1){tf.defenseL.全体 = 0;tf.defenseL.全体値 = 0;}
+						var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'平等治癒','left');if(SkillValue[0] == 1){tf.defenseL.平等 = 0;tf.defenseL.平等値 = 0;}
+						var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'魔族医療','left');if(SkillValue[0] == 1){tf.defenseL.魔族 = 0;tf.defenseL.魔族値 = 0;}
+
+						var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'解毒治療','left');if(SkillValue[0] == 1){tf.defenseL.毒化 = 0;dm("毒化封印(封印)");}
+						var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'解呪治療','left');if(SkillValue[0] == 1){tf.defenseL.呪撃 = 0;dm("呪撃封印(封印)");}
+						var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'麻痺治療','left');if(SkillValue[0] == 1){tf.defenseL.麻痺 = 0;dm("麻痺封印(封印)");}
+						var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'削減治療','left');if(SkillValue[0] == 1){tf.defenseL.削減 = 0;dm("削減封印(封印)");}
+						var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'絶対治療','left');if(SkillValue[0] == 1){tf.defenseL.絶対 = 0;dm("絶対封印(封印)");}
+						for(var n=0;n<6;n++){
+							//自分以外が持っていたら再設定
+							if(n != tf.defender){
+								var SkillValue = battleFuncSkillSet.searchSkill(n,'全体治癒','left');if(SkillValue[0] == 1){tf.defenseL.全体 = 1;tf.defenseL.全体値 += SkillValue[1];}
+								var SkillValue = battleFuncSkillSet.searchSkill(n,'平等治癒','left');if(SkillValue[0] == 1){tf.defenseL.平等 = 1;tf.defenseL.平等値 += SkillValue[1];}
+								var SkillValue = battleFuncSkillSet.searchSkill(n,'魔族医療','left');if(SkillValue[0] == 1){tf.defenseL.魔族 = 1;tf.defenseL.魔族値 += SkillValue[1];}
+
+								var SkillValue = battleFuncSkillSet.searchSkill(n,'解毒治療','left');if(SkillValue[0] == 1){tf.defenseL.毒化 = 1;dm("毒化再設定(封印)");}
+								var SkillValue = battleFuncSkillSet.searchSkill(n,'解呪治療','left');if(SkillValue[0] == 1){tf.defenseL.呪撃 = 1;dm("呪撃再設定(封印)");}
+								var SkillValue = battleFuncSkillSet.searchSkill(n,'麻痺治療','left');if(SkillValue[0] == 1){tf.defenseL.麻痺 = 1;dm("麻痺再設定(封印)");}
+								var SkillValue = battleFuncSkillSet.searchSkill(n,'削減治療','left');if(SkillValue[0] == 1){tf.defenseL.削減 = 1;dm("削減再設定(封印)");}
+								var SkillValue = battleFuncSkillSet.searchSkill(n,'絶対治療','left');if(SkillValue[0] == 1){tf.defenseL.絶対 = 1;dm("絶対再設定(封印)");}
+							}
+						}
+					}
+				}
+			}
+			//状態異常(魅了)
+			if(tf.leftParty[tf.defender].attribute.indexOf('火')  != -1 || tf.leftParty[tf.defender].attribute.indexOf('超') != -1){tf.defenseL.魅了 = 1;}
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'異常耐性','left');if(SkillValue[0] == 1){tf.defenseL.耐性 = 1;}
+dm("R.魅了1:"+tf.offenseR.魅了+"/L.耐性0:"+tf.defenseL.耐性+"/L.魅了0:"+tf.defenseL.魅了+"/L.回避0:"+tf.defenseL.回避);
+			if(tf.offenseR.魅了 == 1 && tf.defenseL.耐性 == 0 && tf.defenseL.魅了 == 0 && tf.defenseL.回避 == 0){
+dm("ｵﾘﾀｹﾞ="+tf.OriginalTarget+"/ｱﾘﾀｹﾞ="+tf.allyTarget+"/ﾃﾞﾌｴﾀﾞ:"+tf.defender);
+				if(tf.offenseR.複異 == 1 || tf.OriginalTarget == tf.defender){//追加分は魅了無効(複数異常以外)
+					if(attackerDamageRate > 0  && attackerDamageRate > tf.leftWall){//ダメージがあれば
+						if((tf.rightParty[tf.attacker].attribute.indexOf('男') != -1 && tf.leftParty[tf.defender].attribute.indexOf('女') != -1) ||
+						   (tf.rightParty[tf.attacker].attribute.indexOf('女') != -1 && tf.leftParty[tf.defender].attribute.indexOf('男') != -1)){
+							tf.leftParty[tf.defender].charm = 1;
+							Images.loadImages("btl_panelcharm");
+							Images.setSizeToImageSize();
+							popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+							Images.loadImages("abnormalIcon_charm");
+							Images.setSizeToImageSize();
+							Images.flipLR();//左側は反転
+							popupPanel.operateRect(0, 70, Images, 0, 0, Images.imageWidth, Images.imageHeight, omPsNormal,255);
+							offensePanelCount++;
+							unitImageLeft.adjustGamma(2.5, 0, 255, 1.0, 0, 255, 2.5, 0, 255);//毒カラー
+							tf.rightParty[tf.attacker].effect = 104;
+							//治療系・医療系を持っていたら解除
+							var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'全体治癒','left');if(SkillValue[0] == 1){tf.defenseL.全体 = 0;tf.defenseL.全体値 = 0;}
+							var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'平等治癒','left');if(SkillValue[0] == 1){tf.defenseL.平等 = 0;tf.defenseL.平等値 = 0;}
+							var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'魔族医療','left');if(SkillValue[0] == 1){tf.defenseL.魔族 = 0;tf.defenseL.魔族値 = 0;}
+
+							var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'解毒治療','left');if(SkillValue[0] == 1){tf.defenseL.毒化 = 0;dm("毒化封印(魅了)");}
+							var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'解呪治療','left');if(SkillValue[0] == 1){tf.defenseL.呪撃 = 0;dm("呪撃封印(魅了)");}
+							var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'麻痺治療','left');if(SkillValue[0] == 1){tf.defenseL.麻痺 = 0;dm("麻痺封印(魅了)");}
+							var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'削減治療','left');if(SkillValue[0] == 1){tf.defenseL.削減 = 0;dm("削減封印(魅了)");}
+							var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'絶対治療','left');if(SkillValue[0] == 1){tf.defenseL.絶対 = 0;dm("絶対封印(魅了)");}
+							for(var n=0;n<6;n++){
+								//自分以外が持っていたら再設定
+								if(n != tf.defender){
+									var SkillValue = battleFuncSkillSet.searchSkill(n,'全体治癒','left');if(SkillValue[0] == 1){tf.defenseL.全体 = 1;tf.defenseL.全体値 += SkillValue[1];}
+									var SkillValue = battleFuncSkillSet.searchSkill(n,'平等治癒','left');if(SkillValue[0] == 1){tf.defenseL.平等 = 1;tf.defenseL.平等値 += SkillValue[1];}
+									var SkillValue = battleFuncSkillSet.searchSkill(n,'魔族医療','left');if(SkillValue[0] == 1){tf.defenseL.魔族 = 1;tf.defenseL.魔族値 += SkillValue[1];}
+
+									var SkillValue = battleFuncSkillSet.searchSkill(n,'解毒治療','left');if(SkillValue[0] == 1){tf.defenseL.毒化 = 1;dm("毒化再設定(魅了)");}
+									var SkillValue = battleFuncSkillSet.searchSkill(n,'解呪治療','left');if(SkillValue[0] == 1){tf.defenseL.呪撃 = 1;dm("呪撃再設定(魅了)");}
+									var SkillValue = battleFuncSkillSet.searchSkill(n,'麻痺治療','left');if(SkillValue[0] == 1){tf.defenseL.麻痺 = 1;dm("麻痺再設定(魅了)");}
+									var SkillValue = battleFuncSkillSet.searchSkill(n,'削減治療','left');if(SkillValue[0] == 1){tf.defenseL.削減 = 1;dm("削減再設定(魅了)");}
+									var SkillValue = battleFuncSkillSet.searchSkill(n,'絶対治療','left');if(SkillValue[0] == 1){tf.defenseL.絶対 = 1;dm("絶対再設定(魅了)");}
+								}
+							}
+						}else{
+							if(tf.leftParty[tf.defender].attribute.indexOf('雷') == -1 && tf.defenseL.麻痺 == 0 && tf.defenseL.絶対 == 0){
+								dm("魅了→麻痺:"+tf.leftParty[tf.defender].paralyze+"+1");
+								tf.leftParty[tf.defender].paralyze += 1;//男でも女でもない場合は麻痺+1にすり替え
+								Images.loadImages("btl_panelParalyze");
+								Images.setSizeToImageSize();
+								popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+								offensePanelCount++;
+								unitImageLeft.adjustGamma(2.5, 150, 255, 2.5, 150, 255, 1.0, 0, 255);//麻痺カラー
+								tf.rightParty[tf.attacker].effect = 101;
+								dm("麻痺値:"+tf.leftParty[tf.defender].paralyze);
+								if(tf.leftParty[tf.defender].paralyze > 1){
+									Images.loadImages("abnormalIcon_Paralyze");
+									Images.setSizeToImageSize();
+									Images.flipLR();//左側は反転
+									popupPanel.operateRect(0, 70, Images, 0, 0, Images.imageWidth, Images.imageHeight, omPsNormal,255);
+								}
+							}else{
+								tf.rightParty[tf.attacker].effect = tf.rightParty[tf.attacker].effTMP;
+							}
+						}
+					}
+				}
+			}
+			//反撃異常
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.attacker,'異常耐性','right');if(SkillValue[0] == 1){tf.defenseR.耐性 = 1;}
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'反撃異常','left');dm("反撃異常="+SkillValue[0]);
+			if(SkillValue[0] == 1 && tf.defenseR.耐性 == 0 && defenderDamageRate > 0){
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'毒化攻撃','left');
+				if(tf.rightParty[tf.attacker].attribute.indexOf('毒') != -1 || tf.rightParty[tf.attacker].attribute.indexOf('死') != -1 ||
+				   tf.rightParty[tf.attacker].attribute.indexOf('器') != -1 || tf.rightParty[tf.attacker].attribute.indexOf('超') != -1){tf.defenseR.毒化 = 1;}
+				if(SkillValue[0] == 1 && tf.defenseR.毒化 == 0 && tf.defenseR.絶対 == 0){
+					tf.rightParty[tf.attacker].poison      += SkillValue[1];
+					Images.loadImages("btl_panelPoison");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 82,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				if(tf.rightParty[tf.attacker].attribute.indexOf('雷') != -1 || tf.rightParty[tf.attacker].attribute.indexOf('超') != -1){tf.defenseR.麻痺 = 1;}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'麻痺攻撃','left');
+				if(SkillValue[0] == 1 && tf.defenseR.麻痺 == 0 && tf.defenseR.絶対 == 0){
+					tf.rightParty[tf.attacker].paralyze    += SkillValue[1];
+					Images.loadImages("btl_panelParalyze");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 82,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				if(tf.rightParty[tf.attacker].attribute.indexOf('超') != -1){tf.defenseR.封印 = 1;}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'封印攻撃','left');
+				if(SkillValue[0] == 1 && tf.defenseR.封印 == 0){
+					tf.rightParty[tf.attacker].seal         = 1;
+					Images.loadImages("btl_panelSeal");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 82,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				if(tf.rightParty[tf.attacker].attribute.indexOf('火')  != -1 || tf.rightParty[tf.attacker].attribute.indexOf('超') != -1){tf.defenseR.魅了 = 1;}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'魅了攻撃','left');
+				if(SkillValue[0] == 1 && tf.defenseR.魅了 == 0){
+					tf.rightParty[tf.attacker].charm        = 1;
+					Images.loadImages("btl_panelCharm");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 82,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				if(tf.rightParty[tf.attacker].attribute.indexOf('聖') != -1 || tf.rightParty[tf.attacker].attribute.indexOf('超') != -1){tf.defenseR.呪撃 = 1;}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'呪の一撃','left');
+				if(SkillValue[0] == 1 && tf.defenseR.呪撃 == 0 && tf.defenseR.絶対 == 0){
+					tf.rightParty[tf.attacker].curse        = 1;
+					Images.loadImages("btl_panelCurse");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 82,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				if(tf.rightParty[tf.attacker].attribute.indexOf('超') != -1){tf.defenseR.削減 = 1;}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'攻撃削減','left');
+				if(SkillValue[0] == 1 && tf.defenseR.削減 == 0 && tf.defenseR.絶対 == 0){
+					tf.rightParty[tf.attacker].cutDown.pow = SkillValue[1];
+					Images.loadImages("btl_panelCutPow");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 82,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'防御削減','left');
+				if(SkillValue[0] == 1 && tf.defenseR.削減 == 0 && tf.defenseR.絶対 == 0){
+					tf.rightParty[tf.attacker].cutDown.def = SkillValue[1];
+					Images.loadImages("btl_panelCutDef");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 82,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'速度削減','left');
+				if(SkillValue[0] == 1 && tf.defenseR.削減 == 0 && tf.defenseR.絶対 == 0){
+					tf.rightParty[tf.attacker].cutDown.spd = SkillValue[1];
+					Images.loadImages("btl_panelCutSpd");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 82,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'士気削減','left');
+				if(SkillValue[0] == 1 && tf.defenseR.削減 == 0 && tf.defenseR.絶対 == 0){
+					tf.rightParty[tf.attacker].cutDown.mor = SkillValue[1];
+					Images.loadImages("btl_panelCutMor");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 82,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'虹の毒撃','left');
+dm("虹の毒撃="+SkillValue[0]);
+				if(SkillValue[0] == 1 && tf.defenseR.絶対 == 0){
+					if(tf.defenseR.毒化 == 0){tf.rightParty[tf.attacker].poison      += SkillValue[1];Images.loadImages("btl_panelPoison")  ;Images.setSizeToImageSize();popupPanel.operateRect( 82,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);defensePanelCount++;}
+					if(tf.defenseR.麻痺 == 0){tf.rightParty[tf.attacker].paralyze    += SkillValue[1];Images.loadImages("btl_panelParalyze");Images.setSizeToImageSize();popupPanel.operateRect( 82,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);defensePanelCount++;}
+					if(tf.defenseR.呪撃 == 0){tf.rightParty[tf.attacker].curse        =             1;Images.loadImages("btl_panelCurse")   ;Images.setSizeToImageSize();popupPanel.operateRect( 82,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);defensePanelCount++;}
+					if(tf.defenseR.削減 == 0){tf.rightParty[tf.attacker].cutDown.pow  = SkillValue[1];Images.loadImages("btl_panelCutPow")  ;Images.setSizeToImageSize();popupPanel.operateRect( 82,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);defensePanelCount++;}
+					if(tf.defenseR.削減 == 0){tf.rightParty[tf.attacker].cutDown.def  = SkillValue[1];Images.loadImages("btl_panelCutDef")  ;Images.setSizeToImageSize();popupPanel.operateRect( 82,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);defensePanelCount++;}
+					if(tf.defenseR.削減 == 0){tf.rightParty[tf.attacker].cutDown.spd  = SkillValue[1];Images.loadImages("btl_panelCutSpd")  ;Images.setSizeToImageSize();popupPanel.operateRect( 82,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);defensePanelCount++;}
+					if(tf.defenseR.削減 == 0){tf.rightParty[tf.attacker].cutDown.mor  = SkillValue[1];Images.loadImages("btl_panelCutMor")  ;Images.setSizeToImageSize();popupPanel.operateRect( 82,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);defensePanelCount++;}
+				}
+dm("defensePanelCount="+defensePanelCount);
+				if(defensePanelCount > 0){
+					Images.loadImages("btl_panelCounterAbnormal");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect(571, 272, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					unitImageRight.adjustGamma(0.5, 0, 255, 1.5, 0, 255, 0.5, 0, 255);//反撃異常カラー
+				}
+			}
+			//専守防衛
+			var SkillValue = battleFuncSkillSet.searchSkill(d,'専守防衛','left');
+			if(SkillValue[0] == 1){attackerDamageRate = (int)(attackerDamageRate/2);}
+			//反撃倍加
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'反撃倍加','left');
+			if(SkillValue[0] == 1 && tf.offenseR.遠隔 == 0){
+dm("反撃倍加 x"+SkillValue[1]);
+				defenderDamageRate = (SkillValue[1]+ 1) * defenderDamageRate;
+				if(tf.OriginalTarget == tf.defender){
+					Images.loadImages("btl_panelCounterMagnifi");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 571, 230, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					//battleFuncsView.numDraw(SkillValue[1]+tf.magnitudeL+1, 'btl_Number0-9counter',popupPanel,718,240,1);
+					battleFuncsView.numDraw(SkillValue[1]+1, 'btl_Number0-9counter',popupPanel,718,240,1);
+				}
+			}
+			//巨大体躯
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.attacker,'巨大体躯','right');
+			if(SkillValue[0] == 1){tf.offenseR.巨大 = 1;tf.offenseR.巨大値 = SkillValue[1];}
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'巨大体躯','left');
+			if(SkillValue[0] == 1){tf.defenseL.巨大 = 1;tf.defenseL.巨大値 = SkillValue[1];}
+			if(tf.offenseR.巨大 == 1){
+				if(tf.offenseR.巨大値 > 80){tf.offenseR.巨大値 = 80;}
+				defenderDamageRate = (int)(defenderDamageRate * ((100 - tf.offenseR.巨大値) /100));
+			}
+			if(tf.defenseL.巨大 == 1){
+				if(tf.defenseL.巨大値 > 80){tf.defenseL.巨大値 = 80;}
+				attackerDamageRate = (int)(attackerDamageRate * ((100 - tf.defenseL.巨大値) /100));
+			}
+			//特攻補正
+			if(tf.magnitudeR > 0 && attackerDamageRate > 0){
+				Images.loadImages("btl_panelAttackerMagnifi");
+				Images.setSizeToImageSize();
+				popupPanel.operateRect( 216, 230, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+				battleFuncsView.numDraw(tf.magnitudeR+1, 'btl_Number0-9damage',popupPanel,363,240,1);
+			}
+
+			attackerDamageRate = attackerDamageRate * (tf.magnitudeR + 1);
+			defenderDamageRate = defenderDamageRate * (tf.magnitudeL + 1);
+
+			//攻撃相性補正(L <- R)
+			var jobAtt;
+			if(tf.rightParty[a].type == 'L'){if(tf.leftParty[d].type =='B'){jobAtt=1;attackerDamageRate *= 1.5;dm("AD相性補正 L -> B:"+attackerDamageRate);}}
+			if(tf.rightParty[a].type == 'S'){if(tf.leftParty[d].type =='L'){jobAtt=1;attackerDamageRate *= 1.5;dm("AD相性補正 S -> L:"+attackerDamageRate);}}
+			if(tf.rightParty[a].type == 'C'){if(tf.leftParty[d].type =='S'){jobAtt=1;attackerDamageRate *= 1.5;dm("AD相性補正 C -> S:"+attackerDamageRate);}}
+			if(tf.rightParty[a].type == 'G'){if(tf.leftParty[d].type =='C'){jobAtt=1;attackerDamageRate *= 1.5;dm("AD相性補正 G -> C:"+attackerDamageRate);}}
+			if(tf.rightParty[a].type == 'D'){if(tf.leftParty[d].type =='G'){jobAtt=1;attackerDamageRate *= 1.5;dm("AD相性補正 D -> G:"+attackerDamageRate);}}
+			if(tf.rightParty[a].type == 'B'){if(tf.leftParty[d].type =='D'){jobAtt=1;attackerDamageRate *= 1.5;dm("AD相性補正 B -> D:"+attackerDamageRate);}}
+			if(jobAtt == 1){
+				Images.loadImages("btl_panelJobAttack");
+				Images.setSizeToImageSize();
+				if(attackerDamageRate > 0){popupPanel.operateRect( 216,150, Images, 0, 0, Images.imageWidth, Images.imageHeight);}
+			}
+
+			//反撃相性補正(L <- R)
+			var jobDef;
+			if(tf.leftParty[d].type == 'L'){if(tf.rightParty[a].type =='B'){jobDef=1;defenderDamageRate *= 1.5;dm("DD相性補正 L -> B:"+defenderDamageRate);}}
+			if(tf.leftParty[d].type == 'S'){if(tf.rightParty[a].type =='L'){jobDef=1;defenderDamageRate *= 1.5;dm("DD相性補正 S -> L:"+defenderDamageRate);}}
+			if(tf.leftParty[d].type == 'C'){if(tf.rightParty[a].type =='S'){jobDef=1;defenderDamageRate *= 1.5;dm("DD相性補正 C -> S:"+defenderDamageRate);}}
+			if(tf.leftParty[d].type == 'G'){if(tf.rightParty[a].type =='C'){jobDef=1;defenderDamageRate *= 1.5;dm("DD相性補正 G -> C:"+defenderDamageRate);}}
+			if(tf.leftParty[d].type == 'D'){if(tf.rightParty[a].type =='G'){jobDef=1;defenderDamageRate *= 1.5;dm("DD相性補正 D -> G:"+defenderDamageRate);}}
+			if(tf.leftParty[d].type == 'B'){if(tf.rightParty[a].type =='D'){jobDef=1;defenderDamageRate *= 1.5;dm("DD相性補正 B -> D:"+defenderDamageRate);}}
+			if(jobDef == 1){
+				Images.loadImages("btl_panelJobDefend");
+				Images.setSizeToImageSize();
+				if(defenderDamageRate > 0){popupPanel.operateRect( 571,150, Images, 0, 0, Images.imageWidth, Images.imageHeight);}
+			}
+
+			//竜鱗守護
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.attacker,'竜鱗守護','right');if(SkillValue[0] == 1){tf.offenseR.竜鱗 = 1;tf.offenseR.竜鱗値 = SkillValue[1];}
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'竜鱗守護','left') ;if(SkillValue[0] == 1){tf.defenseL.竜鱗 = 1;tf.defenseL.竜鱗値 = SkillValue[1];}
+				//竜族特攻無効化
+				for(var i=0;i<tf.tacticsSkillCountL.count;i++){if(tf.tacticsSkillCountL[i].substring(0,1) == '竜'){tf.offenseR.竜鱗 = 0;tf.offenseR.竜鱗値 = 0;}}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'竜族特攻','left');if(tf.leftParty[tf.defender].special.indexOf('竜') != -1 || SkillValue[0] == 1){tf.offenseR.竜鱗 = 0;tf.offenseR.竜鱗値 = 0;}
+				for(var i=0;i<tf.tacticsSkillCountR.count;i++){if(tf.tacticsSkillCountR[i].substring(0,1) == '竜'){tf.defenseL.竜鱗 = 0;tf.defenseL.竜鱗値 = 0;}}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.attacker,'竜族特攻','right');if(tf.rightParty[tf.attacker].special.indexOf('竜') != -1 || SkillValue[0] == 1){tf.defenseL.竜鱗 = 0;tf.defenseL.竜鱗値 = 0;}
+			dm("R.竜鱗="+tf.offenseR.竜鱗+"R.竜鱗値"+tf.offenseR.竜鱗値+" / L.竜鱗="+tf.defenseL.竜鱗+"L.竜鱗値"+tf.defenseL.竜鱗値);
+			if(tf.offenseR.竜鱗 == 1 && tf.defenseL.次元 == 0 && tf.defenseL.回避 == 0){
+				if((attackerDamageRate * (tf.offenseR.竜鱗値 / 100)) > defenderDamageRate && defenderDamageRate > 0){
+					defenderDamageRate = 0;
+					if(tf.Encounter == 0){
+						Images.loadImages("btl_panelGuard");
+						Images.setSizeToImageSize();
+						popupPanel.operateRect( 562,391, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+						kag.tagHandlers.playse(%[buf:'4',storage:'se2101_魔法ヒィィィン.ogg']);
+						kag.tagHandlers.shakes(%[layer:'2',time:100,hmax: 0,vmax: 6]);
+						kag.tagHandlers.waitshakes(%[canskip:'false']);
+					}
+				}
+			}
+			if(tf.defenseL.竜鱗 == 1 && tf.offenseR.次元 == 0){
+				if((defenderDamageRate * (tf.defenseL.竜鱗値 / 100)) > attackerDamageRate && attackerDamageRate > 0){
+					attackerDamageRate = 0;
+					if(tf.Encounter == 0){
+						Images.loadImages("btl_panelGuard");
+						Images.setSizeToImageSize();
+						popupPanel.operateRect( 218,400, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+						kag.tagHandlers.playse(%[buf:'4',storage:'se2101_魔法ヒィィィン.ogg']);
+						kag.tagHandlers.shakes(%[layer:'3',time:100,hmax: 0,vmax: 6]);
+						kag.tagHandlers.waitshakes(%[canskip:'false']);
+					}
+				}
+			}
+
+			//自決自爆(左)
+			tf.HARAKIRI_L = 0;
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'自決自爆','left');
+			if(SkillValue[0] == 1 && (tf.leftParty[tf.defender].HP.now - attackerDamageRate) < 1){
+				if(tf.offenseR.遠隔 == 1){
+					defenderDamageRate += (int)(((SkillValue[1] * tf.leftParty[tf.defender].HP.now)/100)/2);
+				}else{
+					defenderDamageRate += (int)((SkillValue[1] * tf.leftParty[tf.defender].HP.now)/100);
+				}
+dm("L.自決自爆:"+SkillValue[1]+" * "+tf.leftParty[tf.defender].HP.now);
+				if(tf.Encounter == 0){
+					Images.loadImages("btl_panelHARAKIRI");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 34, 442, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					kag.tagHandlers.image(%[layer:'3', page:'fore', storage:"爆発単体", left:0, top:127, opacity:255, visible:true, mode:'psadd']);//エフェクト
+					tf.HARAKIRI_L = 1;
+				}
+			}
+			//自決自爆(右)
+			tf.HARAKIRI_R = 0;
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.attacker,'自決自爆','right');
+			if(SkillValue[0] == 1 && (tf.rightParty[tf.attacker].HP.now - defenderDamageRate) < 1){
+				attackerDamageRate += (int)((SkillValue[1] * tf.rightParty[tf.attacker].HP.now)/100);
+dm("R.自決自爆:"+SkillValue[1]+" * "+tf.rightParty[tf.attacker].HP.now);
+				if(tf.Encounter == 0){
+					Images.loadImages("btl_panelHARAKIRI");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 744, 442, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					kag.tagHandlers.image(%[layer:'2', page:'fore', storage:"爆発単体", left:480, top:127, opacity:255, visible:true, mode:'psadd']);//エフェクト
+					tf.HARAKIRI_R = 1;
+				}
+			}
+
+			attackerDamageRate = (int attackerDamageRate);
+			defenderDamageRate = (int defenderDamageRate);
+dm("attackerDamageRate="+attackerDamageRate);
+dm("defenderDamageRate="+defenderDamageRate);
+			battleFuncsView.numDraw(attackerDamageRate, 'btl_Number0-9damage' ,popupPanel,277,195,5);	//attackerDamage
+			battleFuncsView.numDraw(defenderDamageRate, 'btl_Number0-9counter',popupPanel,531,195,5);	//counterDamage
+			//tf.defenseL.回避 = 0;
+		}else{
+//dm("    a:"+a);
+//dm(" .pow:"+tf.leftParty[a].pow);
+//dm("r.pow:"+tf.leftParty[a].revise.pow);
+			ApowALL = calc.allStatusCalc(tf.leftParty[a].pow, tf.leftParty[a].revise.pow,a,'left','pow');
+			AdefALL = calc.allStatusCalc(tf.leftParty[a].def, tf.leftParty[a].revise.def,a,'left','def');
+			DpowALL = calc.allStatusCalc(tf.rightParty[d].pow,tf.rightParty[d].revise.pow,d,'right','pow');
+			DdefALL = calc.allStatusCalc(tf.rightParty[d].def,tf.rightParty[d].revise.def,d,'right','def');
+			//作戦補正
+			DpowALL += tf.rightParty[d].strategy.pow;
+			DdefALL += tf.rightParty[d].strategy.def;
+			//致命必殺(右)
+			if(tf.criticalR == 1 && (tf.offenseL.扇形 > 0 && tf.OriginalTarget == tf.defender)){
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'致命必殺','right');
+				if(SkillValue[0] == 1){
+					tf.defenseR.致命値 = SkillValue[1];
+					//if(tf.defenseR.致命値 > 100){tf.defenseR.致命値 = 100;}
+					//DdefALL = DdefALL * (1 - tf.defenseR.致命値 * 0.005);
+					DdefALL = DdefALL * 0.75;
+					Images.loadImages("btl_panelCriticalSplash");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 753,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+			}
+			//致命必殺(左)
+			if(tf.criticalL == 1){
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.attacker,'致命必殺','left');
+				if(SkillValue[0] == 1){
+					tf.offenseL.致命値 = SkillValue[1];
+					//if(tf.offenseL.致命値 > 100){tf.offenseL.致命値 = 100;}
+					//DdefALL = DdefALL * (1 - tf.offenseL.致命値 * 0.005);
+					DdefALL = DdefALL * 0.75;
+					Images.loadImages("btl_panelCriticalSplash");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					offensePanelCount++;
+				}
+			}
+			//カブト割による防御補正
+			if(tf.offenseL.兜割 == 1){
+				var Value = (100 - tf.offenseL.兜割値) / 100;
+				if(Value < 0.25){Value =0.25;}
+				DdefALL = (int)(DdefALL * Value);
+				Images.loadImages("btl_panelHelmClash");
+				Images.setSizeToImageSize();
+				popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+				offensePanelCount++;
+			}
+			//次元斬撃による防御補正
+			if(tf.offenseL.次元 == 1){
+				DdefALL = (int)(DdefALL * 0.25);
+				Images.loadImages("btl_panelDimension");
+				Images.setSizeToImageSize();
+				popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+				offensePanelCount++;
+			}
+			//側面攻撃
+			if(tf.offenseL.側面 == 1){
+				Images.loadImages("btl_panelSide");
+				Images.setSizeToImageSize();
+				popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+				offensePanelCount++;
+			}
+			defenderDamageRate = calc.defenderDamageCalc(DpowALL,tf.rightParty[d].HP.now,AdefALL,tf.leftLnd);
+			//遠隔攻撃
+			if(tf.offenseL.次元 == 1 || (tf.offenseL.遠隔 == 1 && tf.defenseR.遠隔 == 0)){
+				defenderDamageRate = 0;							//反撃無効
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'イベイド','right');
+				if(SkillValue[0] == 1 && intrandom(0,99) < SkillValue[1]){tf.defenseR.回避 = 1;tf.criticalL = 0;dm("### 回避成功!! イベイド R ###");}
+				//遠隔攻撃
+				if((tf.offenseL.次元 == 1 || tf.offenseL.遠隔 == 1) && tf.defenseR.回避 == 0){
+					Images.loadImages("btl_panelSnipe");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					offensePanelCount++;
+				}
+			}
+			attackerDamageRate = calc.attackerDamageCalc(ApowALL, tf.leftParty[a].HP.now,DdefALL,tf.rightLnd);
+dm("###("+a+") "+tf.leftParty[a].unitName +"###");
+dm("攻撃側="+attackerDamageRate+"/特攻L="+tf.magnitudeL+"+1");
+dm("防御側="+defenderDamageRate+"/特攻R="+tf.magnitudeR+"+1");
+			if(attackerDamageRate < 0){attackerDamageRate = 0;}
+			if(defenderDamageRate < 0){defenderDamageRate = 0;}
+
+			if(tf.criticalL == 1){
+dm("!!! attackerCritical -L- !!!");
+				attackerDamageRate = (int)((attackerDamageRate * 1.5) * (1 + tf.offenseL.致命値 / 100));
+				//attackerDamageRate = attackerDamageRate * 1.5;
+				Images.loadImages("btl_panelCritical");
+				Images.setSizeToImageSize();
+				if(attackerDamageRate > 0){popupPanel.operateRect( 562,432, Images, 0, 0, Images.imageWidth, Images.imageHeight);}
+			}else{
+				//パリング
+				if(tf.defenseR.回避 == 0){
+					if(tf.offenseL.次元 == 0){//次元斬撃じゃなければ
+						var SkillValue1 = battleFuncSkillSet.searchSkill(tf.defender,'パリング','right');
+						var SkillValue2 = battleFuncSkillSet.searchSkill(tf.defender,'次元斬撃','right');
+		dm("パリング="+SkillValue1[0]+"/パリ値="+SkillValue1[1]);
+		dm("次元斬撃="+SkillValue2[0]+"/次元値="+SkillValue2[1]);
+						if((SkillValue1[0] == 1 && intrandom(0,99) < SkillValue1[1]) || (SkillValue2[0] == 1 && intrandom(0,99) < SkillValue2[1]) ){
+		dm("!!! attackerPelling -R- !!!");
+							attackerDamageRate = 0;
+							if(tf.Encounter == 0){
+								Images.loadImages("btl_panelPelling");
+								Images.setSizeToImageSize();
+								popupPanel.operateRect( 562,432, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+								kag.tagHandlers.playse(%[buf:'4',storage:'se0503_武器弾き高音キュリィィン.ogg']);
+								kag.tagHandlers.shakes(%[layer:'2',time:100,hmax: 0,vmax:10]);
+								kag.tagHandlers.waitshakes(%[canskip:'false']);
+							}
+						}
+					}
+				}
+				if(tf.defenseR.回避 == 1 && tf.rightParty[tf.defender].paralyze < 2){//遠隔でイベイド発生(麻痺２以上は不可)
+dm("!!! attackerAvoid -R- !!!");
+					attackerDamageRate = 0;
+					if(tf.Encounter == 0){
+						Images.loadImages("btl_panelAvoid");
+						Images.setSizeToImageSize();
+						popupPanel.operateRect( 562,432, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+						kag.tagHandlers.playse(%[buf:'4',storage:'se0803_素振りビュン']);
+						kag.tagHandlers.shakes(%[layer:'2',time:100,hmax: 0,vmax:15]);
+						kag.tagHandlers.waitshakes(%[canskip:'false']);
+					}
+				}
+			}
+			if(tf.criticalR == 1 && (tf.offenseL.扇形 > 0 && tf.OriginalTarget == tf.defender)){
+dm("!!! counterCritical -R- !!!");
+				defenderDamageRate = (int)((defenderDamageRate * 1.5) * (1 + tf.defenseR.致命値 / 100));
+				//defenderDamageRate = defenderDamageRate * 1.5;
+				Images.loadImages("btl_panelCounterCritical");
+				Images.setSizeToImageSize();
+				if(defenderDamageRate > 0){popupPanel.operateRect( 218,432, Images, 0, 0, Images.imageWidth, Images.imageHeight);}
+			}else{
+				//パリング
+				if(tf.offenseL.遠隔 == 0){//遠隔は判定しない
+					var SkillValue1 = battleFuncSkillSet.searchSkill(tf.attacker,'パリング','left');
+					var SkillValue2 = battleFuncSkillSet.searchSkill(tf.attacker,'次元斬撃','left');
+	dm("パリング="+SkillValue1[0]+"/パリ値="+SkillValue1[1]);
+	dm("次元斬撃="+SkillValue2[0]+"/次元値="+SkillValue2[1]);
+					if((SkillValue1[0] == 1 && intrandom(0,99) < SkillValue1[1]) || (SkillValue2[0] == 1 && intrandom(0,99) < SkillValue2[1]) ){
+	dm("!!! counterPelling -L- !!!");
+						defenderDamageRate = 0;
+						if(tf.OriginalTarget == tf.defender){
+							if(tf.Encounter == 0){
+								Images.loadImages("btl_panelCounterPelling");
+								Images.setSizeToImageSize();
+								popupPanel.operateRect( 218,432, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+								kag.tagHandlers.playse(%[buf:'4',storage:'se0510_武器弾き高音カィィン（音小.ogg']);
+								kag.tagHandlers.shakes(%[layer:'3',time:100,hmax: 0,vmax: 6]);
+								kag.tagHandlers.waitshakes(%[canskip:'false']);
+							}
+						}
+					}
+				}
+			}
+			//＋貫通ダメージ
+			if(tf.offenseL.貫通 == 1 && tf.defenseR.貫通 == 0 && tf.defenseR.十字 == 0){
+				//attackerDamageRate = (int)(attackerDamageRate * tf.offenseR.貫通値 / 100);
+dm("OriginalTarget:"+tf.OriginalTarget);
+				if(tf.OriginalTarget != tf.defender){defenderDamageRate = 0;}//追加分は反撃ダメージ無効
+				Images.loadImages("btl_panelThrough");
+				Images.setSizeToImageSize();
+				popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+				offensePanelCount++;
+			}
+			//＋扇形ダメージ
+			if(tf.offenseL.扇形 > 0 && tf.defenseR.扇形 == 0 && tf.defenseR.十字 == 0 && tf.defenseR.全域 == 0){
+dm("ｵﾘｼﾞﾅﾙﾀｰｹﾞｯﾄ:"+tf.OriginalTarget);
+				//追加分は反撃ダメージ無効＆攻撃半減
+				if(tf.OriginalTarget != tf.defender){
+					defenderDamageRate = 0;
+					attackerDamageRate = (int)(attackerDamageRate / 2);
+				}
+				if(tf.offenseL.全域 > 0){Images.loadImages("btl_panelAlltype");}else{Images.loadImages("btl_panelFuntype");}
+				Images.setSizeToImageSize();
+				popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+				offensePanelCount++;
+			}
+			//状態異常(削減)
+			if(tf.rightParty[tf.defender].attribute.indexOf('超') != -1){tf.defenseR.削減 = 1;}
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'異常耐性','right');if(SkillValue[0] == 1){tf.defenseR.耐性 = 1;}
+dm("R.削攻1:"+tf.offenseL.削攻+"R.削防1:"+tf.offenseL.削防+"R.削速1:"+tf.offenseL.削速+"R.削士1:"+tf.offenseL.削士);
+dm("L.絶対0:"+tf.defenseR.絶対+"/L.耐性0:"+tf.defenseR.耐性+"/L.削減0:"+tf.defenseR.削減+"/L.回避0:"+tf.defenseR.回避);
+			if(tf.offenseL.削攻 == 1 || tf.offenseL.削防 == 1 || tf.offenseL.削速 == 1 ||tf.offenseL.削士 == 1){
+				if(tf.defenseR.絶対 == 0 && tf.defenseR.耐性 == 0 && tf.defenseR.削減 == 0 && tf.defenseR.回避 == 0){
+dm("ｵﾘﾀｹﾞ="+tf.OriginalTarget+"/ｱﾘﾀｹﾞ="+tf.allyTarget+"/ﾃﾞﾌｴﾀﾞ:"+tf.defender);
+					if(tf.offenseL.複異 == 1 || tf.OriginalTarget == tf.defender){//追加分は毒化無効(複数異常以外)
+						tf.leftParty[tf.attacker].effect = 105;
+						if(tf.offenseL.削攻 == 1){
+							tf.rightParty[tf.defender].cutDown.pow +=tf.offenseL.削攻値;
+							Images.loadImages("btl_panelCutPow");
+							Images.setSizeToImageSize();
+							popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+							offensePanelCount++;
+						}
+						if(tf.offenseL.削防 == 1){
+							tf.rightParty[tf.defender].cutDown.def +=tf.offenseL.削防値;
+							Images.loadImages("btl_panelCutDef");
+							Images.setSizeToImageSize();
+							popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+							offensePanelCount++;
+						}
+						if(tf.offenseL.削速 == 1){
+							tf.rightParty[tf.defender].cutDown.spd +=tf.offenseL.削速値;
+							Images.loadImages("btl_panelCutSpd");
+							Images.setSizeToImageSize();
+							popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+							offensePanelCount++;
+						}
+						if(tf.offenseL.削士 == 1){
+							tf.rightParty[tf.defender].cutDown.mor +=tf.offenseL.削士値;
+							Images.loadImages("btl_panelCutMor");
+							Images.setSizeToImageSize();
+							popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+							offensePanelCount++;
+						}
+					}
+				}
+			}
+			//状態異常(毒)
+dm("R.毒化="+tf.defenseR.毒化);
+			if(tf.rightParty[tf.defender].attribute.indexOf('毒') != -1 || tf.rightParty[tf.defender].attribute.indexOf('死') != -1 ||
+			   tf.rightParty[tf.defender].attribute.indexOf('器') != -1 || tf.rightParty[tf.defender].attribute.indexOf('超') != -1){tf.defenseR.毒化 = 1;}
+dm("L.毒化1:"+tf.offenseL.毒化+"/R.絶対0:"+tf.defenseR.絶対+"/R.耐性0:"+tf.defenseR.耐性+"/R.毒化0:"+tf.defenseR.毒化+"/R.回避0:"+tf.defenseR.回避);
+			if(tf.offenseL.毒化 == 1 && tf.defenseR.絶対 == 0 && tf.defenseR.耐性 == 0 && tf.defenseR.毒化 == 0 && tf.defenseR.回避 == 0){
+dm("ｵﾘﾀｹﾞ="+tf.OriginalTarget+"/ｴﾈﾀｹﾞ="+tf.enemyTarget+"/ﾃﾞﾌｴﾀﾞ:"+tf.defender);
+				if(tf.offenseL.複異 == 1 || tf.OriginalTarget == tf.defender){//追加分は毒化無効(複数異常以外)
+					tf.rightParty[tf.defender].poison += tf.offenseL.毒化値;
+					if(tf.rightParty[tf.defender].poison > 50){tf.rightParty[tf.defender].poison = 50;}
+					Images.loadImages("btl_panelPoison");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					Images.loadImages("abnormalIcon_poison");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect(400, 70, Images, 0, 0, Images.imageWidth, Images.imageHeight, omPsNormal,255);
+					offensePanelCount++;
+					unitImageRight.adjustGamma(2.5, 0, 255, 1.0, 0, 255, 2.5, 0, 255);//毒カラー
+					tf.leftParty[tf.attacker].effect = 100;
+				}
+			}
+			//状態異常(マヒ)
+			if(tf.rightParty[tf.defender].attribute.indexOf('雷') != -1 || tf.rightParty[tf.defender].attribute.indexOf('超') != -1){tf.defenseR.麻痺 = 1;}
+dm("L.麻痺1:"+tf.offenseL.麻痺+"/R.絶対0:"+tf.defenseR.絶対+"/R.耐性0:"+tf.defenseR.耐性+"/R.麻痺0:"+tf.defenseR.麻痺+"/R.回避0:"+tf.defenseR.回避);
+			if(tf.offenseL.麻痺 > 0 && tf.defenseR.絶対 == 0 && tf.defenseR.耐性 == 0 && tf.defenseR.麻痺 == 0 && tf.defenseR.回避 == 0){
+dm("ｵﾘﾀｹﾞ="+tf.OriginalTarget+"/ｱﾘﾀｹﾞ="+tf.enemyTarget+"/ﾃﾞﾌｴﾀﾞ:"+tf.defender);
+				if(tf.offenseL.複異 == 1 || tf.OriginalTarget == tf.defender){//追加分は麻痺無効(複数異常以外)
+					tf.rightParty[tf.defender].paralyze += tf.offenseL.麻痺値;
+					Images.loadImages("btl_panelParalyze");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					tf.leftParty[tf.attacker].effect = 101;
+					offensePanelCount++;
+					unitImageRight.adjustGamma(2.5, 150, 255, 2.5, 150, 255, 1.0, 0, 255);//麻痺カラー
+					if(tf.rightParty[tf.defender].paralyze > 1){
+						Images.loadImages("abnormalIcon_Paralyze");
+						Images.setSizeToImageSize();
+						popupPanel.operateRect(400, 70, Images, 0, 0, Images.imageWidth, Images.imageHeight, omPsNormal,255);
+					}
+				}
+			}
+			//状態異常(呪い)
+			if(tf.rightParty[tf.defender].attribute.indexOf('聖') != -1 || tf.rightParty[tf.defender].attribute.indexOf('超') != -1){tf.defenseR.呪撃 = 1;}
+dm("L.呪い1:"+tf.offenseL.呪撃+"/R.絶対0:"+tf.defenseR.絶対+"/R.耐性0:"+tf.defenseR.耐性+"/R.呪撃0:"+tf.defenseR.呪撃+"/R.回避0:"+tf.defenseR.回避);
+			if(tf.offenseL.呪撃 > 0 && tf.defenseR.絶対 == 0 && tf.defenseR.耐性 == 0 && tf.defenseR.呪撃 == 0 && tf.defenseR.回避 == 0){
+dm("ｵﾘﾀｹﾞ="+tf.OriginalTarget+"/ｱﾘﾀｹﾞ="+tf.enemyTarget+"/ﾃﾞﾌｴﾀﾞ:"+tf.defender);
+				if(tf.offenseL.複異 == 1 || tf.OriginalTarget == tf.defender){//追加分は呪無効(複数異常以外)
+					tf.rightParty[tf.defender].curse = 1;
+					if(tf.rightParty[tf.defender].curse > 10){tf.rightParty[tf.defender].curse = 9;}
+					Images.loadImages("btl_panelCurse");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					tf.leftParty[tf.attacker].effect = 101;
+					offensePanelCount++;
+					unitImageRight.adjustGamma(1.5, 255, 0, 1.5, 255, 0, 1.5, 255, 0);//呪カラー
+					Images.loadImages("abnormalIcon_Curse");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect(400, 70, Images, 0, 0, Images.imageWidth, Images.imageHeight, omPsNormal,255);
+				}
+			}
+			//状態異常(封印)
+			if(tf.rightParty[tf.defender].attribute.indexOf('超') != -1){tf.defenseR.封印 = 1;}
+dm("L.封印1:"+tf.offenseL.封印+"/R.絶対0:"+tf.defenseR.絶対+"/R.耐性0:"+tf.defenseR.耐性+"/R.封印0:"+tf.defenseR.封印+"/R.回避0:"+tf.defenseR.回避);
+			if(tf.offenseL.封印 > 0 && tf.defenseR.耐性 == 0 && tf.defenseR.封印 == 0 && tf.defenseR.回避 == 0){
+dm("ｵﾘﾀｹﾞ="+tf.OriginalTarget+"/ｱﾘﾀｹﾞ="+tf.enemyTarget+"/ﾃﾞﾌｴﾀﾞ:"+tf.defender);
+				if(tf.offenseL.複異 == 1 || tf.OriginalTarget == tf.defender){//追加分は封印無効(複数異常以外)
+					if(attackerDamageRate > 0){
+						tf.rightParty[tf.defender].seal = 1;
+						Images.loadImages("btl_panelSeal");
+						Images.setSizeToImageSize();
+						popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+						tf.leftParty[tf.attacker].effect = 103;
+						offensePanelCount++;
+						unitImageRight.adjustGamma(2.0, 0, 255, 2.0, 0, 255, 2.0, 0, 255);//封印カラー
+						Images.loadImages("abnormalIcon_Seal");
+						Images.setSizeToImageSize();
+						popupPanel.operateRect(400, 70, Images, 0, 0, Images.imageWidth, Images.imageHeight, omPsNormal,255);
+						//治療系・医療系を持っていたら解除
+						var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'全体治癒','right');if(SkillValue[0] == 1){tf.defenseR.全体 = 0;tf.defenseR.全体値 = 0;}
+						var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'平等治癒','right');if(SkillValue[0] == 1){tf.defenseR.平等 = 0;tf.defenseR.平等値 = 0;}
+						var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'魔族医療','right');if(SkillValue[0] == 1){tf.defenseR.魔族 = 0;tf.defenseR.魔族値 = 0;}
+
+						var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'解毒治療','right');if(SkillValue[0] == 1){tf.defenseR.毒化 = 0;dm("毒化封印(封印)");}
+						var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'解呪治療','right');if(SkillValue[0] == 1){tf.defenseR.呪撃 = 0;dm("呪撃封印(封印)");}
+						var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'麻痺治療','right');if(SkillValue[0] == 1){tf.defenseR.麻痺 = 0;dm("麻痺封印(封印)");}
+						var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'削減治療','right');if(SkillValue[0] == 1){tf.defenseR.削減 = 0;dm("削減封印(封印)");}
+						var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'絶対治療','right');if(SkillValue[0] == 1){tf.defenseR.絶対 = 0;dm("絶対封印(封印)");}
+						for(var n=0;n<6;n++){
+							//自分以外が持っていたら再設定
+							if(n != tf.defender){
+								var SkillValue = battleFuncSkillSet.searchSkill(n,'全体治癒','right');if(SkillValue[0] == 1){tf.defenseR.全体 = 1;tf.defenseR.全体値 += SkillValue[1];}
+								var SkillValue = battleFuncSkillSet.searchSkill(n,'平等治癒','right');if(SkillValue[0] == 1){tf.defenseR.平等 = 1;tf.defenseR.平等値 += SkillValue[1];}
+								var SkillValue = battleFuncSkillSet.searchSkill(n,'魔族医療','right');if(SkillValue[0] == 1){tf.defenseR.魔族 = 1;tf.defenseR.魔族値 += SkillValue[1];}
+
+								var SkillValue = battleFuncSkillSet.searchSkill(n,'解毒治療','right');if(SkillValue[0] == 1){tf.defenseR.毒化 = 1;dm("毒化再設定(封印)");}
+								var SkillValue = battleFuncSkillSet.searchSkill(n,'解呪治療','right');if(SkillValue[0] == 1){tf.defenseR.呪撃 = 1;dm("呪撃再設定(封印)");}
+								var SkillValue = battleFuncSkillSet.searchSkill(n,'麻痺治療','right');if(SkillValue[0] == 1){tf.defenseR.麻痺 = 1;dm("麻痺再設定(封印)");}
+								var SkillValue = battleFuncSkillSet.searchSkill(n,'削減治療','right');if(SkillValue[0] == 1){tf.defenseR.削減 = 1;dm("削減再設定(封印)");}
+								var SkillValue = battleFuncSkillSet.searchSkill(n,'絶対治療','right');if(SkillValue[0] == 1){tf.defenseR.絶対 = 1;dm("絶対再設定(封印)");}
+							}
+						}
+					}
+				}
+			}
+			//状態異常(魅了)
+			if(tf.rightParty[tf.defender].attribute.indexOf('火') != -1 || tf.rightParty[tf.defender].attribute.indexOf('超') != -1){tf.defenseR.魅了 = 1;}
+dm("L.魅了1:"+tf.offenseL.魅了+"/R.耐性0:"+tf.defenseR.耐性+"/R.魅了0:"+tf.defenseR.魅了+"/R.回避0:"+tf.defenseR.回避);
+			if(tf.offenseL.魅了 == 1 && tf.defenseR.耐性 == 0 && tf.defenseR.魅了 == 0 && tf.defenseR.回避 == 0){
+dm("ｵﾘﾀｹﾞ="+tf.OriginalTarget+"/ｴﾈﾀｹﾞ="+tf.enemyTarget+"/ﾃﾞﾌｴﾀﾞ:"+tf.defender);
+				if(tf.offenseL.複異 == 1 || tf.OriginalTarget == tf.defender){//追加分は毒化無効(複数異常以外)
+					if(attackerDamageRate > 0 && attackerDamageRate > tf.rightWall){//ダメージがあれば
+						if((tf.leftParty[tf.attacker].attribute.indexOf('男') != -1 && tf.rightParty[tf.defender].attribute.indexOf('女') != -1) ||
+						   (tf.leftParty[tf.attacker].attribute.indexOf('女') != -1 && tf.rightParty[tf.defender].attribute.indexOf('男') != -1)){
+							tf.rightParty[tf.defender].charm = 1;
+							Images.loadImages("btl_panelCharm");
+							Images.setSizeToImageSize();
+							popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+							Images.loadImages("abnormalIcon_Charm");
+							Images.setSizeToImageSize();
+							popupPanel.operateRect(400, 70, Images, 0, 0, Images.imageWidth, Images.imageHeight, omPsNormal,255);
+							offensePanelCount++;
+							unitImageRight.adjustGamma(2.5, 0, 255, 1.0, 0, 255, 2.5, 0, 255);//毒カラー
+							tf.leftParty[tf.attacker].effect = 104;
+							//治療系・医療系を持っていたら解除
+							var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'全体治癒','right');if(SkillValue[0] == 1){tf.defenseR.全体 = 0;tf.defenseR.全体値 = 0;}
+							var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'平等治癒','right');if(SkillValue[0] == 1){tf.defenseR.平等 = 0;tf.defenseR.平等値 = 0;}
+							var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'魔族医療','right');if(SkillValue[0] == 1){tf.defenseR.魔族 = 0;tf.defenseR.魔族値 = 0;}
+
+							var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'解毒治療','right');if(SkillValue[0] == 1){tf.defenseR.毒化 = 0;dm("毒化封印(魅了)");}
+							var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'解呪治療','right');if(SkillValue[0] == 1){tf.defenseR.呪撃 = 0;dm("呪撃封印(魅了)");}
+							var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'麻痺治療','right');if(SkillValue[0] == 1){tf.defenseR.麻痺 = 0;dm("麻痺封印(魅了)");}
+							var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'削減治療','right');if(SkillValue[0] == 1){tf.defenseR.削減 = 0;dm("削減封印(魅了)");}
+							var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'絶対治療','right');if(SkillValue[0] == 1){tf.defenseR.絶対 = 0;dm("絶対封印(魅了)");}
+							for(var n=0;n<6;n++){
+								//自分以外が持っていたら再設定
+								if(n != tf.defender){
+									var SkillValue = battleFuncSkillSet.searchSkill(n,'全体治癒','right');if(SkillValue[0] == 1){tf.defenseR.全体 = 1;tf.defenseR.全体値 += SkillValue[1];}
+									var SkillValue = battleFuncSkillSet.searchSkill(n,'平等治癒','right');if(SkillValue[0] == 1){tf.defenseR.平等 = 1;tf.defenseR.平等値 += SkillValue[1];}
+									var SkillValue = battleFuncSkillSet.searchSkill(n,'魔族医療','right');if(SkillValue[0] == 1){tf.defenseR.魔族 = 1;tf.defenseR.魔族値 += SkillValue[1];}
+
+									var SkillValue = battleFuncSkillSet.searchSkill(n,'解毒治療','right');if(SkillValue[0] == 1){tf.defenseR.毒化 = 1;dm("毒化再設定(魅了)");}
+									var SkillValue = battleFuncSkillSet.searchSkill(n,'解呪治療','right');if(SkillValue[0] == 1){tf.defenseR.呪撃 = 1;dm("呪撃再設定(魅了)");}
+									var SkillValue = battleFuncSkillSet.searchSkill(n,'麻痺治療','right');if(SkillValue[0] == 1){tf.defenseR.麻痺 = 1;dm("麻痺再設定(魅了)");}
+									var SkillValue = battleFuncSkillSet.searchSkill(n,'削減治療','right');if(SkillValue[0] == 1){tf.defenseR.削減 = 1;dm("削減再設定(魅了)");}
+									var SkillValue = battleFuncSkillSet.searchSkill(n,'絶対治療','right');if(SkillValue[0] == 1){tf.defenseR.絶対 = 1;dm("絶対再設定(魅了)");}
+								}
+							}
+						}else{
+							if(tf.rightParty[tf.defender].attribute.indexOf('雷') == -1 && tf.defenseR.麻痺 == 0 && tf.defenseR.絶対 == 0){
+								dm("魅了→麻痺:"+tf.rightParty[tf.defender].paralyze+"+1");
+								tf.rightParty[tf.defender].paralyze += 1;
+								Images.loadImages("btl_panelParalyze");
+								Images.setSizeToImageSize();
+								popupPanel.operateRect( 82,248-32*offensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+								offensePanelCount++;
+								unitImageRight.adjustGamma(2.5, 150, 255, 2.5, 150, 255, 1.0, 0, 255);//麻痺カラー
+								tf.leftParty[tf.attacker].effect = 101;
+								dm("麻痺値:"+tf.rightParty[tf.defender].paralyze);
+								if(tf.rightParty[tf.defender].paralyze > 1){
+									Images.loadImages("abnormalIcon_Paralyze");
+									Images.setSizeToImageSize();
+									popupPanel.operateRect(400, 70, Images, 0, 0, Images.imageWidth, Images.imageHeight, omPsNormal,255);
+								}
+							}else{
+								tf.leftParty[tf.attacker].effect = tf.leftParty[tf.attacker].effTMP;
+							}
+						}
+					}
+				}
+			}
+			//反撃異常
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.attacker,'異常耐性','left');if(SkillValue[0] == 1){tf.defenseL.耐性 = 1;}
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'反撃異常','right');
+			if(SkillValue[0] == 1&& tf.defenseL.耐性 == 0 && defenderDamageRate > 0){
+				if(tf.leftParty[tf.attacker].attribute.indexOf('毒') != -1 || tf.leftParty[tf.attacker].attribute.indexOf('死') != -1 ||
+				   tf.leftParty[tf.attacker].attribute.indexOf('器') != -1 || tf.leftParty[tf.attacker].attribute.indexOf('超') != -1){tf.defenseL.毒化 = 1;}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'毒化攻撃','right');
+				if(SkillValue[0] == 1 && tf.defenseL.毒化 == 0 && tf.defenseL.絶対 == 0 ){
+					tf.leftParty[tf.attacker].poison      += SkillValue[1];
+					Images.loadImages("btl_panelPoison");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect(753,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				if(tf.leftParty[tf.attacker].attribute.indexOf('雷') != -1 || tf.leftParty[tf.attacker].attribute.indexOf('超') != -1){tf.defenseL.麻痺 = 1;}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'麻痺攻撃','right');
+				if(SkillValue[0] == 1 && tf.defenseL.麻痺 == 0 && tf.defenseL.絶対 == 0 ){
+					tf.leftParty[tf.attacker].paralyze    += SkillValue[1];
+					tf.leftParty[tf.attacker].poison      += SkillValue[1];
+					Images.loadImages("btl_panelParalyze");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect(753,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				if(tf.leftParty[tf.attacker].attribute.indexOf('超') != -1){tf.defenseL.封印 = 1;}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'封印攻撃','right');
+				if(SkillValue[0] == 1 && tf.defenseL.封印 == 0){
+					tf.leftParty[tf.attacker].seal         = 1;
+					Images.loadImages("btl_panelSeal");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect(753,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				if(tf.leftParty[tf.attacker].attribute.indexOf('火') != -1 || tf.leftParty[tf.attacker].attribute.indexOf('超') != -1){tf.defenseL.魅了 = 1;}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'魅了攻撃','right');
+				if(SkillValue[0] == 1 && tf.defenseL.魅了 == 0){
+					tf.leftParty[tf.attacker].charm        = 1;
+					Images.loadImages("btl_panelCharm");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect(753,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				if(tf.leftParty[tf.attacker].attribute.indexOf('聖') != -1 || tf.leftParty[tf.attacker].attribute.indexOf('超') != -1){tf.defenseL.呪撃 = 1;}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'呪の一撃','right');
+				if(SkillValue[0] == 1 && tf.defenseL.呪撃 == 0 && tf.defenseL.絶対 == 0 ){
+					tf.leftParty[tf.attacker].curse        = 1;
+					Images.loadImages("btl_panelCurse");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect(753,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				if(tf.leftParty[tf.attacker].attribute.indexOf('超') != -1){tf.defenseL.削減 = 1;}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'攻撃削減','right');
+				if(SkillValue[0] == 1 && tf.defenseL.削減 == 0 && tf.defenseL.絶対 == 0 ){
+					tf.leftParty[tf.attacker].cutDown.pow = SkillValue[1];
+					Images.loadImages("btl_panelcutPow");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect(753,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'防御削減','right');
+				if(SkillValue[0] == 1 && tf.defenseL.削減 == 0 && tf.defenseR.絶対 == 0){
+					tf.leftParty[tf.attacker].cutDown.def = SkillValue[1];
+					Images.loadImages("btl_panelCutDef");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect(753,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'速度削減','right');
+				if(SkillValue[0] == 1 && tf.defenseL.削減 == 0 && tf.defenseR.絶対 == 0){
+					tf.leftParty[tf.attacker].cutDown.spd = SkillValue[1];
+					Images.loadImages("btl_panelCutSpd");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect(753,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'士気削減','right');
+				if(SkillValue[0] == 1 && tf.defenseL.削減 == 0 && tf.defenseR.絶対 == 0){
+					tf.leftParty[tf.attacker].cutDown.mor = SkillValue[1];
+					Images.loadImages("btl_panelCutMor");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect(753,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					Images.loadImages("btl_panelCutMor");Images.setSizeToImageSize();popupPanel.operateRect( 82,248-32*count, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					defensePanelCount++;
+				}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'虹の毒撃','right');
+				if(SkillValue[0] == 1 && tf.defenseL.絶対 == 0){
+					if(tf.defenseL.毒化 == 0){tf.leftParty[tf.attacker].poison      += SkillValue[1];Images.loadImages("btl_panelpoison")  ;Images.setSizeToImageSize();popupPanel.operateRect(753,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);defensePanelCount++;}
+					if(tf.defenseL.麻痺 == 0){tf.leftParty[tf.attacker].paralyze    += SkillValue[1];Images.loadImages("btl_panelParalyze");Images.setSizeToImageSize();popupPanel.operateRect(753,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);defensePanelCount++;}
+					if(tf.defenseL.呪撃 == 0){tf.leftParty[tf.attacker].curse        =             1;Images.loadImages("btl_panelCurse")   ;Images.setSizeToImageSize();popupPanel.operateRect(753,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);defensePanelCount++;}
+					if(tf.defenseL.削減 == 0){tf.leftParty[tf.attacker].cutDown.pow  = SkillValue[1];Images.loadImages("btl_panelCutPow")  ;Images.setSizeToImageSize();popupPanel.operateRect(753,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);defensePanelCount++;}
+					if(tf.defenseL.削減 == 0){tf.leftParty[tf.attacker].cutDown.def  = SkillValue[1];Images.loadImages("btl_panelCutDef")  ;Images.setSizeToImageSize();popupPanel.operateRect(753,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);defensePanelCount++;}
+					if(tf.defenseL.削減 == 0){tf.leftParty[tf.attacker].cutDown.spd  = SkillValue[1];Images.loadImages("btl_panelCutSpd")  ;Images.setSizeToImageSize();popupPanel.operateRect(753,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);defensePanelCount++;}
+					if(tf.defenseL.削減 == 0){tf.leftParty[tf.attacker].cutDown.mor  = SkillValue[1];Images.loadImages("btl_panelCutMor")  ;Images.setSizeToImageSize();popupPanel.operateRect(753,248-32*defensePanelCount, Images, 0, 0, Images.imageWidth, Images.imageHeight);defensePanelCount++;}
+				}
+				if(defensePanelCount > 0){
+					Images.loadImages("btl_panelCounterAbnormal");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect(216, 272, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					unitImageLeft.adjustGamma(0.5, 0, 255, 1.5, 0, 255, 0.5, 0, 255);//反撃異常カラー
+				}
+			}
+			//専守防衛
+			var SkillValue = battleFuncSkillSet.searchSkill(d,'専守防衛','right');
+			if(SkillValue[0] == 1){attackerDamageRate = (int)(attackerDamageRate/2);}
+			//反撃倍加
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'反撃倍加','right');
+			if(SkillValue[0] == 1 && tf.offenseL.遠隔 == 0){
+dm("反撃倍加 x"+SkillValue[1]);
+				defenderDamageRate = (SkillValue[1] + 1) * defenderDamageRate;
+				if(tf.OriginalTarget == tf.defender){
+					Images.loadImages("btl_panelCounterMagnifi");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 216, 230, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					battleFuncsView.numDraw(SkillValue[1]+1, 'btl_Number0-9counter',popupPanel,363,240,1);
+					//battleFuncsView.numDraw(SkillValue[1]+tf.magnitudeR+1, 'btl_Number0-9counter',popupPanel,363,240,1);
+				}
+			}
+			//巨大体躯
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.attacker,'巨大体躯','left');
+			if(SkillValue[0] == 1){tf.offenseL.巨大 = 1;tf.offenseL.巨大値 = SkillValue[1];}
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'巨大体躯','right');
+			if(SkillValue[0] == 1){tf.defenseR.巨大 = 1;tf.defenseR.巨大値 = SkillValue[1];}
+			if(tf.offenseL.巨大 == 1){
+				if(tf.offenseL.巨大値 > 80){tf.offenseL.巨大値 = 80;}
+				defenderDamageRate = (int)(defenderDamageRate * ((100 - tf.offenseL.巨大値) /100));
+			}
+			if(tf.defenseR.巨大 == 1){
+				if(tf.defenseR.巨大値 > 80){tf.defenseR.巨大値 = 80;}
+				attackerDamageRate = (int)(attackerDamageRate * ((100 - tf.defenseR.巨大値) /100));
+			}
+			//特攻補正
+			if(tf.magnitudeL > 0 && attackerDamageRate > 0){
+				Images.loadImages("btl_panelAttackerMagnifi");
+				Images.setSizeToImageSize();
+				popupPanel.operateRect( 571, 230, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+				battleFuncsView.numDraw(tf.magnitudeL+1, 'btl_Number0-9damage',popupPanel,718,240,1);
+			}
+			attackerDamageRate = attackerDamageRate * (tf.magnitudeL + 1);
+			defenderDamageRate = defenderDamageRate * (tf.magnitudeR + 1);
+dm("倍加後Aﾀﾞﾒ="+attackerDamageRate+"/倍加値="+tf.magnitudeL);
+dm("倍加後Dﾀﾞﾒ="+defenderDamageRate+"/倍加値="+tf.magnitudeR);
+
+			//攻撃相性補正(L <- R)
+			var jobAtt;
+			if(tf.leftParty[a].type == 'L'){if(tf.rightParty[d].type =='B'){jobAtt=1;attackerDamageRate *= 1.5;dm("AD相性補正 L -> B:"+attackerDamageRate);}}
+			if(tf.leftParty[a].type == 'S'){if(tf.rightParty[d].type =='L'){jobAtt=1;attackerDamageRate *= 1.5;dm("AD相性補正 S -> L:"+attackerDamageRate);}}
+			if(tf.leftParty[a].type == 'C'){if(tf.rightParty[d].type =='S'){jobAtt=1;attackerDamageRate *= 1.5;dm("AD相性補正 C -> S:"+attackerDamageRate);}}
+			if(tf.leftParty[a].type == 'G'){if(tf.rightParty[d].type =='C'){jobAtt=1;attackerDamageRate *= 1.5;dm("AD相性補正 G -> C:"+attackerDamageRate);}}
+			if(tf.leftParty[a].type == 'D'){if(tf.rightParty[d].type =='G'){jobAtt=1;attackerDamageRate *= 1.5;dm("AD相性補正 D -> G:"+attackerDamageRate);}}
+			if(tf.leftParty[a].type == 'B'){if(tf.rightParty[d].type =='D'){jobAtt=1;attackerDamageRate *= 1.5;dm("AD相性補正 B -> D:"+attackerDamageRate);}}
+			if(jobAtt == 1){
+				Images.loadImages("btl_panelJobAttack");
+				Images.setSizeToImageSize();
+				if(attackerDamageRate > 0){popupPanel.operateRect( 571,150, Images, 0, 0, Images.imageWidth, Images.imageHeight);}
+			}
+
+			//反撃相性補正(L <- R)
+			var jobDef;
+			if(tf.rightParty[d].type == 'L'){if(tf.leftParty[a].type =='B'){jobDef=1;defenderDamageRate *= 1.5;dm("DD相性補正 L -> B:"+defenderDamageRate);}}
+			if(tf.rightParty[d].type == 'S'){if(tf.leftParty[a].type =='L'){jobDef=1;defenderDamageRate *= 1.5;dm("DD相性補正 S -> L:"+defenderDamageRate);}}
+			if(tf.rightParty[d].type == 'C'){if(tf.leftParty[a].type =='S'){jobDef=1;defenderDamageRate *= 1.5;dm("DD相性補正 C -> S:"+defenderDamageRate);}}
+			if(tf.rightParty[d].type == 'G'){if(tf.leftParty[a].type =='C'){jobDef=1;defenderDamageRate *= 1.5;dm("DD相性補正 G -> C:"+defenderDamageRate);}}
+			if(tf.rightParty[d].type == 'D'){if(tf.leftParty[a].type =='G'){jobDef=1;defenderDamageRate *= 1.5;dm("DD相性補正 D -> G:"+defenderDamageRate);}}
+			if(tf.rightParty[d].type == 'B'){if(tf.leftParty[a].type =='D'){jobDef=1;defenderDamageRate *= 1.5;dm("DD相性補正 B -> D:"+defenderDamageRate);}}
+			if(jobDef == 1){
+				Images.loadImages("btl_panelJobDefend");
+				Images.setSizeToImageSize();
+				if(defenderDamageRate > 0){popupPanel.operateRect( 216,150, Images, 0, 0, Images.imageWidth, Images.imageHeight);}
+			}
+
+			//竜鱗守護
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.attacker,'竜鱗守護','left');if(SkillValue[0] == 1){tf.offenseL.竜鱗 = 1;tf.offenseL.竜鱗値 = SkillValue[1];}
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'竜鱗守護','right');if(SkillValue[0] == 1){tf.defenseR.竜鱗 = 1;tf.defenseR.竜鱗値 = SkillValue[1];}
+				//竜族特攻無効化
+				for(var i=0;i<tf.tacticsSkillCountR.count;i++){if(tf.tacticsSkillCountR[i].substring(0,1) == '竜'){tf.offenseL.竜鱗 = 0;tf.offenseL.竜鱗値 = 0;}}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.attacker,'竜族特攻','left');if(tf.leftParty[tf.attacker].special.indexOf('竜') != -1 || SkillValue[0] == 1){tf.defenseR.竜鱗 = 0;tf.defenseR.竜鱗値 = 0;}
+				for(var i=0;i<tf.tacticsSkillCountL.count;i++){if(tf.tacticsSkillCountL[i].substring(0,1) == '竜'){tf.defenseR.竜鱗 = 0;tf.defenseR.竜鱗値 = 0;}}
+				var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'竜族特攻','right');if(tf.rightParty[tf.defender].special.indexOf('竜') != -1 || SkillValue[0] == 1){tf.offenseL.竜鱗 = 0;tf.offenseL.竜鱗値 = 0;}
+			dm("L.竜鱗="+tf.offenseL.竜鱗+"L.竜鱗値"+tf.offenseL.竜鱗値+" / R.竜鱗="+tf.defenseR.竜鱗+"R.竜鱗値"+tf.defenseR.竜鱗値);
+			if(tf.offenseL.竜鱗 == 1 && tf.defenseR.次元 == 0 && tf.defenseR.回避 == 0){
+				if((attackerDamageRate * (tf.offenseL.竜鱗値 / 100)) > defenderDamageRate && defenderDamageRate > 0){
+					defenderDamageRate = 0;
+					if(tf.Encounter == 0){
+						Images.loadImages("btl_panelGuard");
+						Images.setSizeToImageSize();
+						popupPanel.operateRect( 218,391, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+						kag.tagHandlers.playse(%[buf:'4',storage:'se2101_魔法ヒィィィン.ogg']);
+						kag.tagHandlers.shakes(%[layer:'2',time:100,hmax: 0,vmax: 6]);
+						kag.tagHandlers.waitshakes(%[canskip:'false']);
+					}
+				}
+			}
+			if(tf.defenseR.竜鱗 == 1 && tf.offenseL.次元 == 0){
+				if((defenderDamageRate * (tf.defenseR.竜鱗値 / 100)) > attackerDamageRate && attackerDamageRate > 0){
+					attackerDamageRate = 0;
+					if(tf.Encounter == 0){
+						Images.loadImages("btl_panelGuard");
+						Images.setSizeToImageSize();
+						popupPanel.operateRect( 562,400, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+						kag.tagHandlers.playse(%[buf:'4',storage:'se2101_魔法ヒィィィン.ogg']);
+						kag.tagHandlers.shakes(%[layer:'3',time:100,hmax: 0,vmax: 6]);
+						kag.tagHandlers.waitshakes(%[canskip:'false']);
+					}
+				}
+			}
+
+			//自決自爆(右)
+			tf.HARAKIRI_R = 0;
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.defender,'自決自爆','right');
+			if(SkillValue[0] == 1 && (tf.rightParty[tf.defender].HP.now - attackerDamageRate) < 1){
+				if(tf.offenseL.遠隔 == 1){
+					defenderDamageRate += (int)(((SkillValue[1] * tf.rightParty[tf.defender].HP.now)/100)/2);
+				}else{
+					defenderDamageRate += (int)((SkillValue[1] * tf.rightParty[tf.defender].HP.now)/100);
+				}
+dm("R.自決自爆:"+SkillValue[1]+" * "+tf.rightParty[tf.defender].HP.now);
+				if(tf.Encounter == 0){
+					Images.loadImages("btl_panelHARAKIRI");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 34, 442, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					kag.tagHandlers.image(%[layer:'2', page:'fore', storage:"爆発単体", left:480, top:127, opacity:255, visible:true, mode:'psadd']);//エフェクト
+					tf.HARAKIRI_R = 1;
+				}
+			}
+			//自決自爆(左)
+			tf.HARAKIRI_L = 0;
+			var SkillValue = battleFuncSkillSet.searchSkill(tf.attacker,'自決自爆','left');
+			if(SkillValue[0] == 1 && (tf.leftParty[tf.attacker].HP.now - defenderDamageRate) < 1){
+				attackerDamageRate += (int)((SkillValue[1] * tf.leftParty[tf.attacker].HP.now)/100);
+dm("L.自決自爆:"+SkillValue[1]+" * "+tf.leftParty[tf.attacker].HP.now);
+				if(tf.Encounter == 0){
+					Images.loadImages("btl_panelHARAKIRI");
+					Images.setSizeToImageSize();
+					popupPanel.operateRect( 744, 442, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+					kag.tagHandlers.image(%[layer:'3', page:'fore', storage:"爆発単体", left:0, top:127, opacity:255, visible:true, mode:'psadd']);//エフェクト
+					tf.HARAKIRI_L = 1;
+				}
+			}
+
+			attackerDamageRate = (int attackerDamageRate);
+			defenderDamageRate = (int defenderDamageRate);
+
+			battleFuncsView.numDraw(attackerDamageRate, 'btl_Number0-9damage' ,popupPanel,531,195,5);	//attackerDamage
+			battleFuncsView.numDraw(defenderDamageRate, 'btl_Number0-9counter',popupPanel,277,195,5);	//counterDamage
+			//tf.defenseR.回避 = 0;
+		}
+		tf.AD = attackerDamageRate;
+		tf.DD = defenderDamageRate;
+dm("AD="+tf.AD+"/DD="+tf.DD);
+	}
+
+
+	function setEffects(effect,side){
+		if(side == 'right'){tf.effect_x = 0;tf.effect_y = 127;}
+					   else{tf.effect_x = 480;tf.effect_y = 127;}
+		switch(effect){
+			case  0:tf.btl_effect ='剣戟'    ;tf.btl_se ='se0702_刃刺突音中ズシュッ';break;
+			case  1:tf.btl_effect ='剣戟２'  ;tf.btl_se ='se0712_刃切裂音強ドズバッ';break;
+			case  2:tf.btl_effect ='貫通'    ;tf.btl_se ='se0701_刃刺突音弱ズビシュ';break;
+			case  3:tf.btl_effect ='剣戟炎'  ;tf.btl_se ='se1102_ガン発砲大口径ドパァン';break;
+			case  4:tf.btl_effect ='爆発単体';tf.btl_se ='se1301_爆音ボォン';break;
+			case  5:tf.btl_effect ='打撃'    ;tf.btl_se ='se1002_殴打中バシッ';break;
+			case  6:tf.btl_effect ='火単体'  ;tf.btl_se ='se2000_炎系魔法2';break;
+			case  7:tf.btl_effect ='雷単体'  ;tf.btl_se ='se2005_雷撃ズバァン';break;
+			case  8:tf.btl_effect ='水単体'  ;tf.btl_se ='se4006_水をかけるドッパァン';break;
+			case  9:tf.btl_effect ='氷単体'  ;tf.btl_se ='se2002_氷系魔法5';break;
+			case 10:tf.btl_effect ='風単体'  ;tf.btl_se ='se2004_突風ショート';break;
+			case 11:tf.btl_effect ='毒単体'  ;tf.btl_se ='se2010_生物系魔法2';break;
+			case 12:tf.btl_effect ='光単体'  ;tf.btl_se ='se2028_消去系魔法1';break;
+			case 13:tf.btl_effect ='貫通３'  ;tf.btl_se ='se1121_マシンガン掃射ドドドド';break;
+			case 14:tf.btl_effect ='打撃２'  ;tf.btl_se ='se0901_鞭打ち強ビシィィン';break;
+			case 15:tf.btl_effect ='クロー'  ;tf.btl_se ='se0702_刃刺突音中ズシュッ';break;
+			case 16:tf.btl_effect ='クロー２';tf.btl_se ='se0712_刃切裂音強ドズバッ';break;
+			case 17:tf.btl_effect ='剣戟雷'  ;tf.btl_se ='se2005_雷撃ズバァン';break;
+			case 18:tf.btl_effect ='剣戟氷'  ;tf.btl_se ='se2002_氷系魔法5';break;
+			case 19:tf.btl_effect ='貫通２'  ;tf.btl_se ='se0820_矢を射撃して刺さる';break;
+			case 20:tf.btl_effect ='魔法弾'  ;tf.btl_se ='se2117_魔法ビシャッ';break;
+			case 21:tf.btl_effect ='魔法弾２';tf.btl_se ='se1201_発射音バァァァン';break;
+			default:tf.btl_effect ='剣戟'    ;tf.btl_se ='se0702_刃刺突音中ズシュッ';break;
+
+			case 100:tf.btl_effect ='毒単体';tf.btl_se ='se5028_アニメＳＥブワーシュ';break;
+			case 101:tf.btl_effect ='紫雷'  ;tf.btl_se ='se5028_アニメＳＥブワーシュ';break;
+			case 102:tf.btl_effect ='闇単体';tf.btl_se ='se2003_土系魔法3';break;
+			case 103:tf.btl_effect ='束縛'  ;tf.btl_se ='se2121_無韻発動シュヴィオン';break;
+			case 104:tf.btl_effect ='紫打'  ;tf.btl_se ='se2108_魔法ピゥィン….ogg';break;
+			case 105:tf.btl_effect ='弱体'  ;tf.btl_se ='se2104_魔法キシュシュッ.ogg';break;
+		}
+	}
+
+}
+//			if(tf.rightParty[i].id != void || tf.rightParty[i].HP.now > 0){
+//				for(var j=0;j<tf.leftParty[i].skill.count;j++){
+//					if(tf.rightParty[i].skill[j].name == '追加攻撃'){addAttack = tf.rightParty[i].skill[j].value;}
+//				}
+

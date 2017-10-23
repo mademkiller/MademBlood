@@ -1,0 +1,232 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenStats
+//
+/////////////////////////////////////////////////////////////////////////
+//Scripts.execStorage("BattleBase.tjs");
+
+/*
+	ダイアログ
+*/
+class ScreenDialog2 extends TFrame2
+{
+	
+ 	var viewtime= 2000;
+
+// 	var viewText= "";
+// 	var viewType= 0;
+// 	var viewImg= [];
+// 	
+// 	var viewArr= [];
+	
+//	var loopmode= 0;
+
+	var callback= void;
+	
+	function ScreenDialog2( g_ ){
+		super.TFrame2(...);
+		backGround.callbackLEvent2= rightClickCallBack;
+		backGround.callbackREvent2= rightClickCallBack;
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	// init
+	//
+	function init_panel()
+	{
+		
+		var ax= 0, ay= 0;
+		
+		backGround.fillRect( 0, 0, 960, 800, 0x66000000 );
+		
+		switch(f.used.loginfo[0].type) {
+		
+			case 0:
+				backGround.drawImageFile( 262, 150, "sys_dlog_bace3" );
+				ax= 0;
+				ay= 150+120;
+				break;
+				
+			case 1:
+				backGround.drawImageFile( 80, 300, "slg_infomation_win" );
+				ax= 0;
+				ay= 300+50;
+				break;
+				
+			case 2:
+				backGround.drawImageFile( 80, 350, "slg_infomation_win" );
+				backGround.drawImageFile( 50, 150, f.used.loginfo[0].img );
+				ax= 500;
+				ay= 350+50;
+				break;
+				
+			case 3:
+				backGround.drawImageFile( 262, 150, "sys_dlog_bace3" );
+				backGround.drawImageFile( 262+18, 60, f.used.loginfo[0].img );
+				ax= 340;
+				ay= 150+230;
+				break;
+		}
+		
+		var txtsp;
+		txtsp= f.used.loginfo[0].txt.split( ";" );
+		
+		for(var i=0; i<txtsp.count; i++) {
+			var hl= (960-backGround.font.getTextWidth(txtsp[i]))/2;
+			if(ax==0) ax= hl;
+			
+			backGround.drawText2( ax, (30*i)+ay, txtsp[i], 0xf0d2a0, 24, %[ outline:2, outlinecolor:0x664927,
+				shadow:1, shadowopacity:200, shadowblur:2, gradcolor1:0xa68667, gradcolor2:0xffffff ] );
+		}
+		
+		f.used.loginfo.erase(0);
+		
+		//f.used.loginfo.e[0];
+	}
+	
+	///////////////////////////////////////////////////////
+	// method
+	//
+	function execute( mes_="", type_= 0, time_=2000, img_, callback_=void )
+	{
+	
+		//HideCallBack= callback_;
+		
+		f.used.loginfo= [ %[ txt:mes_, type:type_, img:img_ ] ];
+		
+		//ShowScreen( 200 );
+		////if(time_>0) frameWork.events.addPause( time_ )
+		//frameWork.events.addPause( 5000 );
+		//frameWork.events.add( HideScreen_task, %[ time_:200, en_:void ] );
+		
+		//for(var i=0; i<f.used.loginfo.count; i++) {
+			dm("HideCallBackにループをセット");
+			ShowScreen( 200 );
+			frameWork.events.addPause( 2000 );
+			frameWork.events.add( HideScreen_task, %[ time_:200, en_:void ] );
+		//}
+		if(callback_!==void ) frameWork.events.add( callback_, void );
+		
+	}
+	
+	function execute2()
+	{
+		if(f.used.loginfo.count>0) {
+			for(var i=0; i<f.used.loginfo.count; i++) {
+				dm("HideCallBackにループをセット");
+				ShowScreen( 200 );
+				frameWork.events.addPause( 2000 );
+				frameWork.events.add( HideScreen_task, %[ time_:200, en_:void ] );
+			}
+			//if(callback_!==void ) frameWork.events.add( callback_, void );
+		}
+	}
+	
+	///////////////////////////////////////////////////////
+	// callback
+	//
+	function rightClickCallBack()
+	{
+		//backGround.stopMove();
+		//HideScreen( 200 );
+		frameWork.events.next();
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		backGround.setEnableEvent(f_);
+	}
+	
+	///////////////////////////////////////////////////////
+	// show
+	//
+	function onInit()
+	{
+		backGround.setLayer( 0, 0, 960, 800, 0x66000000 );
+		
+		backGround.visible= false;
+		backGround.opacity= 0;
+	}
+	
+	function onShow( time_, en_ )
+	{
+		backGround.stopMoveValue();
+		backGround.stopMove();
+		
+		core2.setEvent_aLock_true();
+		
+		init_panel();
+		
+		backGround.setPos( 0, -80 );
+		backGround.visible= true;
+		backGround.opacity= 0;
+		
+		backGround.beginMove( %[ time:200, path:"(0,-40,255)", accel:-2 ] );
+		
+	}
+	
+	function onShowEnd()
+	{
+		backGround.opacity= 255;
+		
+// 		if(viewtime>0) {
+// 			//backGround.movevalueend_callbak= rightClickCallBack;
+// 			//backGround.beginMoveValue( %[ time:viewtime, path:0 ] );
+// 			frameWork.events.addPause( time_ );
+// 		}
+		
+		core2.setEvent_aLock_false();
+	}
+	
+	function onHide( time_, en_ )
+	{
+		core2.setEvent_aLock_true();
+		
+		backGround.movevalueend_callbak= void;
+		//backGround.stopMoveValue();
+		backGround.beginMove( %[ time:time_, path:"(0,0,0)", accel:2 ] );
+	}
+	
+	function onHideEnd()
+	{
+	
+		backGround.visible= false;
+		backGround.opacity= 0;
+		
+		invalidatePanel();
+		
+		kag.KeyDown_CallBack= void;
+		
+		//core2.setEvent_aLock_false();
+		
+		/*
+		if( f.used.loginfo.count>0 && HideCallBack==void ) {
+			//loopmode--;
+			dm("HideCallBackにループをセット");
+			//HideCallBack= ShowScreen;
+			ShowScreen( 200 );
+			frameWork.events.addPause( 2000 );
+			frameWork.events.add( HideScreen_task, %[ time_:200, en_:void ] );
+		} else {
+			dm("HideCallBackをセット");
+			ShowScreen( 200 );
+			frameWork.events.addPause( 2000 );
+			frameWork.events.add( HideScreen_task, %[ time_:200, en_:void ] );
+			frameWork.events.add( callback, void );
+			//HideCallBack= callback;
+		}
+		*/
+		
+		if( HideCallBack==void ) core2.setEvent_aLock_false();
+	}
+}
+
+function _ADDINFO_( mes_="", type_=0, img_=void ) {
+
+	f.used.loginfo.add( %[ txt:mes_, type:type_, img:img_, time:2000 ] );
+}

@@ -1,0 +1,22 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////
+// core system ì«Ç›çûÇ›
+//Scripts.execStorage("ScreenMain.tjs");
+
+//KAGLoadScript("ImageYesNoDialog.tjs");
+KAGLoadScript("imageHistoryLayer.tjs");
+
+// ShakePlugin.tjs ÇÃê›íË
+GraphicLayer.org_beginTransition = GraphicLayer.beginTransition;
+global.GraphicLayer.beginTransition = function(elm) {
+	global.ShakePlugin_object.onTransStart();	// îwåiÇ Shake ópÉåÉCÉÑÇ…é Ç∑
+	org_beginTransition(...);
+} incontextof GraphicLayer;
+
+

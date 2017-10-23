@@ -1,0 +1,987 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenGameLoop
+//
+// Tform2から派生してないのでscreenのカウントに入らず。
+//
+/////////////////////////////////////////////////////////////////////////
+//
+class ScreenGameLoop
+{
+	var kag= void, work= void, events=void;
+	var commandcue= [];
+	var commandcue_opt= [];
+	
+	//var isRoaded= 0;
+	//イベントフラグ
+	var isJumpBack= void;
+	
+	//var commandcounter= 0;
+	
+	var dayTrunMax= 6;
+	var dayTimeOffset= 0;
+	var dayTimeMax= 12;
+	var dateTimeMax= 8;
+	var dayTimeZone= [true,0,true,6,false];
+	var dayTimeUpdate= %[ time:true, zone:true, trun:true ];
+	
+	//var returnback_flag= false;
+	//var loopstarted_flag= false;
+	
+	function ScreenGameLoop( kag_, fw_, ev_ ) {
+		kag= kag_;
+		work= fw_;
+		events= ev_;
+	}
+	
+	function finalize() {
+	}
+	
+	///////////////////////////////////////////////////////
+	// event
+	//
+	//ゲームをはじめからするときに呼び出す
+	function mainLoopStart(opt){
+	
+		work.games.resetUserData();
+		
+		gf.map= work.games.gameLoadDatasZ( "mapdata" );
+		gf.char= work.games.gameLoadDatasZ( "charadata" );
+		gf.enemy= work.games.gameLoadDatasZ( "partyenemy" );
+		
+		ca.chardata_update();
+		
+		f.used.view.cmview[12]= 2010;
+		f.used.view.cmview[24]= 2040;
+		f.used.view.cmview[48]= 2030;
+		
+		gf.get(2010,gf.char).HP.now= gf.get(2010,gf.char).HP.max;
+		gf.get(2040,gf.char).HP.now= gf.get(2040,gf.char).HP.max;
+		gf.get(2030,gf.char).HP.now= gf.get(2030,gf.char).HP.max;
+	
+		//onPreEvent(opt);
+		f.used.isRoaded= 0;
+		f.used.loopstarted_flag= true;
+		//events.add(mainLoop);
+		
+		//敵を配置
+		//games.setArr2Indexs(f.used.party,gf.enemy,0,22);
+		//games.setArr2Indexs(f.used.party,gf.enemy,22,22);
+		
+		ca.set2_enemy_status_power();
+		
+		f.used.loopstarted_flag= true;
+		f.used.returnback_flag= 0;
+		gt.loaded_flag= false;
+		
+		//onPreEvent();
+		
+		dm("---------mainLoopStart");
+	}
+	
+	function mainLoopReStart(opt) {
+	
+		//f.used= base.setGameCoreBase();
+		work.games.base.setGameCoreBase2(f.used);
+		work.games.data.temporary= work.games.base.setGameCoreTempBase();
+		
+		gf.map= work.games.gameLoadDatasZ( "mapdata" );
+		gf.enemy= work.games.gameLoadDatasZ( "partyenemy" );
+		
+		f.used.view.cmview[12]= 2010;
+		f.used.view.cmview[24]= 2040;
+		f.used.view.cmview[48]= 2030;
+		
+		gf.get(2010,gf.char).HP.now= gf.get(2010,gf.char).HP.max;
+		gf.get(2040,gf.char).HP.now= gf.get(2040,gf.char).HP.max;
+		gf.get(2030,gf.char).HP.now= gf.get(2030,gf.char).HP.max;
+	
+		//onPreEvent(opt);
+		f.used.isRoaded= 0;
+		f.used.loopstarted_flag= true;
+		
+		ca.set2_enemy_status_power();
+		
+		f.used.loopstarted_flag= true;
+		f.used.returnback_flag= 0;
+		gt.loaded_flag= false;
+		
+		dm("---------mainLoopStart");
+	}
+	
+	//１時間ごとに呼び出す
+// 	function mainLoop(opt){
+// 	
+// 		switch(f.used.isRoaded){
+// 			case 0: onPreEvent(opt); break;
+// 			//case 1: onMainNextEvent(opt); break;
+// 			case 2: onPostEvent(opt); break;
+// 			case 3: onMainEvent(opt); break;
+// 		}
+// 		
+// 		//イベント
+// 		//if(isJumpBack===void)work.screen.gamemain.dayTimerUpdate();
+// 		
+// 		//
+// 		return true;
+// 	}
+	
+	function mainLoopEnd_callback(){
+		if(isJumpBack!==void){
+			f.used.returnback_flag= 1;
+			core2.kagBackStart( 300, "routecontrol.ks", isJumpBack );
+		}
+		isJumpBack= void;
+		
+		//インフォメーションを出す
+		core2.screen.dialog2.execute2();
+	}
+	
+// 	function mainLoopStack_callback(){
+// 		events.add(mainLoop);
+// 	}
+	
+	//セーブ、イベント、戦闘　復帰用
+	function mainLoopRecall_callback(){
+		//events.add(mainLoop);
+		if( f.used.returnback_flag>0 || gt.loaded_flag ) onMainEvent( f.used.returnback_flag );
+		//f.used.returnback_flag= 0;
+		//gt.loaded_flag= false;
+	}
+	
+	function mainLoopFast_callback(){
+		if(f.used.loopstarted_flag) onPreEvent();
+		//f.used.loopstarted_flag= false;
+	}
+	
+	///////////////////////////////////////////////////////
+	// event
+	//
+	function onPreEvent(opt){
+	
+		dm("---------onPreEvent.0.");
+		
+		f.used.loopstarted_flag= false;
+		
+// 		if(f.used.stat.nextstory){
+// 			//敵のステータスを更新
+// 			ca.map_set_getting_enemy_update();
+// 			
+// 			f.used.stat.nextstory= false;
+// 		}
+		
+		f.used.time.counter= dayTrunMax;
+		//f.used.time.day= dayTimeZone[0];
+		//f.used.time.day= !(f.used.time.turn%2);
+		//f.used.time.time= dayTimeMax-f.used.time.counter+dayTimeOffset;
+		
+		//ターンエンドの更新　ここでいらないか？
+		ca.map_trunend_additional_update();
+		
+		dm("---------onPreEvent.2."+f.used.isRoaded);
+		
+		//プレイベントを判定
+		var d=0;
+		isJumpBack= void;
+		
+		if(f.used.time.day==false) d= 2;
+		isJumpBack= ca.avg_return_check(d);
+		if(isJumpBack!==void) dm("イベント発動："+isJumpBack);
+		
+		var rt= ca.call_return_check(d, f.used.stat.callchar, f.used.stat.calljump );
+// 		if(rt) {
+// 			//core2.screen.gamemain.call_On();
+// 			//for(var i=0; i<10; i++) if(f.used.stat.callchar[i]!="") dm("イベント発動：%s->%s".sprintf(f.used.stat.callchar[i],f.used.stat.calljump[i]));
+// 		 } //else core2.screen.gamemain.call_Off();
+		
+		core2.screen.gamemain.call_Off();
+		for( var i=0; i<f.used.stat.callchar.count; i++) {
+		 	if(f.used.stat.callchar[i]!="") {
+		 		core2.screen.gamemain.call_On();
+		 		break;
+		 	}
+ 		}
+ 		
+ 		
+		//敵の攻撃判定
+		//set_enemy_maps_attak2();
+		
+		//攻撃アレイに設定
+		f.used.stat.enemyattacks= set_enemy_maps_attak2();
+		
+		//if(f.used.stat.enemyattacks!==void && f.used.stat.enemyattacks.count>0 && core2.screen.gamemain.selectScreen!=0 )
+		if(f.used.stat.enemyattacks.count>0 && core2.screen.gamemain.selectScreen!=0 )
+			core2.screen.gamemain.opt_buttom_top3(0);
+		
+		dm("---------onPreEvent.1."+f.used.isRoaded);
+		
+		f.used.isRoaded= 1;
+		
+		onMainEvent(0);
+	}
+	
+	//復帰時に呼び出す
+	function onMainEvent(opt2){
+		
+		dm("---------onMainEvent.0.");
+		
+		//呼び出し用フラグをリセット
+		var opt= f.used.returnback_flag;
+		f.used.returnback_flag= 0;
+		gt.loaded_flag= false;
+		
+		//キャラクターをアップデート
+		ca.chardata_update();
+		
+		//マップの勢力を更新
+		ca.map_set_getting_update();
+		
+		//建設物のステータスを更新
+		ca.map_trunend_additional_update();
+		ca.map_effects_additional_update2();
+		
+		//国力をテンポへ
+		ca.set2_enemy_status_power();
+		
+		//近接している攻撃できる位置
+		f.used.stat.useattack= get_player_maps_atk();
+		
+		//章の始めのみ設定
+		if(f.used.stat.nextstory){
+			//敵のステータスを更新
+			ca.map_set_getting_enemy_update();
+			
+			for( var i=10; i<f.used.party.count; i++) {
+				var n= f.used.party[i];
+				ca.map_set_enemy_status_update(n.id);
+			}
+			
+			f.used.stat.nextstory= false;
+		}
+		
+		//イベント復帰後
+		if( opt==3 ) {
+			
+			//カウンターを減らす
+			f.used.time.counter--;
+			if( f.used.time.counter<0 ) f.used.time.counter= 0;
+			
+			//時間を進める
+			f.used.time.time++;
+			if( f.used.time.time>11 ) {
+				f.used.time.time= 0;
+			}
+			
+			core2.setEvent_aLock_false();
+		}
+		
+		//戦闘終了時
+		if( opt==2 && tf.battlecancel!==void && !tf.battlecancel ) {
+			
+			//時間を進める
+			if(f.used.time.time>5) f.used.time.time= 0;
+			else f.used.time.time= 6;
+			
+			f.used.time.counter= 0;
+			
+			//敵の復活設定
+			ca.standby_set_enemys_reattack();
+			
+			//占領判定
+			check_trunend_enemyattack3();
+			
+			//イベントをチェック
+// 			var d=0;
+// 			if(f.used.time.day==false) d= 2;
+// 			isJumpBack= ca.avg_return_check(d);
+
+			core2.setEvent_aLock_false();
+			
+		}
+		
+		//表示ステータスを更新
+		if(core2.screen.gamemap.mode==3) work.screen.gamemap.drawStatus();
+		//work.screen.gamemain.dayTimerUpdate2();
+		work.screen.gamemain.updateStatus();
+		
+		//ゲームオーバー判定
+		if(f.used.mapf.territory.count==0) {
+				//全て占領された
+			//core2.kagBackStart( 300, "routecontrol.ks", "*badend" );
+			isJumpBack= "*badend";
+		}
+
+		//bgmを再生
+		if( isJumpBack===void ) {
+			f.playMusicfile= ca.slg_bgm_start();
+			//if((f.playMusicfile!=kag.bgm.playingStorage && f.playMusicfile!="") || opt==3 ) kag.bgm.play(%[storage:f.playMusicfile]);
+			if( f.playMusicfile!="" ) kag.bgm.play(%[storage:f.playMusicfile]);
+		}
+		
+		dm("---------onMainEvent.1."+f.used.isRoaded);
+		
+		//ゲームオーバー判定
+//		if(f.used.mapf.territory.count==0) {
+//				//全て占領された
+//			core2.kagBackStart( 300, "routecontrol.ks", "*badend" );
+//		
+//		} else {
+		
+			//ターンエンド処理へ
+			//if(opt==2 && tf.battlecancel!==void && !tf.battlecancel){
+			if( f.used.time.counter==0 ) {
+				f.used.isRoaded= 2;
+				onPostEvent();
+			}
+			else {
+				f.used.isRoaded= 1;
+				//マップが表示されてればここでイベント発動
+				if(core2.screen.gamemap.mode==3 && isJumpBack!==void) {
+					f.used.returnback_flag= 1;
+					core2.kagBackStart( 300, "routecontrol.ks", isJumpBack );
+					isJumpBack= void;
+				}
+//			}
+		}
+	}
+	
+	//時間を進めたら呼び出す
+	function onMainNextEvent() {
+		
+		dm("---------onMainNextEvent.0.");
+		
+		//カウンターを減らす
+		//f.used.time.counter--;
+		
+		//コマンドカウンターを進める
+		//commandcounter--;
+		
+		//時間に変換する
+		//f.used.time.time= dayTimeMax-f.used.time.counter+dayTimeOffset;
+		//if(f.used.time.time>dayTimeMax) f.used.time.time-=dayTimeMax;
+		
+		//時間を進める
+		//f.used.time.time++;
+		//if(f.used.time.time>=dayTimeMax) f.used.time.time= 0;
+		
+		//dayTimeUpdate.time= true;
+		
+		//表示ステータスを更新
+		//work.screen.gamemap.drawStatus_day();
+		
+		
+		
+		dm("---------onMainNextEvent.1."+f.used.isRoaded);
+		
+		//カウンターが０のとき
+		if( f.used.time.counter==0 ){
+			
+			//check_trunend_enemyattack();
+			
+			//敵がいる場合は強制的に戦闘へ
+			if( f.used.stat.enemyattacks.count>0 ){
+	 				f.used.isRoaded= 3;
+	 				gt.storybattle= 10;
+	 				core2.screen.gamemap.enemy_select_callback(0,%[mapNo:f.used.stat.enemyattacks[0]]);
+			} else {
+				f.used.isRoaded= 2;
+				onPostEvent();
+			}
+			
+		} else {
+			//work.screen.gamemain.dayTimerUpdate2();
+			work.screen.gamemain.updateStatus();
+		}
+		//dayTimerTest
+		
+	}
+	
+	function onPostEvent(){
+		
+		dm("---------onPostEvent.0.");
+		
+// 		var d=1;
+// 		if(f.used.time.day==false) d= 3;
+// 		isJumpBack= ca.avg_return_check(d);
+// 		if(isJumpBack!=void) return;
+		
+// 		//ターンを増加
+// 		f.used.time.turn++;
+// 		dayTimeUpdate.trun= true;
+// 		
+//  		if( f.used.time.turn%2==0 ) {
+//  		
+//  			//曜日を増加
+//  			f.used.time.zone++;
+//  			if(f.used.time.zone>=dateTimeMax) f.used.time.zone= 0;
+// // 			dayTimeUpdate.zone= true;
+// 
+// 			f.used.time.day= !(f.used.time.turn%2);
+//  		
+//  		}
+		
+		//dm("---------onPostEvent.0 "+f.used.time.turn%2+" "+f.used.time.turn+" "+f.used.time.zone);
+		
+		//状況を変更する
+		//for(var i=1; i<dayTimeZone.count; i+=2 ) if(f.used.time.time==dayTimeZone[i]) f.used.time.day= dayTimeZone[i+1];
+		
+		//自動回復
+		for(var i=0; i<f.used.view.chview.count; i++ ){
+			players_uphp_pays(f.used.view.chview[i]);
+			players_uphp_pays(f.used.view.cmview[i]);
+		}
+		
+		//敵自動回復
+		for(var i=10; i<f.used.party.count; i++ ){
+			enemys_uphp_pays(f.used.party[i].id);
+		}
+		
+		//親交度などの追加
+		char_friendship_tring();
+	
+		//if( f.used.time.turn%2==0 ){
+		
+
+		
+		//収入
+		f.used.stat.food.now+= f.used.stat.food.add;
+		f.used.stat.resource.now+= f.used.stat.resource.add;
+		f.used.stat.energy.now+= f.used.stat.energy.add;
+		f.used.stat.gold.now+= f.used.stat.gold.add;
+		
+		//work.screen.gamemain.updateStatusAM();
+		
+		//コスト支払
+		for(var i=0; i<10; i++ ){
+			players_cost_pays(i);
+		}
+		
+		//
+		//work.screen.gamemain.updateStatus();
+		
+		//敵の攻撃判定値を増加
+		set_enemy_maps_addatk(1*f.used.attackspeed);
+		
+		f.used.isRoaded= 0;
+		
+		//events.add(mainLoop);
+		dm("---------onPostEvent.1."+f.used.isRoaded);
+		
+		//マップが表示されてればここでイベント発動
+// 		if(core2.screen.gamemap.mode==3 && isJumpBack!==void) {
+// 			f.used.returnback_flag= 1;
+// 			core2.kagBackStart( 300, "routecontrol.ks", isJumpBack );
+// 			isJumpBack= void;
+// 		} else onPreEvent();
+		
+		//work.screen.gamemain.updateStatusAM_turnup();
+		//work.screen.gamemain.dayTimerUpdate2();
+		
+		
+		//ターンを増加
+		f.used.time.turn++;
+		
+ 		if( f.used.time.turn%2==0 ) {
+ 		
+ 			//曜日を増加
+ 			f.used.time.zone++;
+ 			if(f.used.time.zone>=dateTimeMax) f.used.time.zone= 0;
+ 		
+ 		}
+		
+ 		//昼夜情報を変更
+		f.used.time.day= !(f.used.time.turn%2);
+		
+		work.screen.gamemain.updateStatus();
+		
+		dm("---------onPostEvent.2."+f.used.isRoaded);
+		
+		//インフォメーションを出す
+		core2.screen.dialog2.execute2();
+		
+		onPreEvent();
+		
+	}
+	
+	//プレイヤーのコスト支払
+	function players_cost_pays(x){
+		if(f.used.party[x].status>2){
+			for(var i=0; i<6; i++ ){
+				if(f.used.party[x].division[i]!=0){
+					if(!ca.payment_char(f.used.party[x].division[i])){
+						ca.del_commander_char(0,f.used.party[x].division[i],true,1);
+					}
+				}
+			}
+			if(ca.get_troops_party(x)>0) f.used.party[x].status= 2;
+			else f.used.party[x].status= 0;
+		}
+	}
+	
+	//自動回復
+	function players_uphp_pays(cn){
+		var ch= gf.get(cn,gf.char);
+		if(cn!=0){
+			if(ch.troopsNo>-1){
+				if(f.used.party[ch.troopsNo].status==2){
+					//全回復
+					ca.add_hp_char(cn,f.used.stat.company.hp+_STANDARD_ADDHP[f.used.difficulty]);
+					ca.add_exp_char(cn,f.used.stat.company.exp+_STANDARD_ADDEXP[f.used.difficulty]);
+				} else {
+					ca.add_exp_char(cn,f.used.stat.company.exp+_STANDARD_ADDEXP[f.used.difficulty]);
+				}
+			}else{
+				//半分回復
+				ca.add_hp_char(cn,(f.used.stat.company.hp+_STANDARD_ADDHP[f.used.difficulty])); 
+				ca.add_exp_char(cn,(f.used.stat.company.exp+_STANDARD_ADDEXP[f.used.difficulty]));
+			}
+		}
+	}
+	
+	//敵自動回復
+	function enemys_uphp_pays(cn){
+		var ahp= ca.get_enemy_status_power(gf.enemy[cn].troopsNo-1).hp+ _STANDARD_ADDEMHP[f.used.difficulty]+ f.used.enemyhpadd;
+		ca.add_enemy_hp_char(cn,ahp);
+	}
+	
+	//親交度などの追加
+	function char_friendship_tring() {
+	
+		var ct3= [
+	 		f.friend.Tilca,f.friend.Freya,f.friend.Thor,f.friend.Regret,f.friend.Odin,
+	 		f.friend.Ferna,f.friend.Hel,f.friend.Fenrir,f.friend.Jormu,0
+	 	];
+		
+		var adds1= [ 0,0,0,0,0, 0,0,0,0,0 ];
+		var adds2= [ 0,0,0,0,0, 0,0,0,0,0 ];
+		
+		for(var i=0; i<10; i++ ){
+			if( ct3[i]==1 ) {
+				if( f.used.stat.callfrsp[i]==1 && f.used.stat.calltrng[i]==1 ) {
+					adds1[i]= _FRIENDSHIPADD2;
+					adds2[i]= _TRAININGADD2;
+				} else {
+					if( f.used.stat.callfrsp[i]==1 ) adds1[i]= _FRIENDSHIPADD1;	else adds1[i]= 0;
+					if( f.used.stat.calltrng[i]==1 ) adds2[i]= _TRAININGADD1;	else adds2[i]= 0;
+				}
+			}
+		}
+		
+		
+ 		f.used.親交値.Tilca+=  adds1[0];	f.used.調教値.Tilca+=  adds2[0];
+ 		f.used.親交値.Freya+=  adds1[1];	f.used.調教値.Freya+=  adds2[1];
+ 		f.used.親交値.Thor+=   adds1[2];	f.used.調教値.Thor+=   adds2[2];
+ 		f.used.親交値.Regret+= adds1[3];	f.used.調教値.Regret+= adds2[3];
+ 		f.used.親交値.Odin+=   adds1[4];	f.used.調教値.Odin+=   adds2[4];
+	 	f.used.親交値.Ferna+=  adds1[5];
+	 	f.used.親交値.Hel+=    adds1[6];
+	 	f.used.親交値.Fenrir+= adds1[7];
+	 	f.used.親交値.Jormu+=  adds1[8];
+	 	
+	 	if(f.used.親交値.Tilca>99 ) f.used.親交値.Tilca= 99;
+	 	if(f.used.親交値.Freya>99 ) f.used.親交値.Freya= 99;
+	 	if(f.used.親交値.Thor>99  ) f.used.親交値.Thor= 99;
+	 	if(f.used.親交値.Regret>99) f.used.親交値.Regret= 99;
+	 	if(f.used.親交値.Odin>99  ) f.used.親交値.Odin= 99;
+	 	if(f.used.親交値.Ferna>99 ) f.used.親交値.Ferna= 99;
+	 	if(f.used.親交値.Hel>99   ) f.used.親交値.Hel= 99;
+	 	if(f.used.親交値.Fenrir>99) f.used.親交値.Fenrir= 99;
+	 	if(f.used.親交値.Jormu>99 ) f.used.親交値.Jormu= 99;
+	 	
+	 	if(f.used.調教値.Tilca>99 ) f.used.調教値.Tilca= 99;
+	 	if(f.used.調教値.Freya>99 ) f.used.調教値.Freya= 99;
+	 	if(f.used.調教値.Thor>99  ) f.used.調教値.Thor= 99;
+	 	if(f.used.調教値.Regret>99) f.used.調教値.Regret= 99;
+	 	if(f.used.調教値.Odin>99  ) f.used.調教値.Odin= 99;
+	 	
+	}
+	
+	//自動占領
+	function check_trunend_enemyattack(){
+		if( f.used.stat.enemyattacks.count>0 ){
+			var r= check_teritory_enemys_exec();
+			
+			switch(r) {
+			
+				case 1:
+	 				f.used.isRoaded= 3;
+	 				gt.storybattle= 10;
+	 				core2.screen.gamemap.enemy_select_callback(0,%[mapNo:f.used.stat.enemyattacks[0]]);
+ 					break;
+ 					
+ 				case 2:
+ 					core2.kagBackStart( 300, "routecontrol.ks", "*badend" );
+ 					break;
+ 					
+ 				case 0:
+					f.used.isRoaded= 2;
+					onPostEvent();
+					break;
+					
+			}
+
+		} else {
+			f.used.isRoaded= 2;
+			onPostEvent();
+		}
+	}
+	
+	//自動占領
+	function check_trunend_enemyattack2(){
+		if( f.used.stat.enemyattacks.count>0 ){
+			var r= check_teritory_enemys_exec2();
+			
+			switch(r) {
+			
+				case 1:
+	 				f.used.isRoaded= 3;
+	 				gt.storybattle= 10;
+	 				core2.screen.gamemap.enemy_select_callback(0,%[mapNo:f.used.stat.enemyattacks[0]]);
+ 					break;
+ 					
+ 				case 2:
+ 					core2.kagBackStart( 300, "routecontrol.ks", "*badend" );
+ 					break;
+ 					
+ 				case 0:
+					f.used.isRoaded= 2;
+					onPostEvent();
+					break;
+					
+			}
+
+		} else {
+			f.used.isRoaded= 2;
+			onPostEvent();
+		}
+	}
+	
+	//占領判定
+	function check_trunend_enemyattack3() {
+	
+		//敵が残ってる
+		if( f.used.stat.enemyattacks.count>0 ){
+		
+			//占領処理
+			for(var i= 0; i<f.used.stat.enemyattacks.count; i++ ){
+		
+				var m= f.used.stat.enemyattacks[i];
+		
+				//駐屯している敵が２人以上
+				//if(gf.map[m].post.division.count>1) {
+				var e= ca.map_getting_enemy_data(gf.map[m].post.division);
+				
+				//if(gf.map[m].post.division.count>0) {
+				if( e.hp>e.mhp*f.used.getstatelife ) {
+			
+					//占領
+					//自軍より消去
+					var n= f.used.mapf.territory.find(m);
+					if(n!=-1)f.used.mapf.territory.erase(n);
+			
+					//領土を上書き
+					var em= gf.map[m].post.division[0];
+					gf.map[m].frag= gf.enemy[em].troopsNo-1;
+			
+					//占領されたら攻撃解除
+					f.used.stat.enemyattacks.erase(i);
+		
+				}
+			}
+		}
+		
+	}
+	
+	//勢力を上書き
+	//check_teritory_enemys_exec();
+	function check_teritory_enemys_exec()
+	{
+		var ret= 0;
+		
+		for(var i= 0; i<f.used.stat.enemyattacks.count; i++ ){
+		
+			var m= f.used.stat.enemyattacks[i];
+		
+			//駐屯している敵が２人以上
+			//if(gf.map[m].post.division.count>1) {
+			if(gf.map[m].post.division.count>0) {
+			
+				//占領
+				//自軍より消去
+				var n= f.used.mapf.territory.find(m);
+				if(n!=-1)f.used.mapf.territory.erase(n);
+			
+				//領土を上書き
+				var em= gf.map[m].post.division[0];
+				gf.map[m].frag= gf.enemy[em].troopsNo-1;
+			
+				//占領されたら攻撃解除
+				f.used.stat.enemyattacks.erase(i);
+		
+			}
+		
+		}
+		
+		//戦闘部隊が残ってる
+		if(f.used.stat.enemyattacks.count>0 && ca.get_troops_party3() ) ret= 1;
+		
+		//全て占領された
+		if(f.used.mapf.territory.count==0) ret= 2;
+		
+		return ret;
+	}
+	
+	
+	function onEnabledKag(){
+	}
+	
+	function onReturnKag(){
+	}
+	
+	///////////////////////////////////////////////////////
+	// command execute
+	//
+	function addCommand(){
+	}
+	
+	function delCommand(){
+	}
+	
+	function resetCommand(){
+	}
+	
+	function executeCommand(){
+	}
+	
+	///////////////////////////////////////////////////////
+	// command
+	// 
+	//一時間進める
+	function nullCommand(){
+	
+		f.used.time.counter--;
+		
+		//コマンドカウンターを進める
+		//commandcounter--;
+		
+		//時間に変換する
+		//f.used.time.time= dayTimeMax-f.used.time.counter+dayTimeOffset;
+		//if(f.used.time.time>dayTimeMax) f.used.time.time-=dayTimeMax;
+		
+		//時間を進める
+		f.used.time.time++;
+		if(f.used.time.time>=dayTimeMax) f.used.time.time= 0;
+		
+		dayTimeUpdate.time= true;
+		
+		onMainNextEvent();
+		
+		return true;
+	}
+	
+	//次の状態まで進める
+	function nextCommand(){
+		var s= 0;
+		if(f.used.time.time<6) s= 6-f.used.time.time;
+		else s= 12-f.used.time.time;
+		for(var i=0; i<s; i++ ) events.add(mainLoop);
+	}
+	
+	//次のターンまで進める
+	function nextTrunCommand(){
+		
+		if(f.used.time.time>5) f.used.time.time= 0;
+		else f.used.time.time= 6;
+		f.used.time.counter= 0;
+		
+		//commandcounter= 0;
+		
+		dayTimeUpdate.time= true;
+		
+		onMainNextEvent();
+		
+		////表示ステータスを更新
+	//	work.screen.gamemap.drawStatus();
+	//	work.screen.gamemap.drawStatus_day();
+		
+	//	check_trunend_enemyattack();
+		
+		//f.used.isRoaded= 2;
+		//events.add(mainLoop);
+		
+// 			if(f.used.stat.enemyattacks.count>0 ){
+// 				if(ca.get_troops_party2()==0){
+// 					core2.kagBackStart( 300, "routecontrol.ks", "*badend" );
+// 				} else {
+// 					f.used.isRoaded= 3;
+// 					gt.storybattle= 10;
+// 					core2.screen.gamemap.enemy_select_callback(0,%[mapNo:f.used.stat.enemyattacks[0]]);
+// 				}
+// 			}else{
+// 				f.used.isRoaded= 2;
+// 				onPostEvent();
+// 			}
+			
+		return true;
+	}
+		
+// 	function nextTrunCommand(){
+// 		for(var i=0; i<f.used.time.counter; i++ ) events.add(mainLoop);
+// 	}
+	
+	///////////////////////////////////////////////////////
+	// ai
+	// core2.gameLoop.get_player_maps()
+	//
+	//自分の攻撃される場所を集計
+	//core2.gameLoop.get_player_maps().count
+	function get_player_maps(){
+		var t= [];
+		
+		//自分のテリトリーを検索
+		for(var i=0; i<f.used.mapf.territory.count; i++ ){
+			
+			var um= gf.map[f.used.mapf.territory[i]];
+			
+			if( um.view && um.enable ) {
+				//接続情報を検索
+				for(var x=0; x<um.node.count; x++ ){
+					//他の領地と近接している
+					if( um.node[x]!=-1 && gf.map[um.node[x]].frag!=0){
+						t.add(f.used.mapf.territory[i]);
+						break;
+					}
+				}
+			}
+		}
+		return t;
+	}
+	
+	//自分が攻撃できる場所を集計
+	//core2.gameLoop.get_player_maps_atk().count
+	function get_player_maps_atk(){
+		var t= [];
+		
+		//自分のテリトリーを検索
+		for(var i=0; i<f.used.mapf.territory.count; i++ ){
+			
+			var um= gf.map[f.used.mapf.territory[i]];
+			
+			//接続情報を検索
+			for(var x=0; x<um.node.count; x++ ){
+				//他の領地と近接している
+				if( um.node[x]!=-1 && gf.map[um.node[x]].frag!=0 ){
+					if(t.find(um.node[x])==-1) t.add(um.node[x]);
+				}
+			}
+		}
+		return t;
+	}
+	
+	//敵を移動
+	function set_enemy_maps_move(e_,m_) {
+		if(gf.map[m_].post.division.find(e_)==-1 ){
+			for(var i=0; i<gf.map.count; i++ ){
+				var ff= gf.map[i].post.division.find(e_);
+				if(ff>-1) {
+					gf.map[i].post.division.erase(ff);
+					break;
+				}
+			}
+			gf.map[m_].post.division.add(e_);
+		}
+	}
+	
+	//攻撃可能師団を集計
+	//core2.gameLoop.set_enemy_maps_standby().count
+	function set_enemy_maps_standby() {
+		var t= [];
+		for(var i=10; i<f.used.party.count; i++ ){
+			if(f.used.party[i].attack>=f.used.party[i].attackmax){
+				//f.used.party[i].attack= 0;
+				
+				if( f.used.party[i].role==4 ){
+					t.add(f.used.party[i].id);
+				} else {
+					if( f.used.time.day && f.used.party[i].role==2 ){
+						t.add(f.used.party[i].id);
+					}
+					if( !f.used.time.day && f.used.party[i].role==3 ){
+						t.add(f.used.party[i].id);
+					}
+				}
+				f.used.party[i].attack= -f.used.reattackwait;
+			}
+		}
+		return t;
+	}
+	
+	
+	//敵の攻撃判定値を増加
+	//core2.gameLoop.set_enemy_maps_standby().count
+	function set_enemy_maps_addatk(n_){
+		for(var i=10; i<f.used.party.count; i++ ){
+			if( f.used.party[i].role>1 ){
+				f.used.party[i].attack+= n_;
+			}
+		}
+	}
+	
+	//師団が攻める
+	//core2.gameLoop.set_enemy_maps_attak2()
+	function set_enemy_maps_attak2(n_=4){
+		
+		//場所を生成
+		var t= get_player_maps();
+		if(t.count==0) return [];
+		
+		for(var i=0; i<t.count-n_; i++ ){
+			var rr= Math.floor(Math.random()*t.count);
+			t.erase(rr);
+		}
+		
+		dm("get_player_maps %d.%d".sprintf(t.count,t[0]));
+		
+		//攻撃する師団
+		var e= set_enemy_maps_standby();
+		//dm("".sprintf());
+		
+		if(e.count!=0) {
+		
+			//敵を配置
+			if( !f.used.attacklock ){
+				for(var i=0; i<e.count; i++ ){
+					if( !ca.enabled_friendship_check2(e[i]) ){
+						var rr= Math.floor(Math.random()*t.count);
+						set_enemy_maps_move(e[i],t[rr]);
+					}
+				}
+			}
+		
+		}
+		
+		//駐屯しているマップだけ列挙
+		var tt= [];
+		//for(var i=0; i<t.count; i++ ){
+		for(var i=0; i<f.used.mapf.territory.count; i++ ) {
+			//var tj= t[i];
+			var tj= f.used.mapf.territory[i];
+			if(gf.map[tj].post.division.count>0 && gf.map[tj].post.division!==void )
+				 tt.add(tj);
+		}
+		
+		return tt;
+	}
+	
+// 	function set_enemy_maps_attak2a(){
+// 		
+// 		//駐屯しているマップだけ列挙
+// 		var tt= [];
+// 		for(var i=0; i<t.count; i++ ){
+// 			if(gf.map[t[i]].post.division.count>0 && gf.map[t[i]].post.division!==void )
+// 				 tt.add(t[i]);
+// 		}
+// 		
+// 		return tt;
+// 	}
+}

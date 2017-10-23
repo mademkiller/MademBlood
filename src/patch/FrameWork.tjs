@@ -1,0 +1,687 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenBase
+//
+/////////////////////////////////////////////////////////////////////////
+// スクリーンベース
+
+Scripts.execStorage("Unit.tjs");
+Scripts.execStorage("Container.tjs");
+
+Scripts.execStorage("LayerEvent.tjs");
+Scripts.execStorage("LinearMover2.tjs");
+Scripts.execStorage("TButtonBase2.tjs");
+Scripts.execStorage("TButtonSelect2.tjs");
+Scripts.execStorage("TButtonSelect4.tjs");
+Scripts.execStorage("TDrugMoveBase.tjs");
+//
+Scripts.execStorage("Component.tjs");
+
+Scripts.execStorage("SpriteWorld3D.tjs");
+
+///////////////////////////////////////////////////////
+//
+class FrameWork
+{
+
+	var window= void; //ウインドウインスタンス
+	var parent= void; //プライマリレイアー
+	var parentWindow= void; //プライマリレイアー
+	var parentBackWindow= void; //プライマリレイアー
+	
+	var games= void; //ゲームデータ
+	var gameLoop= void;
+	
+	var backGround= void;
+	var backGroundBack= void;
+	var backGroundCompo= void;
+	var backGroundDialog= void;
+	
+	var screen= %[];
+	
+	var events= void;
+	
+	////
+	var current= void;
+	
+	var scenarioStart= false;
+	var scenarioFile= "routecontrol.ks";
+	
+	var rckicEvent= void; //右クリックイベント
+	
+	var closeResult= false;
+	
+	var KeyDown_CallBack= void;
+	
+	var screenControls= void; //スクリーンコントロール
+	
+	var startPlayTimes= 0; //プレイ時間スタートカウンタ
+	var startPlayTimeTemps= 0; //プレイ時間スタートカウンタ
+	
+	var onTransEvent= void;
+	
+	//定数
+	var SYSTEMSE= 0;
+	
+	function FrameWork(evc_){
+		events= evc_;
+	}
+	
+	function finalize()
+	{
+		invalidate games;
+		invalidate gameLoop;
+		
+		var e = [];
+		e.assign(screen);
+		for(var i=0; i<e.count; i+=2){
+			invalidate screen[e[i]];
+		}
+		
+		invalidate backGroundDialog;
+		invalidate screenControls;
+		invalidate backGroundCompo;
+		invalidate backGroundBack;
+		invalidate backGround;
+	}
+	
+	function initScreen()
+	{
+		var e = [];
+		e.assign(screen);
+		for(var i=0; i<e.count; i+=2){
+			screen[e[i]].resetEvent();
+		}
+		invalidate e;
+	}
+	
+	function toFront()
+	{
+		backGround.parent= parentWindow;
+		backGround.onPaint();
+	}
+	
+	function layerImageOptions( mp )
+	{
+		if( mp.visible!==void ) layer[mp.layer].visible= mp.visible;
+		if( mp.opacity!==void ) layer[mp.layer].opacity= mp.opacity;
+		if( mp.zoom!==void ) layer[mp.layer].zoom= mp.zoom;
+		if( mp.rotate!==void ) layer[mp.layer].rotate= mp.rotate;
+	}
+	
+	function createImage( win, par, bakpar )
+	{
+		screenControls= new ScreenStackControl( win, this );
+		
+		backGround= new CompoLayer( win, par );
+		backGround.name= "FrameWork.backGround";
+		backGround.setPos( 0 ,0 );
+		backGround.setImageSize( par.width, par.height );
+		backGround.setSizeToImageSize();
+		backGround.fillRect( 0,0, par.width, par.height, 0x00000000 );
+		backGround.visible= true;
+		backGround.focusable= false;
+		backGround.hitType= htMask;
+		backGround.hitThreshold= 256;
+		backGround.type= ltAddAlpha;
+		backGround.face= dfAuto;
+		backGround.absolute= 100000000;
+		
+		/////
+		backGroundBack= new Layer( win, bakpar );
+		backGround.name= "FrameWork.backGroundBack";
+		backGroundBack.setImageSize( par.width, par.height );
+		backGroundBack.setSizeToImageSize();
+		backGroundBack.visible= true;
+		
+		/////
+		backGroundCompo= new CompoLayer( win, backGround );
+		backGroundCompo.name= "FrameWork.backGroundCompo";
+		backGroundCompo.setPos( 0 ,0 );
+		backGroundCompo.setSize( 960 ,720 );
+		backGroundCompo.visible= false;
+		backGroundCompo.type= ltAddAlpha;
+		backGroundCompo.face= dfAuto;
+		backGroundCompo.absolute= 200000000;
+		
+		window= win;
+		parentWindow= par;
+		parent= backGround;
+		parentBackWindow= bakpar;
+		
+		games= new GameDatas( this );
+		gameLoop= new ScreenGameLoop( window, this, events );
+		
+		events.eventstart();
+		
+		dm( "FrameWork.init.backGround= "+backGround+" .parent= "+parent );
+	}
+	
+	function snapTempoImage()
+	{
+		var backGroundSnap;
+		backGroundSnap= new Layer( kag, kag.fore.base );
+		backGroundSnap.setSize( kag.fore.base.width, kag.fore.base.height );
+		backGroundSnap.setSizeToImageSize();
+		backGroundSnap.fillRect( 0,0, backGroundSnap.width, backGroundSnap.height, 0x00000000 );
+		backGroundSnap.piledCopy( 0,0, kag.fore.base, 0,0, backGroundSnap.width, backGroundSnap.height );
+		return backGroundSnap;
+	}
+	
+	function swapBackground()
+	{
+		backGroundBack.fillRect( 0,0, backGround.width, backGround.height, 0x00000000 );
+		backGroundBack.piledCopy( 0,0, backGround, 0,0, backGround.width, backGround.height );
+		var tmp= backGround.parent;
+		backGround.parent= backGroundBack.parent;
+		backGroundBack.parent= tmp;
+		if(onTransEvent!==void) onTransEvent();
+	}
+	
+	
+	//ボタンイベントの開始
+	function setEvent_aLock_true() {
+		window.core2_lock_all_event= true;
+		//kag.core2_lock_all_event= true;
+		dm("--------setEvent_aLock_true= "+window.core2_lock_all_event);
+	}
+	
+	function setEvent_aLock_false() {
+		window.core2_lock_all_event= false;
+		//kag.core2_lock_all_event= false;
+		dm("--------setEvent_aLock_false= "+window.core2_lock_all_event);
+	}
+	
+	function setEvent_aLock_ret(f_=void) {
+		if(f_!=void && f_==false) window.core2_lock_all_event= true;
+		else window.core2_lock_all_event= false;
+	}
+	
+	///////////////////////////////////////////////////////
+	//ロードして制御をkagに渡す
+	//
+	//ウインドウをすべて閉じた後
+	//画面を表示してkagのセーブをロード
+	//画面をフェードアウトして制御をkagに渡す
+	//
+	function loadBackStart(n_=-1,f_=void)
+	{
+		dm("loadBackStart");
+		
+		//window.core2_lock_all_event= true;
+		
+		startPlayTime();
+		gameLoop.mainLoopStart();
+		
+		gt.loaded_flag= true;
+		f.used.isRoaded= 3;
+		
+		//タスクを設定
+		events.add( loadBackStart_task, %[ f_:f_ ] );
+		events.add( loadBackLoad_task, %[ loadn:n_ ] );
+	}
+	
+	function loadBackStart_task(opt)
+	{
+		dm("loadBackStart_task");
+		
+		if(opt.f_!==void) backGroundCompo.loadImages(opt.f_);
+		else backGroundCompo.fillRect( 0,0, backGround.width, backGround.height, 0xff000000 );
+		backGroundCompo.visible= true;
+		backGroundCompo.opacity= 0;
+		
+		backGroundCompo.moveFinalCallback= events.next;
+		backGroundCompo.beginMove( %[ time:300, path:"(0,0,255)" ] );
+		
+		return false;
+	}
+	
+	function loadBackLoad_task(opt)
+	{
+		dm("loadBackLoad_task opt.loadn=%s".sprintf(opt.loadn));
+		
+		kag.loadBookMark( opt.loadn, true );
+		
+		//partyの参照をリストア
+ 		//games.setArr2Indexs_restor();
+ 		
+		backGroundCompo.visible= true;
+		backGroundCompo.opacity= 255;
+		
+		backGroundCompo.moveFinalCallback= loadBackEnd_task;
+		backGroundCompo.beginMove( %[ time:750, path:"(0,0,0)" ] );
+		
+		return false;
+	}
+	
+	function loadBackEnd_task()
+	{
+		backGroundCompo.visible= false;
+		backGroundCompo.opacity= 255;
+		//_load_number_= -1;
+		
+		dm("loadBackEnd_task");
+		
+		//window.core2_lock_all_event= false;
+		core2.setEvent_aLock_false();
+		
+		events.next();
+		return true;
+	}
+	
+	///////////////////////////////////////////////////////
+	//kagに制御を渡す
+	function kagBackStart( t_, f_, l_ )
+	{
+		dm("kagBackStart= %s.%s.%s".sprintf(t_,f_,l_));
+		
+		//window.core2_lock_all_event= true;
+		
+		//タスクを設定
+		screenControls.exec_close_all(t_);
+		events.add( kagBackStart_task, %[ storage:f_, target:l_ ] );
+	}
+	
+	function kagBackStart_task(opt)
+	{
+		dm("kagBackStart_task");
+		
+		//window.core2_lock_all_event= false;
+		core2.setEvent_aLock_false();
+		
+		kag.process( opt.storage, opt.target );
+		return true;
+	}
+	
+	
+	
+	///////////////////////////////////////////////////////
+	//ウインドウを閉じる
+	function callBackStart(ca_)
+	{
+		dm("callBackStart");
+		
+		//タスクを設定
+		screenControls.exec_close_all();
+		ca_(events);
+	}
+	
+	////////////////////
+	//プレイ時間を計測開始
+	function startPlayTime(i=-1) {
+		startPlayTimes= System.getTickCount();
+		startPlayTimeTemps= 0;
+		if(i>-1) startPlayTimeTemps= kag.sflags.systemcore.UserPlayTime[i];
+	}
+	
+	//プレイ時間を取得
+	function getPlayTime()
+	{
+		var ret= 0;
+		if(startPlayTimes>0) ret= System.getTickCount()-startPlayTimes;
+		return ret;
+	}
+	
+	//ミリ秒を時間テキストに
+	function getPlayTimeString(t)
+	{
+		//var calcsec = t;
+		var playtime_hour= int(Math.floor(t/(1000*60*60)));
+		t-= playtime_hour * (1000*60*60);
+		var playtime_min= int(Math.floor(t/(1000*60)));
+		t-= playtime_min * (1000*60);
+		var playtime_sec= int(Math.floor(t/1000));
+		 
+		return "%03d:%02d:%02d".sprintf(playtime_hour,playtime_min,playtime_sec);
+	}
+	
+	//プレイ時間をユーザー時間にセット
+	function setPlayTime(i)
+	{
+		kag.sflags.systemcore.UserPlayTime[i]= startPlayTimeTemps+getPlayTime();
+		return kag.sflags.systemcore.UserPlayTime[i];
+	}
+	
+	function resetPlayTime(i)
+	{
+		kag.sflags.systemcore.UserPlayTime[i]= 0;
+	}
+	///////////////////////////////////////////////////////
+	//kagラッパー
+	function playse( file_ )
+	{
+		if( file_!="" ) {
+			window.se[SYSTEMSE].play( %[ storage:file_ ] );
+		}
+	}
+	
+	function kagcall( tag_, file_=void )
+	{
+		window.conductor.clearCallStack();
+		if( file_!==void ) window.process( file_, tag_ );
+		else window.process( scenarioFile, tag_ );
+	}
+	
+	///////////////////////////////////////////////////////
+	//
+	
+	function saveExecuteEventQuick_new()
+	{
+		games.setSaveDataTempAdd(0);
+		
+		setPlayTime(0);
+		//kag.storeFlags();
+		kag.saveBookMark( 0, false );
+		
+		games.saveDataTemp[0]= games.setSaveDataTempBase(0);
+		
+	}
+	
+	function loadExecuteEventQuick_new()
+	{
+		if( core2.games.saveDataTemp[0].exist ) {
+	
+			//ameLoop.returnback_flag= 3;
+				//f.used.isRoaded= 3;
+		
+			kag.bgm.stop();
+		
+			loadBackStart(0);
+			startPlayTime(0);
+		
+		}
+	}
+	
+	///////////////////////////////////////////////////////
+	//イベントスタックイベント
+	function onEventStack( ret, event ){}
+	
+}
+
+///////////////////////////////////////////////////////
+//スクリーン情報を管理
+class ScreenStackControl
+{
+
+	var screen= [];
+	var window= void;
+	var parent= void;
+	//var close_all_event= 0;
+	var close_all_enabled= false;
+	
+	function ScreenStackControl(k_,p_) {
+		window= k_;
+		parent= p_;
+	}
+	
+	//スクリーン追加
+	function add(e) {
+		screen.push(e);
+		window.activeScreen_event_lock= screen.count;
+		
+		//if( screen.count==1 ) dm( "ScreenStackControl.add(%d)= root->%s".sprintf( screen.count,screen[-1].name ) );
+		//else dm( "ScreenStackControl.add(%d)= %s->%s".sprintf( screen.count,screen[-2].name, screen[-1].name ) );
+		for(var i=0; i<screen.count; i++ ) {
+			dm( "ScreenStackControl.add(%d)= %s".sprintf( screen.count,screen[i].name ) );
+		}
+		
+		//resetAbsolute();
+	}
+	
+	//スクリーン削除
+	function del(n_=void) {
+		if(n_!==void){
+ 			var p= screen.find(n_);
+ 			screen.erase(p);
+//			screen.remove(n_);
+			window.activeScreen_event_lock= screen.count;
+		} else {
+			var p= screen.pop();
+			window.activeScreen_event_lock= screen.count;
+		}
+		
+		dm( "ScreenStackControl.del(%d)".sprintf( screen.count ) );
+	}
+	
+	//最前列のスクリーン
+	function get() {
+		return screen[-1];
+	}
+	
+	function getCall() {
+		if( screen[-2]!==void ) return screen[-2].name;
+		return "";
+	}
+	
+	function reset() {
+		event.clear();
+		window.activeScreen_event_lock= screen.count;
+	}
+	
+	function count() {
+		return screen.count;
+	}
+	
+	function enabled() {
+		return screen.count>0;
+	}
+	
+	function resetAbsolute() {
+		for(var i=0; i<screen.count; i++ ) {
+			screen[i].backGround.absolute= 95000+i;
+		}
+	}
+	
+	//開いてるスクリーンのモーダルを全て解除
+	function removeModeAll() {
+		for(var i=0; i<screen.count; i++ ) {
+			//screen[i].backGround.removeMode();
+		}
+	}
+	
+	//一つ前のスクリーンに戻る。
+	function goBack( tm_=200 ) {
+		parent.events.add( screen[-1].HideScreen_task, %[ time_:tm_ ] );
+	}
+	
+	////////////////////////
+	//スクリーンをすべて閉じる
+	function exec_close_all( tm_=150 ) {
+		if(!close_all_enabled){
+			close_all_enabled= true;
+			for(var i=screen.count-1; i>=0; i-- ) {
+				parent.events.add( screen[i].HideScreen_task, %[ time_:tm_ ] );
+			}
+			parent.events.add( closeend_task );
+			dm( "ScreenStackControl.exec_close_all(%s)".sprintf(screen.count) );
+		}
+	}
+	
+	function exec_close_all_end() {
+		if(!close_all_enabled){
+			close_all_enabled= true;
+			for(var i=screen.count-1; i>=0; i-- ) {
+				parent.events.add( screen[i].HideScreen_task, %[ time_:500 ] );
+			}
+			parent.events.add( kag.shutdown );
+			dm( "ScreenStackControl.exec_close_all(%s)".sprintf(screen.count) );
+		}
+	}
+	
+	function closeend_task(opt) {
+		if(close_all_enabled && screen.count==0){
+			close_all_enabled= false;
+			dm( "ScreenStackControl.closeend_task()" );
+		}
+		return true;
+	}
+
+}
+
+///////////////////////////////////////////////////////
+// イベントキュー
+//
+// 順次でイベントを処理するのに使う。
+// 
+class EventStack
+{
+	var event= [];
+	var eventOpt= [];
+	var eventWait= [];
+	
+	var tickcounter= 0;
+	var tickwait= 0;
+	var tickstart= 0;
+	
+	var intfps= 1000/30;
+	
+	//イベントスタック開始
+	var event_started= false;
+	
+	//イベント実行中
+	var event_enable= false;
+	
+	//イベント実行中
+	var event_status= "stop";
+	
+	function EventStack(){
+	}
+	
+	function finalize(){
+		eventstop();
+	}
+	
+	//イベント処理開始
+	function eventstart() {
+		if( !event_started ){
+			event_started= true;
+			tickstart= System.getTickCount();
+			System.addContinuousHandler(handler);
+			event_status= "idel";
+			dm("EventStack.event_status= "+ event_status);
+		}
+	}
+	
+	//イベント処理終了
+	function eventstop() {
+		if( event_started ){
+			System.removeContinuousHandler(handler);
+			event_started= false;
+			event_status= "stop";
+			dm("EventStack.event_status= "+ event_status);
+		}
+	}
+	
+	//追加
+	function add( e, o=void, t=999999999 ) {
+		dm("EventStack.add(%d)= %s".sprintf(event.count,e));
+		event.add(e);
+		eventOpt.add(o);
+		eventWait.add(t);
+	}
+	
+	//一時停止
+	function addPause( t=999999999 ) {
+		dm("EventStack.add(%d)= %s".sprintf(event.count,t));
+		event.add(addPause_callback);
+		eventOpt.add(void);
+		eventWait.add(t);
+	}
+	
+	function addPause_callback(op) { return false; }
+	
+	//待機中のイベントを消去
+	function reset() {
+		event.clear();
+		eventOpt.clear();
+		eventWait.clear();
+	}
+	
+	//イベント実行部
+	function excute() {
+		event_enable= true;
+		
+		//イベント実行
+		var ret= event[0](eventOpt[0]);
+		event_status= "execute";
+		
+		dm("EventStack.event_status= "+ event_status+ " "+ event.count+ " "+ ret );
+		
+		//dm("EventStack.event_status= "+ event_status+ " "+eventWait[0] );
+		
+		//イベント消去
+		if(ret) next();
+		else {
+			event_status= "wait";
+			dm("EventStack.event_status= "+ event_status+ " "+eventWait[0] );
+		}
+		
+		//else if( eventWait[0]==0 ) eventWait[0]= 999999999999;
+		
+		//event_enable= false;
+		
+		//ゲームの終了時のみこの位置で実行
+//		if(eventOpt[0]=="windowclose") var ret= event[0](eventOpt[0]);
+	}
+	
+	//ウエイト　停止ではなく長時間ウエイト
+	function waitexcute(tm) {
+	
+		//event_status= "wait";
+		
+		eventWait[0]-= tm;
+		
+		if( eventWait[0]<=0 ) {
+			next();
+		}
+		
+		//dm("EventStack.waitexcute= "+ eventWait[0]);
+
+	}
+	
+	//一時停止中を解除
+	function next() {
+		if( event_enable ) {
+			event_status= "next";
+			dm("EventStack.event_status= "+ event_status);
+			
+			//イベント消去
+			if(event.count>0){
+				event.erase(0);
+				eventOpt.erase(0);
+				eventWait.erase(0);
+			}
+			event_status= "idel";
+			dm("EventStack.event_status= "+ event_status);
+			event_enable= false;
+		}
+	}
+	
+	//ループ
+	function handler(tick){
+		
+		var tc= System.getTickCount();
+		//var ticks= tc-tickstart;
+		
+		
+		//dm("EventStack.tc= "+ tc+ "-"+ (tc-tickstart) );
+		
+		//tickcounter+= ticks;
+		
+		if( tc-tickstart>=intfps ) {
+		
+			//dm("EventStack.tc= "+ tc+ "-"+ (tc-tickstart) );
+			
+			//if( event.count>0 && !event_enable ) {
+			if( event.count>0 ) {
+				switch(event_status) {
+					case 'idel': excute(tc-tickstart); break;
+					case 'wait': waitexcute(tc-tickstart); break;
+				}
+			}
+			//tickstart= tc-intfps;
+			tickstart= tc;
+			//tickcounter-= intfps;
+		}
+	}
+}

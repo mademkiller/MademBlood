@@ -1,0 +1,2013 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenGameMainMap
+//
+/////////////////////////////////////////////////////////////////////////
+//
+class ScreenGameMainMap extends TFrame2
+{
+	var w3d= void;
+	
+	var p3dObj= [];
+	
+	//var mapListView= [];
+	
+	var isBuilding= false;
+	var isBuildingList= false;
+	
+	function ScreenGameMainMap( g_, s_ ){
+		super.TFrame2(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+		
+		PostReleaseScreen();
+		
+		//invalidate p3dObj;
+		//invalidate mapListView;
+	}
+	
+	///////////////////////////////////////////////////////
+	// init
+	//
+	function onPreLoad()
+	{
+		with( panel )
+		{
+		
+			//3d空間設定
+			w3d= new SpriteWorld3D( 480, 290, 40 );
+			//w3d= new SpriteWorld3D( 960, 580, 40 );
+			// カメラ設定
+			w3d.camera.setPos( 0, 0, 0 );			// 座標
+			w3d.camera.setLookAt( 0, 0, 3000 );		// 注視点
+			w3d.camera.setTopvec( 0, -1, 0 );		// カメラの上面方向
+			w3d.camera.setProjection( 100, 3000 );	// 最近面、最遠面、描画ターゲットレイヤー
+			
+			
+			//マップ表示用
+			.mainMap= new TScrollImageMap( kag, backGround, this );
+			//.mainMap.setLayer( 0, 0, 960, 580, "map_41uv" );
+			.mainMap.setLayer( 0, 0, 960, 580, "map_41_a" );
+			.mainMap.world3d= w3d;
+			.mainMap.setViewPos( 0, 0 );
+			.mainMap.moveCallback= mapMoveCallback;
+			.mainMap.moveCallback3= rightClickCallBack;
+			
+			//拠点画像用
+			.mapObj_tp= new LayerTrueBase2D( kag, .mainMap );
+			.mapObj_tp.setLayer( 0, 0 );
+			.mapObj_tp.loadImages("map_c00tg2",, 0.5, 0.71);
+			
+			//拠点画像用
+			for(var i=gf.map.count-1; i>=0; i--){
+				//p3dObj[i]= new LayerTrueBase2DMap( kag, backGround );
+				p3dObj[i]= new LayerTrueBase2DMap( kag, .mainMap, this );
+				p3dObj[i].setLayer( 0, 0 );
+				p3dObj[i].setData( i, gf.map );
+				//p3dObj[i].drawStatus();
+				//p3dObj[i].onAction= onItemAction;
+				//p3dObj[i].drawText4( 0,100, gf.map[i].name,0xffffff,14 );
+				p3dObj[i].enem.checked_Execute= enemy_select_callback;
+				p3dObj[i].enem2.callbackEvent= gettown_select_callback;
+			}
+			
+			
+//			.mapObj_cor= new LayerTrueBase( kag, backGround );
+//			.mapObj_cor.setLayer( 0, 0, 156, 79, 0xffff0000 );
+//			.mapObj_cor.visible= false;
+//			.mapObj_cor.loadImages("map_mini_info");
+			
+			////
+			//3d空間に頂点を設定 vartex
+			
+			//地面
+			var sr= w3d.addSprite2(4);
+//			sr.setPosSet([
+//				240,195,500, -240,195,500,
+//				240,-95,500, -240,-95,500 ]);
+//				
+			sr.setPosSet([
+				480,390,500, -480,390,500,
+				480,-190,500, -480,-190,500 ]);
+				
+			//木
+			sr= w3d.addSprite2();
+			sr.setPosSet([ -703,-305,500, -853,-305,500 ]);
+			
+			//カーソル
+			sr= w3d.addSprite2();
+			sr.setPosSet(pos2vecp( 235,620,500, 80 ));
+			
+			//拠点
+			for(var i=0; i<gf.map.count; i++){
+				sr= w3d.addSprite2();
+				sr.setPosSet(pos2vecp( gf.map[i].pos.x, gf.map[i].pos.y, 500, 65 ));
+				//p3dObj[i].adata= i;
+			}
+			
+			.uiBuildlistList= new buildSelectStatus( kag, backGround );
+			.uiBuildlistList.setLayer( 960, 0 );
+			
+			//ui
+			.uiBase= new LayerTrueBase( kag, backGround );
+			.uiBase.setLayer( 0, 540 );
+			.uiBase.loadImages("slg_top_chip01");
+			
+			.uiMap= new Minimap( kag, .uiBase );
+			.uiMap.setLayer( 2, 16 );
+			.uiMap.setFrame( 70, 50, 2 );
+			.uiMap.loadImages("slg_top_minimap");
+			.uiMap.moveCallBack= .mainMap.setViewPosMovePar;
+			.mainMap.moveCallback2= .uiMap.setViewPosPar;
+			//.uiMap.moveCallback3= zoom_select_callback2;
+			
+			.uiInfo= new LayerTrueBase( kag, .uiBase );
+			.uiInfo.setLayer( 216, 16 );
+			.uiInfo.loadImages("slg_top_info");
+			
+			
+			
+			
+			/*
+			.uiMapList= new LayerTrueBase( kag, backGround );
+			.uiMapList.setLayer( 0, 360, 200, 180, 0xff00ff00 );
+			.uiMapList.loadImages("slg_bui_list_name");
+			
+			//for(var i=0; i<gf.map.count-1; i++) mapListView[i]= i+1;
+			for(var i=0; i<gf.map.count; i++) mapListView[i]= i;
+			
+			.uiMapListData= new TButtonSelectList( kag, .uiMapList );
+			.uiMapListData.setLayer( 5, 10, 240, 162, 0x00000000 );
+			.uiMapListData.setListData( gf.map, mapListView );
+			.uiMapListData.setButton( 240, 27, 6, TListButtonBase2 );
+			.uiMapListData.checked_Execute= listMoveCallback;
+			
+			.uiMapListDataSlider= new SliderBar( kag, .uiMapList );
+			.uiMapListDataSlider.setLayer( 245, 10, 10, 162, true,, 30, 0xffdddddd );
+			
+			//.uiMapListDataSlider.step= mapListView.count-6;
+			
+			.uiMapListData.setListSlider(.uiMapListDataSlider);
+			*/
+			
+			//拠点リスト
+			.uiMapList2= new buildMidMapList( kag, backGround );
+			.uiMapList2.setLayer( -260, 360 );
+			.uiMapList2.setEvent(listMoveCallback);
+			
+			.uiMapBuildingInfomation= new buildMidInfomation( kag, .uiBase );
+			.uiMapBuildingInfomation.setLayer( 240, 40 );
+			.uiMapBuildingInfomation.setData(,,gf.map[0]);
+			.uiMapBuildingInfomation.drawStatus();
+			
+			/*
+			.sbuttom= new TButtonSelect2( kag, .uiBase );
+			.sbuttom.setLayer( 260, 150, 192, 48 );
+			.sbuttom.setButton( 48, 48, 4 );
+			.sbuttom.setButtonPos([ 0,0, 48,0, 96,0, 144,0 ]);
+			.sbuttom.setButtonLoad([ "sys_wnd_bt_load2","sys_wnd_bt_save2","sys_wnd_bt_loadQ2","sys_wnd_bt_saveQ2" ]);
+			.sbuttom.checked_Execute= icon_base_select_callback;
+			.sbuttom.soundfile= %[ enter:"A1_12219s", leave:"", select:"", click:"A1_12217s" ];
+			*/
+			
+			//メニューボタン
+			.sbuttom= new TButtonSelect4( kag, .uiBase );
+			.sbuttom.setLayer( 360, 150 );
+			.sbuttom.setButton( 48, 48, 5 );
+			.sbuttom.setButtonPos([ 0,0, 55,0, 103,0, 151,0, 199,0 ]);
+			.sbuttom.setButtonLoad([ "sys_wnd_bt_cfg2","sys_wnd_bt_load2","sys_wnd_bt_save2","sys_wnd_bt_loadQ2","sys_wnd_bt_saveQ2" ]);
+			.sbuttom.setButtomSelectMode= [1,1,1,1,1,1];
+			.sbuttom.checked_Execute= icon_base_select_callback;
+			.sbuttom.soundfile= %[ enter:"A1_12219s", leave:"", select:"", click:"A1_12217s" ];
+			
+			
+ 			.RstatsIcons= new TButtonBase1s( kag, backGround );
+ 			.RstatsIcons.setLayer( 0, 300, 24, 48, 2 );
+ 			.RstatsIcons.loadImages("mapchip_p04");
+ 			.RstatsIcons.callbackEvent= zoom_select_callback;
+ 	// 		.RstatsIcons.AllLockOut= true; //ロックをリリースするかstatsIcons.button_Update();
+			
+			
+			//ドラッグスクリーン
+			.drugScreen= new TDrugMoveBase2( kag, backGround );
+			.drugScreen.setLayer( 0, 0, 970, 720 );
+			//.drugScreen.callbackCancelEvent= callback_mini_cancel;
+			
+			.uiBuildlistList.setonDrugEvents( .drugScreen );
+			
+			for(var i=0; i<gf.map.count; i++){
+				p3dObj[i].Drop_Exec.setDrugs( .drugScreen );
+				p3dObj[i].Drop_Exec.Execute= building_drop_callback;
+				p3dObj[i].Drop_Exec.Enabled= true;
+			}
+			
+			//フォーカスリスト
+			//.mainMap.setKeyset( null, null, void, void );
+			
+			selectTown(,false);
+			
+//  			for(var i=0; i<gf.map.count; i++){
+//  				p3dObj[i].drawStatus();
+//  			}
+		}
+		
+		drawStatus();
+		
+		return true;
+	}
+	
+	function onPostRelease()
+	{
+		invalidateLayer(p3dObj);
+		invalidate w3d;
+	}
+	
+	///////////////////////////////////////////////////////
+	// method
+	//
+	function drawStatus()
+	{
+		//if(mode==3){
+			//games.setArr2Indexs(f.used.party,gf.enemy,10,22);
+		
+			//ca.map_set_getting_update(gf);
+		
+			//ca.map_trunend_additional_update(gf);
+		
+			//screen.gamemain.updateStatus();
+		
+			//ca.map_set_getting_enemy_update();
+		
+			//for(var i=0; i<6; i++){
+			//	ca.map_getting_enemy_data(i);
+			//}
+		
+			drawStatus_day();
+		
+			for(var i=0; i<gf.map.count; i++){
+		//	for(var i=0; i<5; i++){
+				if(p3dObj[i]!==void) p3dObj[i].drawStatus();
+			}
+		//}
+	}
+	
+	//core2.screen.gamemap.p3dObj[5].drawStatus();
+	
+	function drawStatus_day()
+	{
+		//if(panel.mainMap!==void){
+		if(mode==3){
+			panel.mainMap.addImageScreenTime( f.used.time.time );
+			panel.mainMap.onPaint();
+		}
+	}
+	
+	function pos2vecp( r1,r2,r3, g )
+	{
+		var h= [ (r1*-1)+240, (r2*-1)+195, r3,
+			(r1*-1)+240-g, (r2*-1)+195, r3 ];
+		//dm("pos2vecp(%d,%d,%d)(%d,%d,%d)".sprintf(
+		//	(r1*-1)+240, (r2*-1)+195, r3,
+		//	(r1*-1)+240+g, (r2*-1)+195, r3));
+		return h;
+	}
+	
+	function pos2vec(r_)
+	{
+		return Math.floor( r_-(1638+((r_-939)*2.05595)) );
+	}
+	
+	function florr(r_)
+	{
+		
+		var rad = r_*Math.PI/180;
+		var sin = Math.sin(rad);
+		var cos = Math.cos(rad);
+		
+		var ret= %[ "x"=> Math.floor(100*sin), "y"=> Math.floor(100*cos) ];
+		
+		Debug.message( "flor= "+ret.x+"x"+ret.y );
+		
+		return ret;
+	}
+	
+	function selectTown(n_=void,m_=true)
+	{
+		if(n_!==void) f.used.mapf.selectIndex= n_;
+		var n= f.used.mapf.selectIndex;
+		
+		if(m_) panel.mainMap.setViewPosMoveMotion( gf.map[n].pos.x-240+(panel.mainMap.subScrWoffset/4), gf.map[n].pos.y-210 );
+		else{
+			panel.mainMap.setViewPosMove( gf.map[n].pos.x-240+(panel.mainMap.subScrWoffset/4), gf.map[n].pos.y-210 );
+			var p= panel.uiMap.pos2Par(gf.map[n].pos.x-240+(panel.mainMap.subScrWoffset/4), gf.map[n].pos.y-210);
+			panel.uiMap.setViewPosPar(p.x,p.y);
+		}
+		
+		w3d.objList[2].setPosSet(pos2vecp( gf.map[n].pos.x, gf.map[n].pos.y, 500, 65 ));
+		panel.mapObj_tp.setPos2Dd( w3d.objList[2] );
+		
+		panel.uiMapBuildingInfomation.setData(,,gf.map[n]);
+		panel.uiMapBuildingInfomation.drawStatus();
+	}
+	
+	///////////////////////////////////////////////////////
+	// callback
+	//
+	function rightClickCallBack()
+	{
+		if(isBuilding) {
+			parrentSrn.opt_buttom_top2();
+		}
+	}
+	
+	function zoom_select_callback( n_ )
+	{
+		switch( n_.isSelected ){
+			case 0:
+				panel.mainMap.cameraZoom= 115;
+				panel.mainMap.cameraY= 500;
+				for(var i=0; i<gf.map.count; i++){
+					p3dObj[i]._Buffer3.visible= true;
+					p3dObj[i]._Buffer4.visible= false;
+					p3dObj[i].enem.visible= true;
+				}
+				break;
+			//case 1: panel.mainMap.cameraZoom= -300; panel.mainMap.cameraY= 0; break;
+			case 1:
+				panel.mainMap.cameraZoom= -100;
+				panel.mainMap.cameraY= 150;
+				for(var i=0; i<gf.map.count; i++){
+					p3dObj[i]._Buffer3.visible= false;
+					p3dObj[i]._Buffer4.visible= true;
+					p3dObj[i].enem.visible= false;
+				}
+				break;
+		}
+		
+		panel.mainMap.onPaint();
+	}
+	
+	function zoom_select_callback2()
+	{
+		switch(panel.RstatsIcons.isSelected){
+			case 0: panel.RstatsIcons.button_Selected(1); break;
+			case 1: panel.RstatsIcons.button_Selected(0); break;
+		}
+		dm("zoom_select_callback2= "+panel.RstatsIcons.isSelected);
+	}
+	
+	function icon_base_select_callback( n )
+	{
+	
+		switch( n )
+		{
+			case 0:
+				core2.screen.config.ShowScreen( 300 );
+				break;
+			case 1:
+				core2.screen.save.saveModeSet= false;
+				core2.screen.save.ShowScreen( 300 );
+				break;
+			case 2:
+				core2.screen.save.saveModeSet= true;
+				core2.screen.save.ShowScreen( 300 );
+				break;
+			case 3:
+				
+				//core2.loadExecuteEventQuick_new();
+				callback_quickLoad();
+				//screen.avg.callback_quicksaveload("win_plate_Ql");
+				break;
+			case 4:
+				core2.saveExecuteEventQuick_new();
+				core2.callback_quicksaveload("win_plate_Qs");
+				//screen.avg.callback_quicksaveload("win_plate_Qs");
+				break;
+		}
+		
+	}
+	
+	//戦闘開始ボタン
+	function enemy_select_callback(n_,d_)
+	{
+		if(ca.map_battle_setting_check()){
+			f.used.stat.attackmode= 1;
+			//ca.map_battle_setting_enemy_data(d_.mapNo);
+			ca.map_battle_setting_enemy_data_init(d_.mapNo,n_);
+			f.used.returnback_flag= 2;
+			f.used.isRoaded= 3;
+			core2.kagBackStart( 300, "BattleMain.ks", "" );
+			//core2.kagBackStart( 300, "ScreenGameMain.ks", "" );
+		}
+	}
+	
+	var gettown_select_callback_no= -1;
+	
+	//占領ボタン
+	function gettown_select_callback(n_)
+	{
+			var prompt = gf.map[n_._id].name+" を;占領しますか？";
+			var result = askYesNoD(prompt,, gettown_select_callback2 );
+ 			if(result) {
+// 				askYesNoD_reset();
+// 				f.used.mapf.territory.add(gettown_select_callback_no);
+// 				gettown_select_callback_no= -1;
+ 				HideScreen(200);
+// 				ShowScreen(300);
+ 			}
+			gettown_select_callback_no= n_._id;
+	}
+
+	//クイックセーブロード
+	function callback_quickLoad( f_=true )
+	{
+		if( games.saveDataTemp[0].exist ) {
+			
+			var prompt = "クイックロードしますか？";
+			//var result = askYesNoD( prompt,callback_quickSave );
+			var result = askYesNoD2( prompt,,callback_quickLoad,core2.loadExecuteEventQuick_new );
+			if( result ) {
+				askYesNoD_reset();
+			}
+		}
+	}
+	
+	
+	function gettown_select_callback2()
+	{
+		dm("koko"+gettown_select_callback_no);
+		
+			if(gettown_select_callback_no!=-1) {
+				askYesNoD_reset();
+				
+				//if(territory.add) f.used.mapf.territory.add(gettown_select_callback_no);
+				//gf.map[gettown_select_callback_no].frag= 0;
+				ca._add_mapf_territory(gettown_select_callback_no);
+				
+				f.used.mapf.selectIndex= gettown_select_callback_no;
+				
+// 				//近接している攻撃できる位置
+// 				f.used.stat.useattack= core2.gameLoop.get_player_maps_atk();
+// 				
+// 				p3dObj[gettown_select_callback_no].drawStatus();
+				
+				gettown_select_callback_no= -1;
+// 				ca.map_set_getting_update();
+			//}
+			
+			f.used.returnback_flag= 3;
+			f.used.isRoaded= 3;
+			
+			core2.kagBackStart( 300, "ScreenGameMain.ks", "" );
+		}
+	}
+	
+	////////////////////
+	//入力イベント
+	function onItemAction( ev )
+	{
+		if( ev.type=="onMouseDown" ) {
+		
+			var ii= ev.layer._id;
+			
+			selectTown(ii);
+			
+			//panel.uiMapListData.setViewIndexMove(ii);
+			panel.uiMapList2.uiMapListData.setViewIndexMove(ii);
+			
+			//dm( "onItemAction.ev.layer.adata= %d (%d,%d)".sprintf(ii,gf.map[ii].pos.x, gf.map[ii].pos.y));
+		}
+		
+		if( ev.type=="onMouseEnter" ) {
+			ev.layer.cursor= crHandPoint;
+		}
+		
+		if( ev.type=="onMouseLeave" ) {
+			ev.layer.cursor= crArrow;
+		}
+		
+		//ドロップ用
+		Drop_Exec.onActionCallBack(ev);
+		
+// 		if( ev.type=="onMouseUp" && panel.drugScreen.drugModeEnabled() ){
+// 			if(ca.map_item_building_condition(ev.layer._data2,panel.drugScreen.src._data2)) onBulidAction(ev);
+// 			else panel.drugScreen.drugModeEnd();
+// 		}
+		
+		
+		
+		
+		
+	}
+	
+	
+	function building_drop_callback( lay, src )
+	{
+// 		if( ev.type=="onMouseUp" && panel.drugScreen.drugModeEnabled() ){
+ 		if(ca.map_item_building_condition(lay._data2,src.lay._data2)) onBulidAction( %[ l1:lay, l2:src.lay ] );
+ 			//else panel.drugScreen.drugModeEnd();
+// 		}
+	}
+	
+	function onBulidAction( ev )
+	{
+		var prompt = "%s を建設しますか？".sprintf(gf.get(ev.l2._data2.index,gf.list.map).name);
+		var result = askYesNoD( prompt, onBulidAction,,ev );
+		if(result) {
+			askYesNoD_reset();
+			ev.l1._data2.type.building= ev.l2._data2.index;
+			ev.l1.drawStatus();
+			
+			ca.map_item_buy_update(ev.l1._data2,ev.l2._data2);
+			
+			//panel.drugScreen.drugModeEnd();
+			ev.l1.drawStatus();
+			
+			//ステータスを更新
+			ca.map_trunend_additional_update();
+			ca.map_effects_additional_update2();
+			
+			screen.gamemain.updateStatus();
+			//screen.gamemain.updateStatusAM2(ev.l2._data2.cost,3);
+			
+			panel.uiMapBuildingInfomation.setData(,,ev.l1._data2);
+			panel.uiMapBuildingInfomation.drawStatus();
+			
+		}
+	}
+	
+	function minimapMoveCallback( e )
+	{
+		setViewPosMovePar();
+	}
+	
+	function listMoveCallback( n_ )
+	{
+		f.used.mapf.selectIndex= n_;
+		
+		panel.mainMap.setViewPosMoveMotion( gf.map[n_].pos.x-240, gf.map[n_].pos.y-210 );
+		
+		w3d.objList[2].setPosSet(pos2vecp( gf.map[n_].pos.x, gf.map[n_].pos.y, 500, 65 ));
+		panel.mapObj_tp.setPos2Dd( w3d.objList[2] );
+	}
+	
+	function mapMoveCallback2( x, y, z )
+	{
+		w3d.objList[2].trans[0].x-= x;
+		w3d.objList[2].trans[0].y-= y;
+		w3d.objList[2].trans[1].x-= x;
+		w3d.objList[2].trans[1].y-= y;
+		
+		//w3d.objList[2].setPosSetEx( -x, -y );
+		
+		w3d.updateSprite();
+		
+		panel.mapObj_tp.setPos2Dd( w3d.objList[2] );
+		//panel.mapObj_tp.setPos( w3d.objList[2].drawTrans[0].x,w3d.objList[2].drawTrans[0].y );
+		
+		panel.uiInfo.fillRect( 10,10, 300,30, 0xff000000 );
+		var str= "vec= %fx%f-%f".sprintf(w3d.objList[2].trans[0].x,w3d.objList[2].trans[0].y,w3d.objList[2].trans[1].x);
+		panel.uiInfo.drawText3( 12,12, str );
+	}
+	
+	function mapMoveCallback( x, y, z )
+	{
+	
+		
+		panel.mapObj_tp.setPos2Dd( w3d.objList[2] );
+		//panel.mapObj_tp.setViewPosMoveMotion( ev.layer.left, gf.map[ii].pos.y );
+		
+		for(var i=0; i<gf.map.count; i++){
+			if( w3d.objList[i+3].setViewEnabled(10) ){
+				p3dObj[i].setObjctView(true);
+				p3dObj[i].setPos2Dd( w3d.objList[i+3] );
+			} else {
+				p3dObj[i].setObjctView(false);
+			}
+		}
+	}
+	
+	function move_callbak( v )
+	{
+		//panel.mainMap.cameraZoom= (-600*v)+100;
+		//panel.mainMap.cameraY= 200*v;
+		//panel.mainMap.cameraY= 0;
+		//panel.mainMap.onPaint();
+		//dm( "setValue= "+v );
+	}
+	
+	//建設メニュー
+	function openBuilding()
+	{
+		isBuilding= true;
+		panel.mainMap.subScrWoffset= 140;
+		panel.uiBuildlistList.setPos( 960-280, 0 );
+		
+		//panel.mainMap.setViewPosMoveMotion( panel.mainMap.valueX+(panel.mainMap.subScrWoffset/2), panel.mainMap.valueY );
+		selectTown(f.used.mapf.selectIndex);
+		
+		//parrentSrn.enabledButton([ 0,0,2, 0,0,0, 0,0,0 ]);
+		for(var i=0; i<gf.map.count; i++) {
+			p3dObj[i].enem.setEnableEvent(,true);
+		}
+		
+		//core2.setEvent_aLock_false();
+	}
+	
+	function closeBuilding()
+	{
+		panel.uiBuildlistList.setPos( 960, 0 );
+		panel.mainMap.subScrWoffset= 0;
+		selectTown(f.used.mapf.selectIndex);
+		isBuilding= false;
+		for(var i=0; i<gf.map.count; i++) {
+			p3dObj[i].enem.setEnableEvent(,false);
+		}
+		
+		//core2.setEvent_aLock_false();
+		//parrentSrn.enabledButton([ 2,1,1, 1,1,1, 1,1,1 ]);
+	}
+	///////////////////////////////////////////////////////
+	// show
+	//
+	function onInit()
+	{
+		backGround.setLayer( 0, 0, 960, 720, 0x00000000 );
+		backGround.visible= false;
+		backGround.opacity= 0;
+	}
+	
+	function onShow( time_, en_ )
+	{
+		//init_panel();
+		//parrentSrn.enabledButton([ 2,1,1, 1,1,1, 1,1,1 ]);
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 0;
+		
+		//panel.mainMap.addImageScreenTime( 6.7 );
+		//panel.uiMapListData.statsUpdate( true, true );
+		panel.uiMapList2.uiMapListData.statsUpdate( true, true );
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,255)" ] );
+		backGround.beginMoveValue( %[ time:time_, path:1.0, accel:-2 ] );
+		backGround.move_callbak= move_callbak;
+		
+		panel.mainMap.par2mode=0;
+		panel.mainMap.beginMoveValue( %[ time:time_, path:1.0, accel:-2 ] );
+		
+		panel.uiBase.setPos( 0, 720 );
+		panel.uiBase.beginMove( %[ time:time_, path:"(0,540,255)", accel:-2 ] );
+		
+//		panel.uiInfo.setPos( 216, 164 );
+//		panel.uiInfo.beginMove( %[ time:time_, path:"(216,16,255)", accel:-2 ] );
+		
+		//backGround.move_callbak
+		
+		dm("onShow");
+	}
+	
+	function onShowEnd()
+	{
+	
+// 		panel.mainMap.enabledEvent= true;
+// 		
+// 		//panel.uiMapListData.enabledEvent= true;
+// 		//panel.uiMapListDataSlider.enabledEvent= true;
+// 		
+// 		panel.RstatsIcons.enabledEvent= true;
+// 		
+// 		parrentSrn.lockButton(false);
+// 		
+// 		panel.uiBuildlistList.setEventEnable(true);
+// 		
+// 		panel.uiMapList2.setEventEnable(true);
+// 		
+// 		//
+// 		for(var i=0; i<gf.map.count; i++){
+// 			p3dObj[i].enabledEvent= true;
+// 		}
+// 		
+// 		panel.uiMap.enabledEvent= true;
+// 		
+// 		//システムボタンを有効
+// 		panel.sbuttom.setEnableEvent(true);
+
+		setEnableEvent( true );
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 255;
+		
+		panel.mainMap.par2mode=1;
+		
+		//frameWork.rckicEvent= rightClickCallBack;
+		
+		dm("onShowEnd");
+	}
+	
+	function onHide( time_, en_ )
+	{
+		setEnableEvent( false );
+		
+// 		panel.sbuttom.setEnableEvent(false);
+// 		
+// 		parrentSrn.lockButton(true);
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,0)", accel:2 ] );
+		
+		panel.uiBase.beginMove( %[ time:time_, path:"(0,720,255)", accel:2 ] );
+		//panel.uiInfo.beginMove( %[ time:time_, path:"(216,164,255)", accel:-2 ] );
+	}
+	
+	function onHideEnd()
+	{
+		backGround.visible= false;
+		backGround.opacity= 0;
+		
+		kag.KeyDown_CallBack= void;
+		
+		PostReleaseScreen();
+	}
+	
+	
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		panel.mainMap.enabledEvent= f_;
+		panel.RstatsIcons.enabledEvent= f_;
+		panel.uiBuildlistList.setEventEnable(f_);
+		panel.uiMapList2.setEventEnable(f_);
+		
+		//
+		for(var i=0; i<gf.map.count; i++){
+			p3dObj[i].enabledEvent= f_;
+		}
+		
+		panel.uiMap.enabledEvent= f_;
+		panel.sbuttom.setEnableEvent(f_);
+		
+		parrentSrn.lockButton(!f_);
+		
+	}
+}
+
+///////////////////////////////////////////////////////
+//マップメイン
+class TScrollImageMap extends LayerEventBase2
+{
+
+	var range= 0;
+	var valueX= 0;
+	var valueY= 0;
+	var valueZ= 0+1;
+	
+	var startX= 0, endX= 0;
+	var startY= 0, endY= 0;
+	
+	var value= 0.0;
+	
+	//var mvp= 0.5;
+	var mvp= 1.0;
+	
+	var _buffImageBack= void;
+	var _buffImageMap= void;
+	var _buffImageMap2= void;
+	var _ScreenMap= void;
+// 	var _buffImageRoad= void;
+	
+	var _buffImageObj= [];
+	
+	var pTime= -1.0;
+	
+	//var p4= [];
+	var cameraZoom= 100;
+	var cameraY= 500;
+	
+	var par2mode= 0;
+	
+	var world3d= void;
+	
+	var subScrW= 480, subScrH= 290, subScrWoffset= 0;
+	
+	var dayTime= 0.0;
+	
+	var moveCallback= void;
+	var moveCallback2= void;
+	var moveCallback3= void;
+	
+	
+	var testbbt= false;
+	
+	function TScrollImageMap( win, par, pal ) {
+		super.LayerEventBase2(...);
+		name= "TScrollImageMap";
+	}
+	
+	function finalize() {
+		invalidate _buffImageBack;
+		invalidate _buffImageMap;
+		invalidate _buffImageMap2;
+		invalidate _ScreenMap;
+// 		invalidate _buffImageRoad;
+		
+		for( var i=0; i<_buffImageObj.count; i++ ) invalidate _buffImageObj[i];
+		invalidate _buffImageObj;
+		
+		super.finalize(...);
+	}
+
+	function setLayer( x_, y_, w_, h_, file_ )
+	{
+		//遠景
+		_buffImageBack= new global.Layer( window, this );
+		_buffImageBack.loadImages( "map_cloud_a" );
+		_buffImageBack.setSizeToImageSize();
+		_buffImageBack.visible= false;
+		_buffImageBack.type = ltOpaque;
+		
+		//マップデータ
+		_buffImageMap= new global.Layer( window, this );
+		_buffImageMap.loadImages( file_ );
+		_buffImageMap.setSizeToImageSize();
+		_buffImageMap.visible= false;
+		_buffImageMap.type = ltAddAlpha;
+		
+		//
+		_buffImageObj[0]= new global.Layer( window, this );
+		_buffImageObj[0].loadImages( "map_tree2" );
+		_buffImageObj[0].setSizeToImageSize();
+		_buffImageObj[0].visible= false;
+		_buffImageObj[0].type = ltAddAlpha;
+		
+		
+// 		_buffImageRoad= new global.Layer( window, this );
+// 		_buffImageRoad.loadImages( f.used.maproadimage );
+// 		_buffImageRoad.setSizeToImageSize();
+// 		_buffImageRoad.visible= false;
+// 		_buffImageRoad.type = ltAddAlpha;
+		
+		//_buffImageMap.pileRect( 0,0, _buffImageRoad, 0,0, _buffImageRoad.width,_buffImageRoad.height );
+		
+		//スクリーンバックバッファ
+		_ScreenMap= new global.Layer( window, this );
+		_ScreenMap.setImageSize( subScrW, subScrH );
+		_ScreenMap.setSizeToImageSize();
+		//_ScreenMap.fillRect( 0, 0, w_, h_, 0xff000000 );
+		//_ScreenMap.type = ltOpaque;
+		_ScreenMap.face = dfAuto;
+		_ScreenMap.visible= false;
+		_ScreenMap.type = ltOpaque;
+		
+		setPos( x_, y_ );
+		setSize( w_, h_ );
+		setImageSize( w_, h_ );
+		
+		visible= true;
+		type = ltOpaque;
+		face = dfAuto;
+		focusable= true;
+		
+		//fillRect( 0, 0, w_, h_, 0x00000000 );
+		
+		addImageScreenTime();
+		
+		dm( "TScrollImage.setScrollImage2()" );
+	}
+	
+	function addImageScreenTime()
+	{
+		//var mImage= [ "map_41_a", "map_41_b", "map_41_c" ];
+		
+		//dayTime= p_;
+		
+		dm("dayTimerTest= %s, d=%d".sprintf(f.used.time.time,f.used.time.day));
+		
+// 		if( f.used.time.day ) {
+// 			_buffImageBack.loadImages("map_cloud_a");
+// 			_buffImageMap.loadImages( f.used.mapimage[0] );
+// 		} else {
+// 			_buffImageBack.loadImages("map_cloud_c");
+// 			_buffImageMap.loadImages( f.used.mapimage[1] );
+// 		}
+		if( f.used.time.day ) {
+			_buffImageBack.loadImages(f.used.mapcimage[0]);
+			_buffImageMap.loadImages( f.used.mapimage[0] );
+		} else {
+			_buffImageBack.loadImages(f.used.mapcimage[1]);
+			_buffImageMap.loadImages( f.used.mapimage[1] );
+		}
+		
+// 		_buffImageMap.operateRect( 0,0, _buffImageRoad, 0,0, _buffImageRoad.width,_buffImageRoad.height, omAuto, 255  );
+	}
+	
+	/////
+	function addImageScreenTime2_setup()
+	{
+		//var mImage= [ "map_41_a", "map_41_b", "map_41_c" ];
+		
+		if(_buffImageMap2==void) {
+		
+			//dayTime= p_;
+			
+			_buffImageMap2= new global.Layer( window, _buffImageMap );
+			_buffImageMap2.setImageSize(960, 720);
+			_buffImageMap2.setSizeToImageSize();
+			_buffImageMap2.visible= true;
+			_buffImageMap2.opacity= 256;
+			_buffImageMap2.type = ltAddAlpha;
+			
+			_buffImageMap2.piledCopy( 0,0, core2.backGround, 0,0, 960,720 );
+			
+// 			if( f.used.time.day ) {
+// 				_buffImageBack.loadImages("map_cloud_a");
+// 				_buffImageMap.loadImages( f.used.mapimage[0] );
+// 			} else {
+// 				_buffImageBack.loadImages("map_cloud_c");
+// 				_buffImageMap.loadImages( f.used.mapimage[1] );
+// 			}
+			if( f.used.time.day ) {
+				_buffImageBack.loadImages(f.used.mapcimage[0]);
+				_buffImageMap.loadImages( f.used.mapimage[0] );
+			} else {
+				_buffImageBack.loadImages(f.used.mapcimage[1]);
+				_buffImageMap.loadImages( f.used.mapimage[1] );
+			}
+			
+		} else {
+			invalidate _buffImageMap2;
+			_buffImageMap2= void;
+		}
+	}
+	
+	
+	function addImageScreenTime2( p_ )
+	{
+		if(_buffImageMap2==void) {
+			_buffImageMap2.opacity= p_;
+// 			_buffImageMap.operateRect( 0,0, _buffImageRoad, 0,0, _buffImageRoad.width,_buffImageRoad.height, omAuto, 255  );
+		}
+	}
+	
+	/////
+	
+	function addImageScreen( l_, f1_, f2_="", p_ )
+	{
+		l_.loadImages( f1_ );
+		l_.setSizeToImageSize();
+		
+		if( f2_!=""){
+			var _bf= new global.Layer( window, this );
+			_bf.loadImages( f2_ );
+			_bf.setSizeToImageSize();
+			
+			l_.operateRect( 0,0, _bf, 0,0, _bf.width,_bf.height, omAuto, 255*p_ );
+			
+			invalidate _bf;
+			
+			dm("addImageScreen= %s<-%s(%d)".sprintf(f1_,f2_,255*p_));
+		}
+	}
+	
+    function loadImagesHelper() {
+        setSizeToImageSize();
+    }
+    
+    
+	function setFocusPoint( vx_, vy_ )
+	{
+		if( vx_>=imageWidth-(width\2) ) vx_= imageWidth-(width\2);
+		if( vx_<=width\2 ) vx_= width\2;
+		
+		if( vy_>=imageHeight-(height\2) ) vy_= imageHeight-(height\2);
+		if( vy_<=height\2 ) vy_= height\2;
+		
+	}
+	
+	function setViewPos( x_=void, y_=void )
+	{
+		if( x_!==void ) {
+			if( x_>_buffImageMap.imageWidth-width ) x_= _buffImageMap.imageWidth-width;
+			if( x_<0 ) x_= 0;
+			valueX= x_;
+		}
+		
+		if( y_!==void ) {
+			if( y_>_buffImageMap.imageHeight-height ) y_= _buffImageMap.imageHeight-height;
+			if( y_<0 ) y_= 0;
+			valueY= y_;
+		}
+		
+		onPaint();
+		
+		//beginMoveValue( %[ time:time_, path:sc, accel:-2 ] );
+	}
+	
+	function setValue( v=void )
+	{
+		value= v;
+		valueX= startX+(endX*value);
+		valueY= startY+(endY*value);
+		onPaint();
+		dm( "setValue= "+value );
+	}
+	
+	function move_callbak( v )
+	{
+		if(par2mode==0){
+			//cameraZoom= 100*v;
+			cameraZoom=115+(200*(1.0-v));
+			//cameraZoom=20+(400*(1.0-v));
+			cameraY= 500*v;
+			//cameraY= 0;
+			onPaint();
+		}
+		
+		if(par2mode==1){
+			valueX= startX+(endX*v);
+			valueY= startY+(endY*v);
+			//moveCallback( valueX*1.67, valueY*1.50 );
+			var p= pos2Par( valueX, valueY );
+			moveCallback2(p.x,p.y);
+			onPaint();
+		}
+		//dm( "setValue= "+v );
+	}
+	
+	function setViewPosMoveMotion( x_=0, y_=0 )
+	{
+		var mm= ViewPosLimit(x_,y_);
+		
+		if( valueX!=mm.x || valueY!=mm.y )
+		{
+			startX= valueX;
+			startY= valueY;
+			
+			endX= mm.x-valueX;
+			endY= mm.y-valueY;
+			
+			beginMoveValue( %[ time:500, path:1.0, accel:-2 ] );
+		}
+	}
+	
+	function setViewPosMove( x_=0, y_=0 )
+	{
+		var mm= ViewPosLimit(x_,y_);
+		
+		if( valueX!=mm.x || valueY!=mm.y )
+		{
+			valueX= mm.x;
+			valueY= mm.y;
+		}
+		
+		onPaint();
+	}
+	
+	function ViewPosLimit( x_=void, y_=void )
+	{
+		if( x_!==void ) {
+			if( x_>_buffImageMap.imageWidth-_ScreenMap.width+subScrWoffset ) x_= _buffImageMap.imageWidth-_ScreenMap.width+subScrWoffset;
+			if( x_<0 ) x_= 0;
+		}
+		
+		if( y_!==void ) {
+			if( y_>_buffImageMap.imageHeight-_ScreenMap.height+100 ) y_= _buffImageMap.imageHeight-_ScreenMap.height+100;
+			if( y_<0 ) y_= 0;
+		}
+		
+		return %[ x:x_, y:y_ ];
+	}
+	
+	function setViewPosMovePar( x_=void, y_=void )
+	{
+		if( x_!==void ) valueX= int((_buffImageMap.imageWidth-_ScreenMap.width)*x_);
+		if( y_!==void ) valueY= int((_buffImageMap.imageHeight-_ScreenMap.height)*y_);
+		
+		onPaint();
+	}
+	
+	function pos2Par( x_=void, y_=void )
+	{
+		var px= x_/(_buffImageMap.imageWidth-_ScreenMap.width);
+		var py= y_/(_buffImageMap.imageHeight-_ScreenMap.height);
+		if(px<0.0) px=0.0;
+		if(px>1.0) px=1.0;
+		if(py<0.0) py=0.0;
+		if(py>1.0) py=1.0;
+		return %[ x:px, y:py ];
+	}
+	
+	function onPaint()
+	{
+		if( world3d.objList.count>0 ){
+			
+			//カメラの位置を移動
+			world3d.camera.setPos( -valueX, -valueY, (-valueZ*10)+cameraZoom );
+			world3d.camera.setLookAt( -valueX, -valueY+cameraY, (-valueZ*10)+cameraZoom+800 );
+			
+			//地面をカメラに固定
+			world3d.objList[0].setPosSetEx( -valueX, -valueY );
+			
+			//空間をアップデート
+			world3d.updateSprite();
+			
+			//遠景を描写
+			var gx= (-(valueX/(480-_buffImageMap.width))*0.48)*0.8;
+			var gy= (-(valueY/(290-_buffImageMap.height))*0.70)*0.5;
+			_ScreenMap.copyRect( 0, 0, _buffImageBack, (_buffImageBack.width*gx)+20, _buffImageBack.height*gy, subScrW, subScrH, 255 );
+			
+			//マップを描写
+			var wo_= world3d.objList[0];
+			_ScreenMap.perspectiveCopy( _buffImageMap, valueX-240, valueY-195, subScrW*2, subScrH*2,
+				wo_.drawTrans[0].x, wo_.drawTrans[0].y,
+				wo_.drawTrans[1].x, wo_.drawTrans[1].y,
+				wo_.drawTrans[2].x, wo_.drawTrans[2].y,
+				wo_.drawTrans[3].x, wo_.drawTrans[3].y
+				);
+				
+			//オブジェクトを描写
+			if( world3d.objList[1]!=void && f.used.mapobjectview ){
+				if( world3d.objList[1].setViewEnabled(250) ) draw3Dsprite( world3d.objList[1], 0 );
+			}
+			
+			//スクリーンに拡大
+			stretchCopy( 0, 0, width, height, _ScreenMap, 0, 0, subScrW, subScrH, stNearest );
+			//copyRect( 0, 0, _ScreenMap, 0, 0, subScrW, subScrH );
+			//stretchCopy( 0, 0, width, height, _ScreenMap, 0, 0, subScrW, subScrH, stFastLinear );
+			
+			moveCallback( valueX, valueY, valueZ );
+			
+		}
+
+	}
+	
+	function draw3Dsprite( o_=void, vn_=0 )
+	{
+		var ib= _buffImageObj[vn_];
+    	
+    	var z= (o_.drawTrans[1].x-o_.drawTrans[0].x)/ib.height;
+    	if(z>5) z=5.0;
+    	if(z<0.0001) z=0.0001;
+    	
+    	var x= o_.drawTrans[0].x;
+    	var y= o_.drawTrans[0].y-int(ib.height*z);
+    	
+		_ScreenMap.operateStretch( x, y, int(ib.width*z), int(ib.height*z), ib,
+			0, 0, ib.width, ib.height, omAuto, 255, stNearest
+			//0, 0, ib.width, ib.height, omAuto, 255, stFastLinear
+		);
+		
+//		_ScreenMap.stretchCopy( x, y, int(ib.width*z), int(ib.height*z), ib,
+//			0, 0, ib.width, ib.height, stNearest
+//		);
+		
+//		dm("draw3Dsprite(%d,%d,%d)".sprintf( 
+//			x, y, int(ib.width*z) ));
+	}
+	
+	////////////////////
+	//入力イベント
+	var mvX= 0, mvY= 0, mm= -1;
+	function onAction( ev )
+	{
+		if( ev.type=="onClick" ) {
+			
+//			startX= valueX;
+//			startY= valueY;
+//			
+//			endX= (ev.x-(width\2));
+//			endY= (ev.y-(height\2));
+//			
+//			beginMoveValue( %[ time:500, path:1.0, accel:-2 ] );
+			
+			//dm( "actionCallBack= "+startX+":"+startY+" "+endX+":"+endY );
+		}
+		
+		
+		//if( ev.type=="onMouseUp" && ev.button==1 ) {
+		//	startX= valueX;
+		//	startY= valueY;
+			
+		//	endX= (ev.x-(width\2));
+		//	endY= (ev.y-(height\2));
+			
+		//	beginMoveValue( %[ time:500, path:1.0, accel:-2 ] );
+			//dm( "actionCallBack.onMouseUp= %d:%d:%d".sprintf( ev.x,ev.y,ev.button ));
+		//}
+		
+		
+		if( ev.type=="onMouseDown" && ev.button==0 ) {
+		//if( ev.type=="onMouseDown" ) {
+			mvX= ev.x;
+			mvY= ev.y;
+			//dm( "actionCallBack.onMouseDown= %d:%d:%d".sprintf( ev.x,ev.y,ev.button ));
+		}
+		
+		//
+		if( ev.type=="onMouseDown" && ev.button==1 ) {
+			if( moveCallback3!=void ) moveCallback3();
+		}
+		
+//		if( ev.type=="onMouseUp" ) {
+//			testbbt= false;
+//		}
+		
+		if( ev.type=="onMouseMove" && isMouseDrug ) {
+			var rx= int((ev.x-snapL.mx)*mvp);
+			var ry= int((ev.y-snapL.my)*mvp);
+			
+			//setViewPosMove( rx, ry );
+			setViewPosMove( valueX-rx, valueY-ry );
+			
+			//var p= pos2Par( valueX, valueY );
+//			var p= pos2Par( rx, ry );
+//			//mvX= ev.x;
+//			//mvY= ev.y;
+//			
+//			moveCallback2(p.x,p.y);
+			
+			var p= pos2Par( valueX, valueY );
+			moveCallback2(p.x,p.y);
+			//moveCallback( valueX*1.00, valueY*1.00, valueZ );
+			//moveCallback( valueX, valueY, valueZ );
+			//dm( "actionCallBack= "+valueX+":"+valueY+":"+valueZ );
+			//moveCallback2( valueX, valueY, 500 );
+		}
+		
+//		if( ev.type=="onMouseMove" && testbbt ) {
+//			var rx= int((ev.x-mvX)*mvp);
+//			var ry= int((ev.y-mvY)*mvp);
+//			mvX= ev.x;
+//			mvY= ev.y;
+//			moveCallback2( rx, ry, 500 );
+//			dm( "moveCallback2= "+rx+":"+ry );
+//		}
+		
+		
+		if( ev.type=="onMouseEnter" ) {
+		}
+		
+		
+		if( ev.type=="onMouseWheel" ) {
+			//if( ev.delta>0 ) valueZ--;
+			//if( ev.delta<0 ) valueZ++;
+			//moveCallback( valueX*1.00, valueY*1.00, valueZ*50 );
+			onPaint();
+		}
+	}
+	
+
+}
+
+///////////////////////////////////////////////////////
+//スクロールイメージ
+class Minimap extends LayerEventBase2
+{
+	var _buffImage;
+	var moveCallBack= void;
+	
+	function Minimap( win, par, pal ) {
+		super.LayerEventBase2(...);
+		name= "Minimap";
+	}
+	
+	function finalize() {
+		invalidate _buffImage;
+		super.finalize(...);
+	}
+
+	function setLayer( x_, y_, w_=32, h_=32, file_ )
+	{
+		_buffImage= new global.LayerTrueBase( window, this );
+		_buffImage.setLayer( 0,0, 32,32, 0x00000000 );
+		_buffImage.face = dfAuto;
+		
+		setPos( x_, y_ );
+		setSize( w_, h_ );
+		setImageSize( w_, h_ );
+		
+		visible= true;
+		type = ltOpaque;
+		//face = dfAuto;
+		focusable= true;
+		
+		fillRect( 0, 0, w_, h_, 0xff000000 );
+		
+		dm( "TScrollImage.setScrollImage2()" );
+	}
+	
+	function setFrame( w_, h_, b_=2 )
+	{
+		_buffImage.setSize( w_, h_ );
+		_buffImage.setImageSize( w_, h_ );
+		_buffImage.fillRect( 0, 0, w_, h_, 0xffff0000 );
+		_buffImage.fillRect( b_, b_, w_-(b_*2), h_-(b_*2), 0x00000000 );
+		type = ltAddAlpha;
+	}
+	
+	function setViewPos( x_=void, y_=void )
+	{
+		if( x_!==void ) {
+			if( x_>width-_buffImage.width ) x_= width-_buffImage.width;
+			if( x_<0 ) x_= 0;
+			_buffImage.left= x_;
+		}
+		
+		if( y_!==void ) {
+			if( y_>height-_buffImage.height ) y_= height-_buffImage.height;
+			if( y_<0 ) y_= 0;
+			_buffImage.top= y_;
+		}
+	}
+	
+	function setViewPosPar( x_=void, y_=void )
+	{
+		if( x_!==void ) _buffImage.left= int((width-_buffImage.width)*x_);
+		if( y_!==void ) _buffImage.top=  int((height-_buffImage.height)*y_);
+	}
+	
+	function pos2Par( x_=void, y_=void )
+	{
+		var px= (x_-(_buffImage.width\2))/(width-_buffImage.width);
+		var py= (y_-(_buffImage.height\2))/(height-_buffImage.height);
+		if(px<0.0) px=0.0;
+		if(px>1.0) px=1.0;
+		if(py<0.0) py=0.0;
+		if(py>1.0) py=1.0;
+		return %[ x:px, y:py ];
+	}
+	
+	////////////////////
+	//入力イベントsbuttom
+	function onAction( ev )
+	{
+		//
+		if( ev.type=="onMouseDown" && ev.button==0 ) {
+			var p= pos2Par(ev.x,ev.y);
+			setViewPosPar(p.x,p.y);
+			if(moveCallBack!==void) moveCallBack(p.x,p.y);
+		}
+		
+		if( ev.type=="onMouseMove" && isMouseDrug ) {
+			var p= pos2Par(ev.x,ev.y);
+			setViewPosPar(p.x,p.y);
+			if(moveCallBack!==void) moveCallBack(p.x,p.y);
+		}
+		
+	}
+	
+
+}
+
+/////////////////////////////////////////////////////////////////////////
+//
+class LayerTrueBase2DMap extends LayerTrueBase2D
+{
+	var _BufferBack;
+	var _BufferRed;
+	var _Buffer3;
+	var _Buffer4;
+	
+	var enem;
+	var enem2;
+	
+	var bname= "";
+	
+	var Drop_Exec= void;
+	
+	function LayerTrueBase2DMap( win, par, pal ) {
+		super.LayerTrueBase2D(...);
+		name= "LayerTrueBase2DMap";
+		
+		Drop_Exec= new TDropControlBase(this);
+		
+		_BufferBack= new global.LayerTrueBase( win, this );
+		_BufferBack.setLayer( 0, 0, 140, 38, 0x99000000 );
+// 	    _BufferBack.drawImageFile( 40, 1, "mapchip_p01" );
+// 	    _BufferBack.drawImageFile( 52+40, 1, "mapchip_p02" );
+	    _BufferBack.visible= true;
+		
+		_BufferRed= new global.LayerTrueBase( win, this );
+		_BufferRed.setLayer( 0, 0, 140, 38, 0xffff0000 );
+// 	    _BufferRed.drawImageFile( 40, 1, "mapchip_p01" );
+// 	    _BufferRed.drawImageFile( 52+40, 1, "mapchip_p02" );
+		_BufferRed.visible= false;
+		
+		_Buffer3= new global.LayerTrueBase( win, this );
+		_Buffer3.setLayer( 0, 0, 140, 48, 0x00000000 );
+		
+		_Buffer4= new global.LayerTrueBase( win, this );
+		_Buffer4.setLayer( 10, 25, 32, 32, 0x00000000 );
+		_Buffer4.visible= false;
+	    
+		//enem= new TButtonSelect4slid( win, this );
+		enem= new enemyOpenButton( win, this );
+		enem.setLayer( 0, 0, 150, 30 );
+		enem.setButton( 30, 30, 8 );
+		enem.visible= false;
+		
+		enem2= new TButtonBase1k( win, this );
+		enem2.setLayer( 0, 0, 94, 26, 3 );
+		enem2.loadImages("btl_btDraft_title");
+		enem2.visible= false;
+		
+		//enem.setButtonLoad(["itm1111","itm1112","itm1113","itm1114","itm1115","itm1116"]);
+		
+		//alart_enable(true);
+	}
+	
+	function finalize() {
+		invalidate _BufferBack;
+		invalidate _BufferRed;
+		invalidate _Buffer3;
+		invalidate _Buffer4;
+		invalidate enem;
+		invalidate enem2;
+		invalidate Drop_Exec;
+		super.finalize(...);
+	}
+    
+	function setData( i_=0, d_=void, d2_=void ){
+		super.setData(...);
+		enem.mapNo= i_;
+		enem2._id= i_;
+    }
+    
+	function setObjctView( f_=false ){
+		if(f_){
+			if(_data2.view) visible= true;
+			else visible= false;
+		}else{
+			visible= false;
+		}
+    }
+    
+	function alart_enable_callback(v){
+		_BufferRed.opacity= 256*(1-v);
+	}
+	
+	function alart_enable( f_=false, col=void ){
+		if(col!==void) _BufferRed.fillRect( 0, 0, 140, 38, col );
+		if( f_ ) {
+			_BufferRed.stopMoveValue();
+			_BufferRed.movevalue_callbak= alart_enable_callback;
+			_BufferRed.beginMoveValue( %[ time:1000, loop:true ] );
+			_BufferRed.visible= true;
+		} else {
+			_BufferRed.stopMoveValue();
+			_BufferRed.opacity= 256;
+			_BufferRed.visible= false;
+		}
+	}
+	
+    //function setupPaint(){
+    function drawStatus(){
+    
+    	var ms= _data[_id];
+    	var fm= ms.image[0].file;
+    	var inc= 0;
+    	if( ms.type.building!=-1 ){
+    		//fm= gf.list.map[gf.get(_data[_id].type.building,gf.list.map)].image[0].file;
+    		//fm= gf.list.map[gf.list.map.find2(_data[_id].type.building)].image[0].file;
+    		//bname= gf.list.map[gf.list.map.find2(_data[_id].type.building)].name;
+    		var gfb= gf.get(ms.type.building,gf.list.map);
+    		fm= gfb.image[0].file;
+    		bname= gfb.name;
+    		inc= gfb.income;
+    	}
+    	
+		//visible= _data2.view;
+		//visible= false;
+		
+    	//setEnableEvent(_data2.enable);
+    	
+    	//dm("-----LayerTrueBase2DMap "+fm);
+    	if(storage!=fm) loadImages( fm,, 0.5, 0.71);
+    	//loadImages( fm,, 0.5, 0.71);
+		
+//    	_Buffer2[0].loadImages( _getLiteral( _FRAG_TYPE, _data[_id].frag )[2] );
+//    	_Buffer2[1].loadImages( "mapchip_p01" );
+//    	_Buffer2[2].loadImages( "mapchip_p02" );画像が見つからない。
+    	
+    	var ehp= 0;
+    	var emhp= 0;
+    	
+    	//ca.map_getting_enemy_data(gf.map[0].post.division).image[0]
+    	
+		if(ms.post.division.count>0) {
+			var e= ca.map_getting_enemy_data(ms.post.division);
+			ehp= e.hp;
+			emhp= e.mhp;
+			
+			enem.visible= true;
+			enem.setEnableCount(0,e.image.count);
+			enem.setButtonLoad(e.image);
+			//enem.setButtonLoad([e.image[0]]);
+			
+			if( ( ms.frag==0 || f.used.stat.useattack.find(_id)!=-1 ) && !ca.enabled_friendship_check(ms.frag) ) enem.setEnableEvent(true);
+			else enem.setEnableEvent(false);
+		} else {
+			//占領ボタンの処理
+			if( f.used.stat.useattack.find(_id)!=-1 && f.used.mapzone[ms.frag]==1 && !ca.enabled_friendship_check(ms.frag) ) {
+				enem2.visible= true;
+				enem2.setEnableEvent(true);
+			} else enem2.visible= false;
+		}
+    	
+    	if(sf.debugmode==1) {
+    		enem.setEnableEvent(true);
+    		enem2.setEnableEvent(true);
+    	}
+    	
+    	//if(visible){
+    	
+	    	var vh= ehp/emhp;
+    	
+	    	_Buffer3.fillRect( 0, 0, 140,48, 0x00000000 );
+	    	//_Buffer3.fillRect( 0, 10, 140,38, 0x88000000 );
+	    	
+		    _Buffer3.drawImageFile( 40, 11, "mapchip_p01" );
+		    _Buffer3.drawImageFile( 52+40, 11, "mapchip_p02" );
+	    
+	    	if(ms.frag!==98){
+	    		if(ms.frag!=-1){
+	    		_Buffer3.drawImageFile( 0, 0, _getLiteral( _FRAG_TYPE, ms.frag )[2] );
+	    		_Buffer4.loadImages(_getLiteral( _FRAG_TYPE, ms.frag )[2]);
+	    		} else dm("!!!!!!!!!!!!!!!!!!!!!bugs "+ms.frag);
+	    	}
+	    	
+	    	//storage
+		
+			if(ms.post.division.count>0){
+				_Buffer3.drawText2( 54, 13, "%05d".sprintf(ehp), 0xffffff, 114 );
+				//_Buffer3.drawText2( 107, 13, "%04d".sprintf(ms.rivise), 0xffffff, 114 );
+				_Buffer3.fillRect( 0, 28, 140,2, 0xffff0000 );
+				_Buffer3.fillRect( 0, 28, 140*vh,2, 0xff00ff00 );
+				setEnableEvent(,false);
+			}else{
+				_Buffer3.drawText2( 54, 13, "-----", 0xffffff, 114 );
+				//_Buffer3.drawText2( 107, 13, "----", 0xffffff, 114 );
+				_Buffer3.fillRect( 0, 28, 140,2, 0xff000000 );
+				
+				//マップが有効化？
+				if( ms.frag==0 || f.used.stat.useattack.find(_id)!=-1 ) setEnableEvent(,false);
+				else setEnableEvent(,true);
+				
+			}
+		
+			if(ms.frag==0) _Buffer3.drawText2( 107, 13, "%04d".sprintf(inc), 0xffffff, 114 );
+			else _Buffer3.drawText2( 107, 13, "----", 0xffffff, 114 );
+
+		
+			_Buffer3.drawText2( 1, 33, ms.name, 0xffffff, 14 );
+			//_Buffer3.drawText2( 42, 0, bname, 0xffffff, 112 );
+		//}
+		
+		alart_enable(false);
+		
+		if(ms.post.division.count>0 && ms.frag==0 ) alart_enable(true, 0xffff0000);
+		//else alart_enable(false);
+		
+		if(f.used.stat.useattack.find(_id)!=-1 && f.used.mapzone[ms.frag]==1 ) alart_enable(true, 0xff666666);
+		//else alart_enable(false);
+		
+    }
+    
+	function onPaint()
+	{
+		super.onPaint();
+		
+		
+		if(_buffImage!==void){
+		
+			//operateStretch( 0, 0, int(_buffImage.width*zoom), int(_buffImage.height*zoom), _buffImage,
+			//	0, 0, _buffImage.width, _buffImage.height, stNearest
+			//);
+			
+			stretchCopy( 0, 0, int(_buffImage.width*zoom), int(_buffImage.height*zoom), _buffImage,
+				0, 0, _buffImage.width, _buffImage.height, stNearest
+				//0, 0, _buffImage.width, _buffImage.height, stFastLinear
+			);
+		}
+		
+		var vx= (width-140)\2, vy= height*0.10;
+		
+		_BufferBack.setPos( vx, vy+10 );
+		_BufferRed.setPos( vx, vy+10 );
+		_Buffer3.setPos( vx, vy );
+		
+		enem.setPos( vx, vy+48 );
+		enem2.setPos( vx, vy+48 );
+	}
+	
+	function onAction( ev )
+	{
+		if( ev.type=="onMouseDown" ) {
+		
+			var ii= ev.layer._id;
+			
+			framePanel.selectTown(ii);
+			
+			//panel.uiMapListData.setViewIndexMove(ii);
+			framePanel.panel.uiMapList2.uiMapListData.setViewIndexMove(ii);
+			
+			//dm( "onItemAction.ev.layer.adata= %d (%d,%d)".sprintf(ii,gf.map[ii].pos.x, gf.map[ii].pos.y));
+		}
+		
+		if( ev.type=="onMouseEnter" ) {
+			ev.layer.cursor= crHandPoint;
+		}
+		
+		if( ev.type=="onMouseLeave" ) {
+			ev.layer.cursor= crArrow;
+		}
+		
+		//ドロップ用
+		Drop_Exec.onActionCallBack(ev);
+		
+// 		if( ev.type=="onMouseUp" && panel.drugScreen.drugModeEnabled() ){
+// 			if(ca.map_item_building_condition(ev.layer._data2,panel.drugScreen.src._data2)) onBulidAction(ev);
+// 			else panel.drugScreen.drugModeEnd();
+// 		}
+		
+		
+		
+		
+		
+	}
+}
+
+///////////////////////////////////////////////////////
+//
+class buildMidIcon extends TDrugEventBase2
+{
+	
+	function buildMidIcon( win, par, pal ) {
+		super.TDrugEventBase2(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 100,80, 0x00000000 );
+	}
+	
+	function drawStatus()
+	{
+		if( _data2!==void && _data2.enable )
+		{
+			visible= true;
+			
+			fillRect( 0,0, width,height, 0x00000000 );
+			
+			if(Storages.isExistentStorage(_data2.image[0].file+".png")) drawImageFileStretch(-15,-10,100,100,_data2.image[0].file);
+			
+		}
+		else visible= false;
+	}
+}
+
+///////////////////////////////////////////////////////
+//
+class buildSelectStatus extends LayerTrueBase
+{
+	var selectView= 0;
+	var selectViewImage= [];
+	var selectTargetImage= void;
+	
+	//var selectTargetMove= [];
+	var selectTargetMove2;
+	
+	function buildSelectStatus( win, par, pal ) {
+		super.LayerTrueBase(...);
+	}
+	
+	function finalize() {
+	
+		invalidate selectTargetImage;
+		invalidate selectTargetMove2;
+		for(var i=0; i<6; i++) invalidate selectViewImage[i];
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_,y_, 400,600, 0xff000000 );
+		
+		//カーソル
+		selectTargetImage= new global.LayerTrueBase(window,this);
+		selectTargetImage.setLayer(0,5, 100,100, 0xffff0000);
+		selectTargetImage.loadImages("slg_Build_chip01");
+		selectTargetImage.visible= false;
+		
+		//メニューボタン
+		selectTargetMove2= new global.TButtonSelect4( window, this );
+		selectTargetMove2.setLayer( 10, 510 );
+		selectTargetMove2.setButton( 68, 24, 2 );
+		selectTargetMove2.setButtonPos([ 0,0, 68,0 ]);
+		selectTargetMove2.setButtonLoad([ "slg_bui_bt_Pback","slg_bui_bt_Pnext" ]);
+		selectTargetMove2.setButtomSelectMode= [1,1];
+		selectTargetMove2.checked_Execute= setSelectNextPrev;
+// 		selectTargetMove2.AllLockOut= true; //ロックをリリースするか
+		
+		//アイコン
+		for(var i=0; i<6; i++){
+			selectViewImage[i]= new global.buildMidIcon(window,this);
+			selectViewImage[i].setLayer(15,(83*i)+5);
+			selectViewImage[i].Drug_Enter= setSelectEvents;
+		}
+		drawStatus();
+	}
+	
+	//カーソル移動のコールバック
+	function setSelectEvents(l_,ev){
+		if( ev.type=="onMouseEnter" ){
+			selectTargetImage.setPos(l_.left-15,l_.top);
+			selectTargetImage.visible= true;
+		}
+		
+		if( ev.type=="onMouseLeave" ){
+			selectTargetImage.visible= false;
+		}
+	}
+	
+	//メニューボタンのコールバック
+	function setSelectNextPrev(ev){
+		switch(ev){
+			case 0:
+				selectView--;
+				if(selectView<0) selectView= 4;
+				drawStatus();
+				break;
+			case 1:
+				selectView++;
+				if(selectView>=5) selectView= 0;
+				drawStatus();
+				break;
+		}
+	}
+	
+	function setEventEnable(f_)
+	{
+		selectTargetMove2.setEnableEvent(f_);
+		for(var i=0; i<6; i++) selectViewImage[i].enabledEvent= f_;
+	}
+	
+	function setonDrugEvents(f1_,f2_){
+		for(var i=0; i<6; i++){
+			//selectViewImage[i].Drug_Executes= f1_;
+			//selectViewImage[i].Drug_Enter= ui_Cor_callbak;
+			selectViewImage[i].Drug_Exec.setDrugs(f1_);
+ 			selectViewImage[i].Drug_Exec.Enabled= true;
+		}
+	}
+	
+	function setSelect(i_){
+		selectView= i_;
+		drawStatus();
+	}
+	
+	function drawStatus()
+	{
+		//if( selectViewImage[i]._data[selectViewImage[i]._id];>0 ){
+		
+			visible= true;
+			
+			loadImages("slg_bui_list_icon");
+			
+			for(var i=0; i<6; i++){
+				selectViewImage[i].setData( (selectView*6)+i, gf.list.map );
+				selectViewImage[i].drawStatus();
+				
+				if(selectViewImage[i]._data2!==void){
+					
+					var ch= selectViewImage[i]._data2;
+					var svl= selectViewImage[i].left;
+					var svt= selectViewImage[i].top;
+					
+					drawText2( svl+85,  svt+16, "%s".sprintf(ch.name),0x000000, 14 );
+					drawText2( svl+85,  svt+32, "HP %d".sprintf(ch.addHP),0x000000, 12 );
+					drawText2( svl+140, svt+32, "金 %d".sprintf(ch.cost),0x000000, 12 );
+					drawText2( svl+200, svt+32, "建設 %s".sprintf(_getLiteral(_ITEM_BUILD_TYPE_STATE,ch.type.state)[1]),0x000000, 12 );
+					drawText2( svl+85,  svt+45, "効果 %s".sprintf(ch.specialeffecttag[0]),0x000000, 12 );
+					drawText2( svl+85,  svt+56, "効果 %s".sprintf(ch.specialeffecttag[1]),0x000000, 12 );
+				}
+			}
+			
+		//} else visible= false;
+	}
+}
+
+///////////////////////////////////////////////////////
+//
+class buildMidInfomation extends LayerTrueBase
+{
+	
+	function buildMidInfomation( win, par, pal ) {
+		super.LayerTrueBase(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 350,130, 0xffff0000 );
+	}
+	
+	function drawStatus()
+	{
+		var ch= _data2.type.building;
+		var chh= gf.list.map[ch];
+		
+		fillRect( 0, 0, width,height, 0x00000000 );
+		
+		///drawImageFile( -20,-50,chh.image[0].file);
+		drawImageFileStretch(-20,-10,150,150,chh.image[0].file);
+		
+    	var ehp= 0;
+    	var emhp= 0;
+		if(_data2.post.division.count>0){
+			var e= ca.map_getting_enemy_data(_data2.post.division);
+			ehp= e.hp;
+			emhp= e.mhp;
+		}
+		
+		//var svl= selectViewImage[i].left;
+		//var svt= selectViewImage[i].top;
+		
+		drawText4( 48, 5, "%s".sprintf(_data2.name),0xffffff, 20, 0x000000 );
+		
+		var vh= ehp/emhp;
+		fillRect( 0, 28, 140,2, 0xffff0000 );
+		fillRect( 0, 28, 140*vh,2, 0xff00ff00 );
+    	
+    	drawText2( 0,  35, "敵総HP %4d/%4d".sprintf(ehp,emhp),0x000000, 114 );
+		drawText2( 0,  50, "%s".sprintf(chh.name),0x000000, 14 );
+		
+		if(_data2.frag!=98){
+			drawText2( 150, 35, "所有軍　 %s".sprintf(_getLiteral(_FRAG_TYPE,_data2.frag)[1]), 0x000000, 14 );
+			if(_data2.frag!=-1){
+				drawImageFile( 0, 0, _getLiteral( _FRAG_TYPE, _data2.frag )[2] );
+			} else dm("!!!!!!!!!!!!!!!!!!!!!bugs "+_data2.frag);
+		}
+		
+		drawText2( 150, 50, "属国　　 %s".sprintf(_getLiteral(_ITEM_MAP_COUNTRY,_data2.country)[1]), 0x000000, 14);
+		drawText2( 150, 65, "建設可能 %s".sprintf(_getLiteral(_ITEM_BUILD_TYPE_STATE,_data2.type.state)[1]), 0x000000, 14 );
+		
+		//drawText2( 100, 32, "金 %d".sprintf(ch.cost),0x000000, 12 );
+		//drawText2( 100,  45, "効果 %s".sprintf(ch.specialeffecttag[0]),0x000000, 12 );
+		//drawText2( 100,  56, "効果 %s".sprintf(ch.specialeffecttag[1]),0x000000, 12 );
+		
+		/*
+		if( _data2!==void && _data2.enable )
+		{
+			visible= true;
+			
+			fillRect( 0,0, width,height, 0x00000000 );
+			
+			if(Storages.isExistentStorage(_data2.image[0].file+".png")) drawImageFileStretch(-15,-10,100,100,_data2.image[0].file);
+			
+		}
+		else visible= false;
+		*/
+	}
+}
+
+///////////////////////////////////////////////////////
+//
+class buildMidMapList extends LayerTrueBase
+{
+	var uiMapListData;
+	var uiMapListDataSlider;
+	var uiMapListOpen;
+	
+	var mapListView= [];
+	
+	var listCallBack= void;
+	
+	var isOpen= false;
+	
+	function buildMidMapList( win, par, pal ) {
+		super.LayerTrueBase(...);
+	}
+	
+	function finalize() {
+		invalidate uiMapListData;
+		invalidate uiMapListDataSlider;
+		invalidate uiMapListOpen;
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 282, 180, 0x00000000 );
+		drawImageFile( 0,0, "slg_bui_list_name");
+		
+		for(var i=0; i<gf.map.count; i++) if(gf.map[i].view==1 && gf.map[i].enable==1 ) mapListView.add(i);
+		
+		uiMapListData= new TButtonSelectList( window, this );
+		uiMapListData.setLayer( 5, 10, 238, 162, 0x00000000 );
+		uiMapListData.setListData( gf.map, mapListView );
+		uiMapListData.setButton( 238, 27, 6, TListButtonBase2 );
+		//uiMapListData.checked_Execute= listMoveCallback;
+		
+		uiMapListDataSlider= new SliderBar( window, this );
+		uiMapListDataSlider.setLayer( 243, 10, 10, 162, true,, 30, 0xffdddddd );
+		uiMapListData.setListSlider(uiMapListDataSlider);
+		
+		uiMapListOpen= new TButtonBase1k( window, this );
+		uiMapListOpen.setLayer( 260, 10, 24, 48 );
+		uiMapListOpen.loadImages( "slg_bui_bt_list" );
+		uiMapListOpen.callbackEvent= ListOpen;
+		uiMapListOpen.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+	// 	uiMapListOpen.AllLockOut= true; //ロックをリリースするかstatsIcons.button_Update();
+	}
+	
+	function setEventEnable(f_)
+	{
+		uiMapListData.enabledEvent= f_;
+		uiMapListOpen.enabledEvent= f_;
+		uiMapListDataSlider.enabledEvent= f_;
+	}
+	
+	function setEvent(f){
+		uiMapListData.checked_Execute= f;
+	}
+	
+	function ListOpen(){
+		if(!isOpen) { left+=260; isOpen=true; }
+		else { left-=260; isOpen=false; }
+	}
+	
+	function drawStatus()
+	{
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////
+//
+//class enemyOpenButton extends TButtonSelect4open
+class enemyOpenButton extends TButtonSelect4slid
+{
+	var mapNo= 0;
+	
+	function enemyOpenButton( win, par, pal ) {
+		//super.TButtonSelect4open(...);
+		super.TButtonSelect4slid(...);
+		name= "TButtonSelect4open";
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	////////////////////
+	//入力イベント
+	function onAction( ev )
+	{
+		if( ev.type=="onMouseDown" && ev.layer.isSelected ) {
+		
+			if( ev.layer._id==buttomChecked ){
+				if( checked_Execute2!==void ) checked_Execute2( buttomChecked, this );
+				dm("TButtonSelect4.checked_Execute2.buttomChecked=%s".sprintf(buttomChecked));
+			} else {
+				ev.layer.button_Checked( true );
+				Checked_callback( ev.layer._id );
+				
+				if( checked_Execute!==void ) checked_Execute( buttomChecked, this );
+				if( setButtomSelectMode[ev.layer._id]==1 ) {
+					ev.layer.button_Checked( false );
+					buttomChecked= -1;
+				}
+				dm("TButtonSelect4.buttomChecked=%s".sprintf(buttomChecked));
+			}
+			
+		}
+		
+		if( ev.type=="onMouseMove" ) {
+			if(!ev.layer.isSelected){
+				if( !ev.layer.isChecked ) ev.layer.cursor= crHandPoint;
+				ev.layer.button_Selected( true );
+				Selected_callback( ev.layer._id );
+				if( selected_Execute!==void ) selected_Execute( buttomSelected, this );
+			}
+		}
+			
+		if( ev.type=="onMouseEnter" ) {
+			if( !ev.layer.isChecked ) ev.layer.cursor= crHandPoint;
+			ev.layer.button_Selected( true );
+			Selected_callback( ev.layer._id );
+			if( selected_Execute!==void ) selected_Execute( buttomSelected, this );
+		}
+		
+		if( ev.type=="onMouseLeave" ) {
+			ev.layer.cursor= crArrow;
+			ev.layer.button_Selected( false );
+			Selected_callback( -1 );
+			if( selected_Execute!==void ) selected_Execute( buttomSelected, this );
+		}
+	}
+}

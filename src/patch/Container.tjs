@@ -1,0 +1,573 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenBase
+//
+/////////////////////////////////////////////////////////////////////////
+// スクリーンベース
+
+class TFrame2
+{
+	var backGround= void; //スクリーンプライマリーレイアー
+	var frameWork= void; //フレームワークのインスタンス
+	var games= void; //gamesの別名
+	var screen= void; //スクリーンの別名
+	
+	var name= ""; //名前
+	
+	var mode; //スクリーンの進行モード
+	
+	var panel= %[]; //レイアーのdic
+	
+	var rckicEventRecall= void; //右クリックのリコール
+	var rckicEventRecall2= void; //右クリックのリコール
+	var modelMode= true; //モーダルにする
+	
+	var KeyDown_CallBack_Recall= void; //ウインドウに対してのキー入力のコールバック
+	
+	//var active_Focus= void; //フォーカスされているレイヤー
+	
+	//var activeScreen_Recall= void;
+	
+	//var screen_close= void;
+	
+	var ShowCallBack= void;
+	var HideCallBack= void;
+	
+	var parrentSrn= void; //親スクリーン
+	
+	var isPreLoad= false; //プレロードフラグ
+	
+	//
+	var loopCallback= void;
+	
+	function TFrame2( g_, s_=void )
+	{
+		frameWork= g_;
+		games= frameWork.games;
+		screen= frameWork.screen;
+		
+		parrentSrn= s_;
+		
+// 		if( parrentSrn!==void ) backGround= new CompoLayer( kag, parrentSrn.backGround, this );
+// 		else backGround= new CompoLayer( kag, frameWork.backGround, this );
+		if( parrentSrn!==void ) backGround= new FrameBackGround( kag, parrentSrn.backGround, this );
+		else backGround= new FrameBackGround( kag, frameWork.backGround, this );
+		
+		backGround.setFontSize( 16 );
+	}
+	
+	function finalize()
+	{
+		invalidatePanel();
+		invalidate panel;
+		invalidate backGround;
+	}
+	
+	property opacity {
+		setter(v) {
+			backGround.opacity= v;
+			if( v==0 ) backGround.hitThreshold= 256;
+			else backGround.hitThreshold= 1;
+		}
+		getter { return backGround.opacity; }
+	}
+	
+	property visible
+	{
+		setter(v) {
+			backGround.visible= v;
+			if( v==false ) backGround.hitThreshold= 256;
+			else backGround.hitThreshold= 1;
+		}
+		getter { return backGround.visible; }
+	}
+	
+	/////////////////////////////////////////////
+	//panel
+	//dic配列のレイヤを開放
+	function invalidatePanel(p=panel) {
+		var e = [];
+		e.assign(p);
+		for(var i=0; i<e.count; i+=2)
+		{
+			invalidate p[e[i]];
+		}
+		(Dictionary.clear incontextof p)();
+	}
+	
+	//配列のレイヤを開放
+	function invalidateLayer(e=void) {
+		for(var i=0; i<e.count; i++)
+		{
+			invalidate e[i];
+		}
+		e.clear();
+	}
+	
+		//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void ) {
+	}
+	
+	//そのうちなくなる
+	function setEnabledEventPanel( t_ )
+	{
+		var e = [];
+		e.assign(panel);
+		for(var i = 0; i <e.count; i += 2) {
+			if( panel[e[i]].enabledEvent!==void ) panel[e[i]].enabledEvent= t_;
+		}
+		dm( "TFrame.setEnabeEvent."+e.count\2 );
+	}
+	
+	function setEnabledEventPanelReset()
+	{
+		var e = [];
+		e.assign(panel);
+		for(var i = 0; i <e.count; i += 2) {
+			panel[e[i]].resetEvent();
+		}
+		dm( "TFrame.setEnabledEventPanelReset."+e.count\2 );
+	}
+	
+	//
+	function setVisiblePanel( t_ )
+	{
+		backGround.visible= t_;
+		var e = [];
+		e.assign(panel);
+		for(var i = 0; i <e.count; i += 2) {
+			if( panel[e[i]].visible!==void ) panel[e[i]].visible= t_;
+		}
+		dm( "TFrame.setVisiblePanel."+e.count\2 );
+	}
+	
+	//全てのムーブをとめる
+	function setStopMovePanel()
+	{
+		if( backGround.moveObject!==void ) backGround.stopMove();
+		var e = [];
+		e.assign(panel);
+		for(var i = 0; i <e.count; i+= 2) {
+			if( panel[e[i]].moveObject!==void ) panel[e[i]].stopMove();
+			if( panel[e[i]].moveValueObject!==void ) panel[e[i]].stopMoveValue();
+		}
+		dm( "TFrame.setStopMovePanel."+e.count\2 );
+	}
+	
+	/////////////////////////////////////////////
+	//スナップショット
+	function snapScreen( a=0, c=0x000000, b=0 )
+	{
+		backGround.face= dfAlpha;
+		backGround.fillRect( 0,0, backGround.width, backGround.height, 0xff000000 );
+		backGround.piledCopy( 0,0, kag.fore.base, 0,0, backGround.width, backGround.height );
+		if( b!=0 ) backGround.doBoxBlur( b, b );
+		if( a!=0 ) backGround.colorRect( 0,0, backGround.width, backGround.height, c, a );
+	}
+	
+	function snapKag( a_=0, c_=0x000000, b_=0 )
+	{
+		snapKagLayer( backGround, a_, c_, b_ );
+	}
+	
+	//kagレイヤーだけをスナップショット
+	function snapKagLayer( lay_, a_=0, c_=0x000000, b_=0 )
+	{
+		lay_.fillRect( 0,0, width, height, 0xff000000 );
+		
+		var layers = kag.fore.layers;
+		for(var i = layers.count-1; i >= 0; i--)
+		{
+			lay_.copyRect( layers[i].left,layers[i].top, layers[i],
+			0,0,layers[i].width,layers[i].height );
+		}
+		
+		if( b_!=0 ) lay_.doBoxBlur( b_, b_ );
+		if( a_!=0 ) lay_.colorRect( 0,0, width, height, c_, a_ );
+	}
+	
+	/////////////////////////////////////////////
+	//ウインドウ表示時の開始時
+	//初期設定
+	function InitScreen( n_=void )
+	{
+		if( n_!==void ) name= n_;
+		
+		//モード設定
+		//mode= 0;
+		ResetScreen();
+		
+		onInit();
+		
+		dm( "%s.InitScreen()".sprintf( name ) );
+	}
+	
+	//初期化
+	function ResetScreen()
+	{
+		
+		//コールバックを開放
+		backGround.moveFinalCallback= void;
+		
+		//モード設定
+		mode= 0;
+		
+		//すべてのレイアーの移動停止
+		setStopMovePanel();
+		
+		////キー入力のコールバックを復帰
+		frameWork.KeyDown_CallBack= KeyDown_CallBack_Recall;
+		KeyDown_CallBack_Recall= void;
+		
+		//kagの右クリック(スーパー)をリコール
+		//frameWork.rckicEvent= rckicEventRecall;
+		rckicEventRecall= void;
+		
+		//モーダルを解除
+		//backGround.removeMode();
+		backGround.visible= false;
+		
+		//モード設定
+		mode= 0;
+		
+		//スクリーンスタックから消去
+		frameWork.screenControls.del();
+		
+		onReset();
+		
+		dm( "%s.ResetScreen()".sprintf( name ) );
+	}
+	
+	/////////////////////////////////////////////
+	//プレロード
+	function PreLoadScreen()
+	{
+		if( mode==0 ) {
+			//onPreLoad();
+			frameWork.events.add( onPreLoad );
+		
+			//モード設定
+			isPreLoad= true;
+		
+			dm( "%s.PreLoadScreen()".sprintf( name ) );
+			
+		}
+		return true;
+	}
+	
+	//開放
+	function PostReleaseScreen()
+	{
+		
+		onPostRelease();
+		
+		//モード設定
+		isPreLoad= false;
+		
+		dm( "%s.PostReleaseScreen()".sprintf( name ) );
+		
+		return true;
+	}
+	
+	/////////////////////////////////////////////
+	//スクリーン表示、これを呼び出す
+	function ShowScreen( time_=0, en_=void )
+	{
+		if( mode==0 ) {
+			//frameWork.setEvent_aLock_true();
+			frameWork.events.add( ShowScreen_task, %[ time_:time_, en_:en_ ] );
+		}
+	}
+	
+	//スクリーン表示タスク、これがイベントタスクから呼び出される
+	function ShowScreen_task( opt )
+	{
+		
+		//ShowEndScreenコールバックを設定
+		ShowCallBack= opt.en_;
+		
+		//呼び出し元を停止
+		if( frameWork.screenControls.enabled() ) frameWork.screenControls.get().StopScreen();
+		
+		//キー入力のコールバックを保存
+		KeyDown_CallBack_Recall= frameWork.KeyDown_CallBack;
+		
+		//kagの右クリック(スーパー)を保存
+		rckicEventRecall= frameWork.rckicEvent;
+		frameWork.rckicEvent= void;
+		
+		//モード設定
+		mode= 1;
+		
+		//screenコールバックを設定
+		backGround.moveFinalCallback= ShowEndScreen_task;
+		
+		dm( "%s.ShowScreen( %d, %s )".sprintf( name, opt.time_, opt.en_ ) );
+		
+		//モーダルに設定
+		backGround.visible= true;
+		backGround.opacity= 255;
+		//if( modelMode ) backGround.setMode();
+		
+		//スクリーンスタックに追加
+		//frameWork.screenControls.add(this);
+		
+		onShow( opt.time_, opt.en_ );
+		
+		//スクリーンスタックに追加
+		frameWork.screenControls.add(this);
+		
+		if( opt.time_==0 ) return true;
+		else return false;
+		//return false;
+		
+	}
+	
+	//スクリーン表示終了タスク
+	function ShowEndScreen_task()
+	{
+		backGround.moveFinalCallback= void;
+		
+		//モード設定
+		mode= 2;
+		
+		//すべてのレイアーの移動停止
+		setStopMovePanel();
+		
+		//kagの右クリック(スーパー)を保存
+		//rckicEventRecall= frameWork.rckicEvent;
+		
+		dm( "%s.ShowEndScreen()".sprintf( name ) );
+		
+		onShowEnd();
+		
+		mode= 3;
+		
+		frameWork.events.next();
+		
+		//
+		if(loopCallback!==void) loopCallback();
+		
+		//
+		//backGround.setEnableEvent(true);
+		setEnableEvent(true);
+		
+		//frameWork.setEvent_aLock_false();
+		
+		return true;
+	}
+	
+	function StopScreen()
+	{
+		mode= 6;
+		
+		dm( "%s.StopScreen()".sprintf( name ) );
+		
+		onStopShow();
+		
+	}
+	
+	//サブスクリーンより戻ってきたときに呼び出される
+	function ReShowScreen()
+	{
+		mode= 3;
+		
+		dm( "%s.ReShowScreen()".sprintf( name ) );
+		
+		onReShow();
+		
+		//frameWork.setEvent_aLock_false();
+	}
+	
+	
+	//スクリーン非表示、これを呼び出す
+	function HideScreen( time_=0, en_=void )
+	{
+		if( mode==3 ) {
+			
+			frameWork.rckicEvent= void;
+			
+			//frameWork.setEvent_aLock_true();
+			
+			//backGround.setEnableEvent(false);
+			//setEnableEvent(false);
+			
+			frameWork.events.add( HideScreen_task, %[ time_:time_, en_:en_ ] );
+			//frameWork.events.add( HideEndScreen_task );
+		}
+	}
+	
+	//スクリーン非表示タスク
+	function HideScreen_task( opt )
+	{
+		//モード設定
+		mode= 4;
+		
+		//
+		setEnableEvent(false);
+		
+		//HideEndScreenコールバックを設定
+		HideCallBack= opt.en_;
+		
+		//コールバックを設定
+		backGround.moveFinalCallback= HideEndScreen_task;
+		
+		dm( "%s.HideScreen( %d, %s )".sprintf( name, opt.time_, opt.en_ ) );
+		
+		onHide( opt.time_, opt.en_ );
+		
+		//if( time_==0 ) backGround.moveFinalCallback();
+		if( opt.time_==0 ){
+			//HideEndScreen_task();
+			return true;
+		}
+		else return false;
+		
+	}
+	
+	//スクリーン非表示終了タスク
+	function HideEndScreen_task()
+	{
+		
+		backGround.moveFinalCallback= void;
+		
+		//モード設定
+		mode= 5;
+		
+		//すべてのレイアーの移動停止
+		setStopMovePanel();
+		
+		////キー入力のコールバックを復帰
+		frameWork.KeyDown_CallBack= KeyDown_CallBack_Recall;
+		
+		//kagの右クリック(スーパー)をリコール
+		frameWork.rckicEvent= rckicEventRecall;
+		
+		dm( "%s.HideEndScreen()".sprintf(name) );
+		
+		//モーダルを解除
+		//backGround.removeMode();
+		backGround.visible= false;
+		
+		onHideEnd();
+		
+		//invalidatePanel();
+		
+		//モード設定
+		mode= 0;
+		
+		//スクリーンスタックから消去
+		frameWork.screenControls.del();
+		
+		//frameWork.events.add( HideEndScreenAfter );
+		//HideEndScreenAfter();
+		
+		//前回のスクリーンのイベントを発生
+		if( frameWork.screenControls.enabled() ) frameWork.screenControls.get().ReShowScreen();
+		
+		frameWork.events.next();
+		
+		//core2.setEvent_aLock_false();
+		//return true;
+		
+		if(HideCallBack!==void) {
+			HideCallBack(200);
+			HideCallBack= void;
+		}
+	}
+	
+//	function HideEndScreenAfter()
+//	{
+//		
+//		//前回のスクリーンのイベントを発生
+//		if( frameWork.screenControls.enabled() ) frameWork.screenControls.get().ReShowScreen();
+//		//else frameWork.screenControls.close_all();
+//		
+//		
+//		//if(HideCallBack!==void) {
+//		//	//HideCallBack.exec(HideCallBack.value);
+//		//	HideCallBack(250);
+//		//	HideCallBack= void;
+//		//}
+//		
+//		return true;
+//	}
+	
+	//以下をオーバーライド
+	function onInit() {}
+	function onReset() {}
+	function onShow( time_, en_ ) {}
+	function onShowEnd() {}
+	function onHide( time_, en_ ) {}
+	function onHideEnd() {}
+	
+	function onStopShow() {}
+	function onReShow() {}
+}
+
+///////////////////////////////////////////////////////
+//シングルボタン
+class FrameBackGround extends LayerEventBase2
+{
+	var callbackLEvent2= void; //クリック時のイベント
+	var callbackREvent2= void; //クリック時のイベント
+	var soundfile= %[ enter:"", leave:"", select:"", click:"" ];
+	
+	function FrameBackGround( win, par, pal ) {
+		super.LayerEventBase2(...);
+		type= ltAddAlpha;
+		face= dfAuto;
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	//初期設定
+// 	function setLayer( x_, y_, w_, h_, 0x00000000 ){
+// 		super.setLayer(...);
+// 	}
+	
+    function loadImagesHelper() {
+		hitType= htMask;
+		hitThreshold= 0;
+		focusable= true;
+    }
+	
+	function actionCallBack( elm )
+	{
+		if( enabledEvent && !enabledEventLock && !window.core2_lock_all_event ) {
+			onAction( elm );
+			if(action_Execute!==void) action_Execute(elm);
+		}
+	}
+	
+	////////////////////
+	//入力イベント
+	function onAction( ev )
+	{
+		if( ev.type=="onMouseDown" && isMouseEnter ) {
+		
+			switch(ev.button) {
+			
+				case 0:
+					if( callbackLEvent2!==void ) {
+						//core2.setEvent_aLock_true();
+						core2.playse( soundfile.click );
+						callbackLEvent2(this,ev);
+					}
+					break;
+				
+				case 1:
+					if( callbackREvent2!==void ) {
+						//core2.setEvent_aLock_true();
+						core2.playse( soundfile.click );
+						callbackREvent2(this,ev);
+					}
+					break;
+				
+			}
+		}
+	}
+}

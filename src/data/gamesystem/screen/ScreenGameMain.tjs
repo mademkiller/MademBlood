@@ -1,0 +1,1116 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenGameMain
+//
+/////////////////////////////////////////////////////////////////////////
+//
+class ScreenGameMain extends TFrame2
+{
+
+	//var dayTimer= void;
+	//var dayTimercount= 0.0;
+	
+	var selectScreen= 0;
+	
+	var dat= %[];
+	
+	function ScreenGameMain( g_ ){
+		super.TFrame2(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	// init
+	//
+	function init_panel()
+	{
+		with( panel )
+		{
+			//core2.gameLoop.events.add(core2.gameLoop.mainLoop);
+			
+			//ui
+			.uiMenu= new LayerTrueBase( kag, backGround );
+			.uiMenu.setLayer( 618, 556 );
+			.uiMenu.loadImages("slg_top_menu");
+			
+			/*
+			.uiComm= new TButtonSelect2( kag, .uiMenu );
+			.uiComm.setLayer( 7, 7, 150, 150 );
+			.uiComm.setButton( 48, 48, 9 );
+			.uiComm.setButtonPos([ 0,0, 50,0, 100,0, 0,50, 50,50, 100,50, 0,100, 50,100, 100,100 ]);
+			.uiComm.setButtonLoad([ "slg_top_bt_mSco","slg_top_bt_mStr","slg_top_bt_mCon","slg_top_bt_mDra",
+				"slg_top_bt_mOrg","slg_top_bt_mArm","slg_top_bt_mCall","slg_top_bt_mTur2","slg_top_bt_mTur" ]);
+			.uiComm.checked_Execute= opt_buttom_top;
+			//.uiComm.buttomDoubleChecked= buttomDoubleCheckedArray;
+			.uiComm.buttomDoubleCheckedArray= [ 0,0,1, 0,0,0, 1,1,1 ];
+			*/
+			
+			.uiComm= new TButtonSelect4( kag, .uiMenu );
+			.uiComm.setLayer( 7, 7 );
+			.uiComm.setButton( 48, 48, 8 );
+			
+			.uiComm.setButtonPos([ 0,0, 50,0, 100,0, 0,50, 50,50, 100,50, 0,100, 50,100 ]);
+			.uiComm.setButtonLoad([ "slg_top_bt_mSco","slg_top_bt_mStr","slg_top_bt_mCon","slg_top_bt_mDra",
+				"slg_top_bt_mOrg","slg_top_bt_mArm","slg_top_bt_mCall","slg_top_bt_mNP" ]);
+			.uiComm.setCallBack(,opt_buttom_top);
+// 			.uiComm.checked_Execute= opt_buttom_top;
+// 			.uiComm.checked_Execute2= opt_buttom_top2;
+			//.uiComm.buttomDoubleCheckedArray= [ 0,0,1, 0,0,0, 1,1,1 ];
+			
+			.uiComm.setButtomSelectMode= [ 0,0,0, 0,0,0, 0,0 ];
+			.uiComm.AllLockOut= false;
+			
+			.uiComm2= new TButtonBase1k( kag, .uiMenu );
+			.uiComm2.setLayer( 107, 107, 48, 48 );
+			.uiComm2.loadImages("slg_top_bt_mTur");
+			.uiComm2.setCallBack(frameWork.gameLoop.nextTrunCommand);
+			.uiComm2.button_Enabled(true);
+			.uiComm2.AllLockOut= false;
+			
+//  			.uiComm3= new TButtonBase1k( kag, .uiMenu );
+//  			.uiComm3.setLayer( 107, 7, 48, 48 );
+//  			.uiComm3.loadImages("slg_top_bt_mCon");
+//  			//.uiComm3.setCallBack(frameWork.gameLoop.nextTrunCommand);
+//  			.uiComm3.button_Enabled(true);
+			
+//  			.uiComm4= new TButtonBase1k( kag, .uiMenu );
+//  			.uiComm4.setLayer( 7, 107, 48, 48 );
+//  			.uiComm4.loadImages("slg_top_bt_mCall");
+//  			.uiComm4.setCallBack(opt_gotest_call);
+//  			.uiComm4.button_Enabled(true);
+ 			
+			.uiBaseInfo= new LayerTrueBase( kag, backGround );
+			.uiBaseInfo.setLayer( 777, 537, 183, 73, 0x00000000 );
+			
+			
+			.uiStInfo= new LayerTrueBase( kag, .uiBaseInfo );
+			.uiStInfo.setLayer( 0, 4 );
+			.uiStInfo.loadImages("slg_top_phase01b");
+			//.uiStInfo.loadImages("slg_top_phase01b");
+			
+			.uiTimeInfo= new LayerTrueBase( kag, .uiBaseInfo );
+			.uiTimeInfo.setLayer( 0, 26 );
+			.uiTimeInfo.loadImages("slg_top_phase02b");
+			.uiTimeInfo.setPos( 0, 26 );
+			
+			.uiTopInfo= new LayerTrueBase( kag, .uiBaseInfo );
+			.uiTopInfo.setLayer( 0, 0 );
+			.uiTopInfo.loadImages("slg_top_phase00");
+			
+			
+			.uiMenu_txt= new LayerTextBase( kag, backGround );
+			.uiMenu_txt.setLayer( 778, 550, 180, 160 );
+			
+			.uicallInfo= new LayerTrueBase( kag, .uiMenu );
+			.uicallInfo.setLayer( 7, 107 );
+			.uicallInfo.loadImages("slg_top_bt_mCalla");
+			.uicallInfo.visible= false;
+			.uicallInfo.opacity= 0;
+			
+			//フォーカスリスト
+			//.mainMap.setKeyset( null, null, void, void );
+			
+			updateStatus();
+			setTimeValue2(false);
+			setDayValue2(false);
+			
+			selectScreen= 0;
+		}
+	}
+	
+	///////////////////////////////////////////////////////
+	// method game main-loop
+	//
+	
+//	function preGameLoop(v)
+//	{
+
+//	}
+	
+	///////////////////////////////////////////////////////
+	// method
+	//
+// 	function setTimeValue(v)
+// 	{
+// 		//var h= -int((1130-123)*(v/24));
+// 		//panel.uiTimeInfo.setPos( h, 26 );
+// //		var r= f.used.time.zone;
+// //		frameWork.games.setDayTimeAdd(1);
+// //		
+// //		setTimeValue2();
+// //		updateStatus();
+// //		time.trun
+// 	}
+	
+	function dayTimerUpdate()
+	{
+// 		if(frameWork.screen.gamemap.mode==3){
+// 			frameWork.screen.gamemap.panel.mainMap.addImageScreenTime( f.used.time.time );
+// 			frameWork.screen.gamemap.panel.mainMap.onPaint();
+// 		}
+		
+		if( frameWork.gameLoop.dayTimeUpdate.time ){
+			setTimeValue2();
+			frameWork.gameLoop.dayTimeUpdate.time=false;
+		}
+		
+		if( frameWork.gameLoop.dayTimeUpdate.zone ){
+			setDayValue2();
+			frameWork.gameLoop.dayTimeUpdate.zone=false;
+			frameWork.gameLoop.dayTimeUpdate.trun=false;
+			//updateStatusAM();
+		}
+		// else updateStatus();
+		
+		//dm("dayTimerTest= %s, d=%d".sprintf(f.used.time.time,core2.games.getDayTimeSun()));
+	}
+	
+	function dayTimerUpdate2()
+	{
+	
+// 		var t= 42*f.used.time.time;
+// 		if( f.used.time.time==0 ){
+// 			t= 42*frameWork.gameLoop.dayTimeMax;
+// 			t2= 42*(frameWork.gameLoop.dayTimeMax-1);
+// 		}
+		
+		panel.uiTimeInfo.setPos( -42*f.used.time.time, panel.uiTimeInfo.top );
+		panel.uiStInfo.setPos( -42*f.used.time.zone, panel.uiStInfo.top );
+			
+		//core2.setEvent_aLock_false();
+	
+	/*
+		setTimeValue2(false);
+		setDayValue2(false);
+		frameWork.gameLoop.dayTimeUpdate.time=false;
+		frameWork.gameLoop.dayTimeUpdate.zone=false;
+		frameWork.gameLoop.dayTimeUpdate.trun=false;
+		*/
+	}
+	
+	/*
+	function dayTimerUpdate3()
+	{
+// 		if(frameWork.screen.gamemap.mode==3){
+// 			frameWork.screen.gamemap.panel.mainMap.addImageScreenTime( f.used.time.time );
+// 			frameWork.screen.gamemap.panel.mainMap.onPaint();
+// 		}
+		
+
+	function setTimeValue2(f_=true)
+	{
+		var t= 42*f.used.time.time;
+		var t2= 42*(f.used.time.time-1);
+		if( f.used.time.time==0 ){
+			t= 42*frameWork.gameLoop.dayTimeMax;
+			t2= 42*(frameWork.gameLoop.dayTimeMax-1);
+		}
+		
+		if(f_){
+			panel.uiTimeInfo.setPos( -t2, panel.uiTimeInfo.top );
+			panel.uiTimeInfo.beginMove( %[ time:260, path:"(%d,%d,255)".sprintf(-t,panel.uiTimeInfo.top), accel:-3 ] );
+			panel.uiTimeInfo.moveFinalCallback= core2.setEvent_aLock_false;
+		} else {
+			panel.uiTimeInfo.setPos( -t, panel.uiTimeInfo.top );
+			core2.setEvent_aLock_false();
+		}
+	}
+	
+	function setDayValue2(f_=true)
+	{
+		var t= 42*f.used.time.zone;
+		var t2= 42*(f.used.time.zone-1);
+		if( f.used.time.zone==0 ){
+			t= 42*frameWork.gameLoop.dateTimeMax;
+			t2= 42*(frameWork.gameLoop.dateTimeMax-1);
+		}
+		
+		if(f_){
+			panel.uiStInfo.setPos( -t2, panel.uiStInfo.top );
+			panel.uiStInfo.beginMove( %[ time:260, path:"(%d,%d,255)".sprintf(-t,panel.uiStInfo.top), accel:-3 ] );
+		} else {
+			panel.uiStInfo.setPos( -t, panel.uiStInfo.top );
+		}
+	}
+	
+		if( frameWork.gameLoop.dayTimeUpdate.time ){
+			setTimeValue2();
+			frameWork.gameLoop.dayTimeUpdate.time=false;
+		}
+		
+		if( frameWork.gameLoop.dayTimeUpdate.zone ){
+			setDayValue2();
+			frameWork.gameLoop.dayTimeUpdate.zone=false;
+			frameWork.gameLoop.dayTimeUpdate.trun=false;
+			//updateStatusAM();
+		}
+		// else updateStatus();
+		
+		//dm("dayTimerTest= %s, d=%d".sprintf(f.used.time.time,core2.games.getDayTimeSun()));
+	}
+	*/
+	
+	function updateStatus(){
+	
+		dayTimerUpdate2();
+		
+		panel.uiMenu_txt.clearText();
+		
+		//
+		var tn= (f.used.time.turn\2)+1;
+		dm("updateStatus %d.%d".sprintf(f.used.time.turn,tn));
+		panel.uiMenu_txt.drawText3( 135,  5, "%3d".sprintf(f.used.time.turn+1),, 216 );
+		
+		var fcv= f.used.stat.force[0]\100;
+		var fccl= [ 0xff000000, 0xff0000ff, 0xff00acff, 0xff00ffff, 0xff00ffac,
+					0xff00ff00, 0xffacff00, 0xffffff00 ,0xffffac00, 0xffff0000, 0xffffffff ];
+		var fcc= (f.used.stat.force[0]%100)/100;
+		
+		panel.uiMenu_txt.drawText3(  35, 42, "%d".sprintf(fcv),, 216 );
+		panel.uiMenu.fillRect( 214,29, 121,22, fccl[fcv+1] );
+		panel.uiMenu.fillRect( 214+(121*fcc),29, 121*(1-fcc),22, fccl[fcv] );
+		
+		panel.uiMenu_txt.drawText3(  32, 69, "%7d".sprintf(f.used.stat.food.now),, 216 );
+		panel.uiMenu_txt.drawText3(  32, 94, "%7d".sprintf(f.used.stat.resource.now),, 216 );
+		panel.uiMenu_txt.drawText3(  32,119, "%7d".sprintf(f.used.stat.energy.now),, 216 );
+		panel.uiMenu_txt.drawText3(  32,144, "%7d".sprintf(f.used.stat.gold.now),, 216 );
+		
+		panel.uiMenu_txt.drawText3(  120, 69, "%5d".sprintf(f.used.stat.food.add),, 214 );
+		panel.uiMenu_txt.drawText3(  120, 94, "%5d".sprintf(f.used.stat.resource.add),, 214 );
+		panel.uiMenu_txt.drawText3(  120,119, "%5d".sprintf(f.used.stat.energy.add),, 214 );
+		panel.uiMenu_txt.drawText3(  120,144, "%5d".sprintf(f.used.stat.gold.add),, 214 );
+		
+	}
+	
+	function updateStatusAM(){
+		panel.uiMenu_txt.stopMoveValue();
+		panel.uiMenu_txt.movevalue_callbak= countMove_callback;
+		panel.uiMenu_txt.beginMoveValue( %[ time:500 ] );
+		panel.uiMenu_txt.movevalueend_callbak= core2.setEvent_aLock_false;
+		
+// 				panel.option0.moveFinalCallback= function( v ) {
+// 				core2.screen.config.panel.option0.visible= false;
+// 				core2.setEvent_aLock_false();
+// 			};
+	}
+	
+	function countMove_callback(v){
+	
+		panel.uiMenu_txt.clearText();
+		
+		//
+		panel.uiMenu_txt.drawText3( 135,  5, "%3d".sprintf((f.used.time.turn\2)+1),, 216 );
+		panel.uiMenu_txt.drawText3(  35, 42, "%d".sprintf(f.used.stat.force[0]\100),, 216 );
+		
+		var fcc= (f.used.stat.force[0]%100)/100;
+		panel.uiMenu.fillRect( 214,29, 121,22, 0xffff5344 );
+		panel.uiMenu.fillRect( 214+(121*fcc),29, 121*(1-fcc),22, 0xff000000 );
+		
+		var fn= (f.used.stat.food.now-f.used.stat.food.add)+(f.used.stat.food.add*v);
+		panel.uiMenu_txt.drawText3(  32, 69, "%7d".sprintf(fn),, 216 );
+		
+		fn= (f.used.stat.resource.now-f.used.stat.resource.add)+(f.used.stat.resource.add*v);
+		if(fn<0) fn= 0;
+		panel.uiMenu_txt.drawText3(  32, 94, "%7d".sprintf(fn),, 216 );
+		
+		fn= (f.used.stat.energy.now-f.used.stat.energy.add)+(f.used.stat.energy.add*v);
+		if(fn<0) fn= 0;
+		panel.uiMenu_txt.drawText3(  32,119, "%7d".sprintf(fn),, 216 );
+		
+		fn= (f.used.stat.gold.now-f.used.stat.gold.add)+(f.used.stat.gold.add*v);
+		if(fn<0) fn= 0;
+		panel.uiMenu_txt.drawText3(  32,144, "%7d".sprintf(fn),, 216 );
+		
+		
+		var ff= f.used.stat.food.add*(1-v);
+		panel.uiMenu_txt.drawText3(  120, 69, "%5d".sprintf(ff),, 214 );
+		
+		ff= f.used.stat.resource.add*(1-v);
+		panel.uiMenu_txt.drawText3(  120, 94, "%5d".sprintf(ff),, 214 );
+		
+		ff= f.used.stat.energy.add*(1-v);
+		panel.uiMenu_txt.drawText3(  120,119, "%5d".sprintf(ff),, 214 );
+		
+		ff= f.used.stat.gold.add*(1-v);
+		panel.uiMenu_txt.drawText3(  120,144, "%5d".sprintf(ff),, 214 );
+		
+	}
+	
+	/////
+	
+	function updateStatusAM_turnup(){
+	
+		//if(core2.screen.gamemap.mode==3) core2.screen.gamemap.addImageScreenTime2_setup( p_ );
+		
+		panel.uiMenu_txt.stopMoveValue();
+		panel.uiMenu_txt.movevalue_callbak= countMove_turnup_callback;
+		panel.uiMenu_txt.beginMoveValue( %[ time:500 ] );
+		panel.uiMenu_txt.movevalueend_callbak= countMove_turnup_end_callback;
+	}
+	
+	function countMove_turnup_callback(v){
+	
+		panel.uiMenu_txt.clearText();
+		
+		//
+		panel.uiMenu_txt.drawText3( 135,  5, "%3d".sprintf((f.used.time.turn\2)+1),, 216 );
+		panel.uiMenu_txt.drawText3(  35, 42, "%d".sprintf(f.used.stat.force[0]\100),, 216 );
+		
+		var fcc= (f.used.stat.force[0]%100)/100;
+		panel.uiMenu.fillRect( 214,29, 121,22, 0xffff5344 );
+		panel.uiMenu.fillRect( 214+(121*fcc),29, 121*(1-fcc),22, 0xff000000 );
+		
+		var fn= (f.used.stat.food.now-f.used.stat.food.add)+(f.used.stat.food.add*v);
+		panel.uiMenu_txt.drawText3(  32, 69, "%7d".sprintf(fn),, 216 );
+		
+		fn= (f.used.stat.resource.now-f.used.stat.resource.add)+(f.used.stat.resource.add*v);
+		if(fn<0) fn= 0;
+		panel.uiMenu_txt.drawText3(  32, 94, "%7d".sprintf(fn),, 216 );
+		
+		fn= (f.used.stat.energy.now-f.used.stat.energy.add)+(f.used.stat.energy.add*v);
+		if(fn<0) fn= 0;
+		panel.uiMenu_txt.drawText3(  32,119, "%7d".sprintf(fn),, 216 );
+		
+		fn= (f.used.stat.gold.now-f.used.stat.gold.add)+(f.used.stat.gold.add*v);
+		if(fn<0) fn= 0;
+		panel.uiMenu_txt.drawText3(  32,144, "%7d".sprintf(fn),, 216 );
+		
+		
+		var ff= f.used.stat.food.add*(1-v);
+		panel.uiMenu_txt.drawText3(  120, 69, "%5d".sprintf(ff),, 214 );
+		
+		ff= f.used.stat.resource.add*(1-v);
+		panel.uiMenu_txt.drawText3(  120, 94, "%5d".sprintf(ff),, 214 );
+		
+		ff= f.used.stat.energy.add*(1-v);
+		panel.uiMenu_txt.drawText3(  120,119, "%5d".sprintf(ff),, 214 );
+		
+		ff= f.used.stat.gold.add*(1-v);
+		panel.uiMenu_txt.drawText3(  120,144, "%5d".sprintf(ff),, 214 );
+		
+		//if(core2.screen.gamemap.mode==3) core2.screen.gamemap.addImageScreenTime2( p_ );
+	}
+	
+	function countMove_turnup_end_callback() {
+	
+		//core2.screen.gamemap.addImageScreenTime2_setup();
+		//core2.setEvent_aLock_false();
+	}
+	
+	/////
+	
+	function updateStatusAM2(v,m,ud=false){
+		
+		panel.uiMenu_txt.stopMoveValue();
+		//updateStatus();
+		
+		switch(m){
+			case 0: panel.uiMenu_txt.movevalue_callbak= countMove_food_callback; break;
+			case 1: panel.uiMenu_txt.movevalue_callbak= countMove_resource_callback; break;
+			case 2: panel.uiMenu_txt.movevalue_callbak= countMove_energy_callback; break;
+			case 3: panel.uiMenu_txt.movevalue_callbak= countMove_gold_callback; break;
+		}
+		
+		panel.uiMenu_txt.valuedata= v;
+		panel.uiMenu_txt.valuemode= ud;
+		
+		//panel.uiMenu_txt.beginMoveValue( %[ time:v ] );
+		if(Math.abs(v)>99) {
+			panel.uiMenu_txt.beginMoveValue( %[ time:1000 ] );
+			//panel.uiMenu_txt.movevalueend_callbak= core2.setEvent_aLock_false;
+		} else updateStatus();
+	}
+	
+	function countMove_food_callback(v){
+		v= 1-v;
+		var fn= f.used.stat.food.now;
+		if(panel.uiMenu_txt.valuemode) fn-= panel.uiMenu_txt.valuedata*v;
+		else fn+= panel.uiMenu_txt.valuedata*v;
+		panel.uiMenu_txt.fillRect(  32,67, 80,15, 0x00000000 );
+		panel.uiMenu_txt.drawText3(  32,69, "%7d".sprintf(fn),, 216 );
+	}
+	
+	function countMove_resource_callback(v){
+		v= 1-v;
+		var fn= f.used.stat.resource.now;
+		if(panel.uiMenu_txt.valuemode) fn-= panel.uiMenu_txt.valuedata*v;
+		else fn+= panel.uiMenu_txt.valuedata*v;
+		panel.uiMenu_txt.fillRect(  32,92, 80,15, 0x00000000 );
+		panel.uiMenu_txt.drawText3(  32,94, "%7d".sprintf(fn),, 216 );
+	}
+	
+	function countMove_energy_callback(v){
+		v= 1-v;
+		var fn= f.used.stat.energy.now;
+		if(panel.uiMenu_txt.valuemode) fn-= panel.uiMenu_txt.valuedata*v;
+		else fn+= panel.uiMenu_txt.valuedata*v;
+		panel.uiMenu_txt.fillRect(  32,117, 80,15, 0x00000000 );
+		panel.uiMenu_txt.drawText3(  32,119, "%7d".sprintf(fn),, 216 );
+	}
+	
+	function countMove_gold_callback(v){
+		v= 1-v;
+		var fn= f.used.stat.gold.now;
+		if(panel.uiMenu_txt.valuemode) fn-= panel.uiMenu_txt.valuedata*v;
+		else fn+= panel.uiMenu_txt.valuedata*v;
+		panel.uiMenu_txt.fillRect(  32,142, 80,15, 0x00000000 );
+		panel.uiMenu_txt.drawText3(  32,144, "%7d".sprintf(fn),, 216 );
+	}
+	
+	//コール
+	function call_On() {
+		panel.uicallInfo.visible= true;
+		panel.uicallInfo.stopMoveValue();
+		panel.uicallInfo.movevalue_callbak= call_On_callback;
+		panel.uicallInfo.beginMoveValue( %[ time:1000, loop:true ] );
+	}
+	
+	function call_Off() {
+		panel.uicallInfo.stopMoveValue();
+		panel.uicallInfo.visible= false;
+	}
+	
+	function call_On_callback(v) {
+		v= 1-v;
+		panel.uicallInfo.opacity= v*256;
+	}
+	
+	///////////////////////////////////////////////////////
+	// callback
+	//
+	function opt_buttom_top(v)
+	{
+		
+		var sstime= 300;
+		
+		if(selectScreen==2) {
+			screen.gamemap.closeBuilding();
+		} else {
+			if(v!=2) {
+				switch(selectScreen) {
+					case 0: screen.gamemap.HideScreen(sstime); break;
+					case 1: screen.gamedir.HideScreen(sstime); break;
+					case 3: screen.gamedra.HideScreen(sstime); break;
+					case 4: screen.gameorg.HideScreen(sstime); break;
+					case 5: screen.gamepre.HideScreen(sstime); break;
+					case 6: screen.gamecal.HideScreen(sstime); break;
+					case 7: screen.gameifo.HideScreen(sstime); break;
+				}
+			}
+		}
+		
+		//if(selectScreen!=v){
+			
+		var ss= void;
+		
+		//opt_buttom_close(selectScreen,v);
+		
+		selectScreen= v;
+		
+		switch(selectScreen){
+			case 0:
+				enabledButton([ 2,1,1, 1,1,1, 1,1 ]);
+				panel.uiComm2.button_Enabled(1);
+				//if(screen.gamemap.mode!=3) {
+					screen.gamemap.PreLoadScreen();
+					screen.gamemap.ShowScreen(sstime);
+				//}
+				break;
+			case 1:
+				enabledButton([ 1,2,0, 1,1,1, 1,1 ]);
+				panel.uiComm2.button_Enabled(0);
+				screen.gamedir.PreLoadScreen();
+				screen.gamedir.ShowScreen(sstime);
+				break;
+				
+ 			case 2:
+ 				enabledButton([ 1,0,2, 0,0,0, 0,0 ]);
+ 				panel.uiComm2.button_Enabled(0);
+ 				screen.gamemap.openBuilding();
+ 				break;
+				
+			case 3:
+				enabledButton([ 1,1,0, 2,1,1, 1,1 ]);
+				panel.uiComm2.button_Enabled(0);
+				screen.gamedra.PreLoadScreen();
+				screen.gamedra.ShowScreen(sstime);
+				break;
+				
+			case 4:
+				enabledButton([ 1,1,0, 1,2,1, 1,1 ]);
+				panel.uiComm2.button_Enabled(0);
+				screen.gameorg.PreLoadScreen();
+				screen.gameorg.ShowScreen(sstime);
+				break;
+				
+			case 5:
+				enabledButton([ 1,1,0, 1,1,2, 1,1 ]);
+				panel.uiComm2.button_Enabled(0);
+				screen.gamepre.PreLoadScreen();
+				screen.gamepre.ShowScreen(sstime);
+				break;
+				
+			case 6:
+				enabledButton([ 1,1,0, 1,1,1, 2,1 ]);
+				panel.uiComm2.button_Enabled(0);
+				screen.gamecal.PreLoadScreen();
+				screen.gamecal.ShowScreen(sstime);
+				break;
+				
+			case 7:
+				enabledButton([ 1,1,0, 1,1,1, 1,2 ]);
+				panel.uiComm2.button_Enabled(0);
+				screen.gameifo.PreLoadScreen();
+				screen.gameifo.ShowScreen(sstime);
+				break;
+				
+// 			case 5:
+// 				enabledButton([ 1,0,0, 0,0,0, 0,0 ]);
+// 				//screen.gamemap.HideScreen(sstime);
+// 				//screen.gamemain.visible= false;
+// 				//kag.processCall( "BattleMain.ks", "" );
+// 				ca.map_battle_setting_enemy_data(_TESTSTATE);
+// 				core2.kagBackStart( 300, "BattleMain.ks", "" );
+// 				break;
+// 			case 7:
+// 				enabledButton([ 2,1,1, 1,1,1, 0,0 ]);
+// 				frameWork.gameLoop.nullCommand();
+// 				break;
+				
+		}
+		return false;
+		//}
+	}
+	
+	function opt_buttom_top2()
+	{
+		screen.gamemap.closeBuilding();
+		enabledButton([ 2,1,1, 1,1,1, 1,1 ]);
+		panel.uiComm2.button_Enabled(1);
+		selectScreen= 0;
+		
+// 		switch(selectScreen){
+// 			case 2:
+// 				enabledButton([ 2,1,1, 1,1,1, 0,0 ]);
+// 				screen.gamemap.closeBuilding();
+// 				panel.uiComm2.button_Enabled(true);
+// 				selectScreen= 0;
+// 				break;
+// 		}
+	}
+	
+	function opt_buttom_top3(f_)
+	{
+		var sstime= 300;
+		
+		//screen.gamemap.HideScreen(sstime);
+		//screen.gameorg.HideScreen(sstime);
+		//screen.gamepre.HideScreen(sstime);
+		//screen.gamedir.HideScreen(sstime);
+		
+		if(selectScreen==3) screen.gamedra.HideScreen(sstime);
+		if(selectScreen==2) screen.gamemap.closeBuilding();
+			
+		if(selectScreen!=0){
+			screen.gamemap.PreLoadScreen();
+			screen.gamemap.ShowScreen(sstime);
+		}
+		
+		selectScreen= 0;
+		
+		if(f_==0){
+			enabledButton([ 2,1,1, 1,1,1, 1 ]);
+			panel.uiComm2.button_Enabled(true);
+		}
+		
+ 		if(f_==1){
+ 			enabledButton([ 2,0,0, 0,0,0, 0 ]);
+			panel.uiComm2.button_Enabled(false);
+		}
+	}
+	
+// 	function opt_gotest_call(){
+// 	
+// 		opt_buttom_close();
+// 		
+// 		enabledButton([ 1,0, 0,0,0 ]);
+// 		panel.uiComm2.button_Enabled(0);
+// 		panel.uiComm3.button_Enabled(0);
+// 		panel.uiComm4.button_Enabled(2);
+// 		
+// 		screen.gamecal.PreLoadScreen();
+// 		screen.gamecal.ShowScreen(300);
+// 	}
+	
+	function opt_buttom_close(v,vv)
+	{
+		
+		var sstime= 300;
+		
+		if(v==2) {
+			screen.gamemap.closeBuilding();
+		} else {
+// 			if(v!=2) {
+// 				screen.gamemap.HideScreen(sstime);
+// 				screen.gamedir.HideScreen(sstime);
+// 				screen.gamedra.HideScreen(sstime);
+// 				screen.gameorg.HideScreen(sstime);
+// 				screen.gamepre.HideScreen(sstime);
+// 				screen.gamecal.HideScreen(sstime);
+// 			}
+			if(vv!=2) {
+				switch(v) {
+					case 0: screen.gamemap.HideScreen(sstime); break;
+					case 1: screen.gamedir.HideScreen(sstime); break;
+					case 3: screen.gamedra.HideScreen(sstime); break;
+					case 4: screen.gameorg.HideScreen(sstime); break;
+					case 5: screen.gamepre.HideScreen(sstime); break;
+					case 6: screen.gamecal.HideScreen(sstime); break;
+				}
+			}
+		}
+	}
+	
+	function setTimeValue2(f_=true)
+	{
+		var t= 42*f.used.time.time;
+		var t2= 42*(f.used.time.time-1);
+		if( f.used.time.time==0 ){
+			t= 42*frameWork.gameLoop.dayTimeMax;
+			t2= 42*(frameWork.gameLoop.dayTimeMax-1);
+		}
+		
+		if(f_){
+			panel.uiTimeInfo.setPos( -t2, panel.uiTimeInfo.top );
+			panel.uiTimeInfo.beginMove( %[ time:260, path:"(%d,%d,255)".sprintf(-t,panel.uiTimeInfo.top), accel:-3 ] );
+			panel.uiTimeInfo.moveFinalCallback= core2.setEvent_aLock_false;
+		} else {
+			panel.uiTimeInfo.setPos( -t, panel.uiTimeInfo.top );
+			//core2.setEvent_aLock_false();
+		}
+	}
+	
+	function setDayValue2(f_=true)
+	{
+		var t= 42*f.used.time.zone;
+		var t2= 42*(f.used.time.zone-1);
+		if( f.used.time.zone==0 ){
+			t= 42*frameWork.gameLoop.dateTimeMax;
+			t2= 42*(frameWork.gameLoop.dateTimeMax-1);
+		}
+		
+		if(f_){
+			panel.uiStInfo.setPos( -t2, panel.uiStInfo.top );
+			panel.uiStInfo.beginMove( %[ time:260, path:"(%d,%d,255)".sprintf(-t,panel.uiStInfo.top), accel:-3 ] );
+		} else {
+			panel.uiStInfo.setPos( -t, panel.uiStInfo.top );
+		}
+	}
+	
+	function rightClickCallBack()
+	{
+		//HideScreen( 200 );
+	}
+	
+	//メニューのロック
+	function lockButton(f_){
+		panel.uiComm.setEnableEvent(,f_);
+		panel.uiComm2.setEnableEvent(,f_);
+	}
+	
+	//メニューの有効化
+	function enabledButton(f_){
+		panel.uiComm.setEnable(f_);
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+ 		panel.uiComm.setEnableEvent(f_);
+ 		panel.uiComm2.setEnableEvent(f_);
+ 		//panel.uiComm3.setEnableEvent(f_);
+
+		backGround.setEnableEvent(f_);
+	}
+	///////////////////////////////////////////////////////
+	// show
+	//
+	function onInit()
+	{
+		backGround.setLayer( 0, 0, 960, 720, 0x00000000 );
+		backGround.visible= false;
+		backGround.opacity= 0;
+	}
+	
+	function onShow( time_, en_ )
+	{
+		
+		init_panel();
+		
+		enabledButton([ 2,1,1, 1,1,1, 1,1 ]);
+		
+		lockButton(true);
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 0;
+		
+		//メインループの一番最初の処理
+		frameWork.gameLoop.mainLoopFast_callback();
+		
+		//メインループの復帰処理
+		frameWork.gameLoop.mainLoopRecall_callback();
+		
+		dayTimerUpdate2();
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,255)" ] );
+		dm("onShow");
+	}
+	
+	function onShowEnd()
+	{
+	
+		//panel.uiComm.enabledEvent= true;
+		//panel.uiComm.enabledEventLock= true;
+		
+// 		panel.uiComm.setEnableEvent(true);
+// 		panel.uiComm2.setEnableEvent(true);
+// 		panel.uiComm3.setEnableEvent(true);
+		//panel.uiComm4.setEnableEvent(true);
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 255;
+		
+		frameWork.rckicEvent= rightClickCallBack;
+		
+		//
+		//ここでメインのリコールを呼び出す
+		//frameWork.gameLoop.mainLoopRecall_callback();
+		
+		frameWork.screen.gamemap.PreLoadScreen();
+		frameWork.screen.gamemap.ShowScreen( 1000 );
+		
+		//dayTimerUpdate();
+		
+		dm("onShowEnd");
+	}
+	
+	function onHide( time_, en_ )
+	{
+// 		panel.uiComm.setEnableEvent(false);
+// 		panel.uiComm2.setEnableEvent(false);
+// 		panel.uiComm3.setEnableEvent(false);
+		//panel.uiComm4.setEnableEvent(false);
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,0)", accel:2 ] );
+	}
+	
+	function onHideEnd()
+	{
+		backGround.visible= false;
+		backGround.opacity= 0;
+		
+		kag.KeyDown_CallBack= void;
+		
+	}
+}
+
+///////////////////////////////////////////////////////
+//スクロールイメージ
+class charTopStatus extends LayerTrueBase
+{
+	var _Image;
+	var ch= void;
+	
+	function charTopStatus( win, par, pal ) {
+		super.LayerTrueBase(...);
+		name= "charTopStatus";
+	}
+	
+	function finalize() {
+		invalidate _Image;
+		super.finalize(...);
+	}
+
+	function setLayer( x_, y_ )
+	{
+		loadImages("slg_Org_plate_unit");
+		setPos( x_, y_ );
+		
+		_Image= new LayerTextBase( window, this );
+		_Image.setLayer( 0,0, width,height, 0x00000000 );
+		
+		visible= true;
+		
+		dm( "charTopStatus.setLayer()" );
+	}
+	
+	function setCharNo( c_ )
+	{
+		//ch= gf.char.get([gf.char.find2(_id));
+		//ch= gf.char.get(_id);
+		ch= gf.get(_id,gf.char);
+		//drawStatus();
+	}
+	
+// 	function setChar( c_=void )
+// 	{
+// 		ch= c_;
+// 		drawStatus();
+// 	}
+	
+	function setChar2( c_=void )
+	{
+		ch= c_;
+	}
+	
+	function setUpdate()
+	{
+	}
+	
+	function ValueUpDn( c_ )
+	{
+		if(c_<0) return 1;
+		if(c_>0) return 2;
+		return 0;
+	}
+	
+	function drawStatus()
+	{
+		if( ch!==void && ch.index!=0 ){
+			with(_Image){
+				
+				.clearText();
+				
+				var fn;
+				
+				fn= _getLiteralf( _CHAR_DATA_TYPE, ch.type, 1 );
+				if(fn!==void) drawImageFile( 41,5, fn[2]);
+				
+				if(ch.divineEx!="") fn= _getLiteralf( _CHAR_DATA_DIVINE, ch.divineEx, 1 );
+				else fn= _getLiteralf( _CHAR_DATA_DIVINE, ch.divine, 1 );
+				if(fn!==void) drawImageFile( 25,5, fn[2]);
+				
+				if(Storages.isExistentStorage(ch.image[0].file+".png")) drawImageFile( 317,1, ch.image[0].file);
+				
+				.drawText4( 60,  4, "%s".sprintf(ch.uniqueName),0xffbb02, 18 );
+				
+				//ライフ
+				fillRect( 32,25, 200,2, 0xffaa0000 );
+				fillRect( 32,25, 200*(ch.HP.now/ch.HP.max),2, 0xff00f68c );
+				
+				.drawText4( 28,  29, "Lv",, 14 );		.drawText4( 75,  29, "%d".sprintf(ch.level),, 14 );
+				.drawText4( 28,  44, "HP",, 114 );		.drawText4( 75,  44, "%d/%d".sprintf(ch.HP.now,ch.HP.max),, 114 );
+				.drawText4( 28,  59, "経験値",, 114 );	.drawText4( 75,  59, "%d".sprintf(ch.experience),, 114 );
+				.drawText4( 28,  74, "成長",, 14 );		.drawText4( 75,  74, "%s".sprintf(ch.growth),, 14 );
+				.drawText4( 28,  89, "治療費",, 14 );	.drawText4( 75,  89, "%d".sprintf(ch.cost),, 114 );
+				
+				//.drawText4( 145,  29, "装備1",, 14 );	.drawText4( 200,  29, "%s".sprintf(ch.equiped.weapon),, 14 );
+				//.drawText4( 145,  44, "装備2",, 14 );	.drawText4( 200,  44, "%s".sprintf(ch.equiped.armor),, 14 );
+				
+				var d= ca.get_item_type_to_index(ch.equipment.weapon);
+				if(d!=-1) .drawImageFile(145,29, _getLiteral(_ITEM_TYPE,d)[2]);
+				
+				    d= ca.get_item_type_to_index(ch.equipment.armor);
+				if(d!=-1) .drawImageFile(145,44, _getLiteral(_ITEM_TYPE,d)[2]);
+				
+// 				if(ch.equipment.armor!=""){
+// 					.drawImageFile(145,44, _getLiteral( _ITEM_TYPE, ca.get_item_type_to_index(ch.equipment.armor))[2]);
+// 				}
+				
+				if(ch.equipedID.weapon!=0){
+					var cc= gf.get(ch.equipedID.weapon,gf.list.item);
+					//.drawImageFile(145,29, _getLiteral( _ITEM_TYPE, cc.type )[2]);
+					.drawText4( 165, 29, "%s".sprintf(cc.name),0xffffff, 14 );
+				}
+				
+				if(ch.equipedID.armor!=0){
+					var cc= gf.get(ch.equipedID.armor,gf.list.item);
+					//.drawImageFile(145,44, _getLiteral( _ITEM_TYPE, cc.type )[2]);
+					.drawText4( 165,  44, "%s".sprintf(cc.name),0xffffff, 14 );
+				}
+				
+				.drawText4( 145,  59, "種族",, 14 );	.drawText4( 190,  59, "%s".sprintf(ch.attribute),, 14 );
+				.drawText4( 145,  74, "特攻",, 14 );	.drawText4( 190,  74, "%s%s".sprintf(ch.special,ch.specialEx),, 14 );
+				.drawText4( 145,  89, "%s%s".sprintf(ch.prefix,ch.suffix),, 14 );
+				
+				var updn= [ "","↓","↑" ];
+				var stat= [ 0, 0, 0, 0 ];
+				var stav= [ 0, 0, 0, 0 ];
+				
+				stat[0]= calc.StatusCalc( ch.pow+ch.revise.pow, ch.experience );
+				stat[1]= calc.StatusCalc( ch.def+ch.revise.def, ch.experience );
+				stat[2]= calc.StatusCalc( ch.spd+ch.revise.spd, ch.experience );
+				stat[3]= calc.StatusCalc( ch.mor+ch.revise.mor, ch.experience, 'mor' );
+				
+				stat[0]+= ch.equipedADD.pow; stav[0]=ValueUpDn(ch.revise.pow+ch.equipedADD.pow);
+				stat[1]+= ch.equipedADD.def; stav[1]=ValueUpDn(ch.revise.def+ch.equipedADD.def);
+				stat[2]+= ch.equipedADD.spd; stav[2]=ValueUpDn(ch.revise.spd+ch.equipedADD.spd);
+				stat[3]+= ch.equipedADD.mor; stav[3]=ValueUpDn(ch.revise.mor+ch.equipedADD.mor);
+				
+				for(var i= 0; i<4; i++ ) if(stat[i]<1) stat[i]= 1;
+				
+				.drawText4( 440,   6, "攻撃 %3d%s".sprintf(stat[0],updn[stav[0]]),0xfe0000, 114 );
+				.drawText4( 440,  32, "防御 %3d%s".sprintf(stat[1],updn[stav[1]]),0xffbb02, 114 );
+				.drawText4( 440,  60, "速度 %3d%s".sprintf(stat[2],updn[stav[2]]),0x02fec1, 114 );
+				.drawText4( 440,  86, "士気 %3d%s".sprintf(stat[3],updn[stav[3]]),0x00aefd, 114 );
+				
+				
+				var ha= [ 6, 22, 38, 54, 70, 86, 6, 22, 38, 54, 70, 86 ];
+				var wa= [ 510, 510, 510, 510, 510, 510, 590, 590, 590, 590, 590, 590 ];
+				var cc= [ 0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xc0fff4, 0xc0fff4, 0xc0fff4, 0xc0fff4 ];
+				for(var i= 0; i<12; i++ ) {
+					if(ch.skill[i].name!=""){
+						if(ch.skill[i].value==0) .drawText4( wa[i], ha[i], "%s".sprintf(ch.skill[i].name),cc[i], 114 );
+						else .drawText4( wa[i], ha[i], "%s:%2d".sprintf(ch.skill[i].name,ch.skill[i].value),cc[i], 114 );
+					}else .drawText4( wa[i], ha[i], "－－－－:",cc[i], 114 );
+				}
+				
+				var tt= [];
+				tt.split( ";", ch.comment );
+				
+				var cl= ca.char_loyalty2count(ch.loyalty);
+				
+				var tt2= ""+ch.script[cl];
+				//if(tt2!=0) tt2= ch.script[cl].replace(';','');
+				
+				//var tt2= "";
+				
+				if(tt2!==void && tt2!="") tt2= tt2.substring(0,tt2.length-1);
+				
+				//if(tt2!==void && tt2!="") tt2= tt2.substring(0,tt2.length);
+				
+				//if(tt2!==void && tt2!="") tt2= tt2.replace(";","");
+				
+				.drawText4( 669,   6, tt2,, 14 );
+				.drawText4( 669,  22, tt[0],, 14 );
+				.drawText4( 669,  38, tt[1],, 14 );
+				.drawText4( 669,  54, tt[2],, 14 );
+				
+				if(ch.unitClass!=0) .drawText4( 669,  70, "忠誠度 %d".sprintf(ch.loyalty),, 14 );
+				
+				var vctype= ["cost_food2","","cost_enegy2",""];
+				//.drawImageFile(800,69,vctype[ca.char_stat_caoslow(ch.index)]);
+				.drawImageFile(800,69,vctype[ch.paytype]);
+				
+				.drawText4( 765,  70, "報酬".sprintf(ch.statickcost),, 14 );
+				.drawText4( 818,  70, "%d".sprintf(ch.statickcost),, 14 );
+				
+				if(ch.unitClass==0) .drawText4( 669,  86, "%s".sprintf(ch.unitName),, 14 );
+				else .drawText4( 669,  86, "%s級 %s".sprintf(ca.char_rankint2str(ch.rank),ch.unitName),, 14 );
+			
+			}
+		}
+	}
+
+}
+
+///////////////////////////////////////////////////////
+//スクロールイメージ
+class charMiniStatus extends LayerTrueBase
+{
+	//var _Image;
+	var ch= void;
+	
+	function charMiniStatus( win, par, pal ) {
+		super.LayerTrueBase(...);
+		name= "charMiniStatus";
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_,y_, 142,64, 0xff000000 );
+	}
+	
+	/*
+	function setCharNo( c_ ){
+		ch= gf.char[c_];
+		drawStatus();
+	}
+	
+	function setChar( c_ ){
+		ch= c_;
+		drawStatus();
+	}
+	
+	function setData( i,c_=void ){
+	
+		ch= c_;
+		ch= gf.char[c_];
+		
+		drawStatus();
+	}
+	*/
+	
+	function setData( i_, d_=void )
+	{
+		_id= i_;
+		if(_data!==void) _data= d_;
+		//_data= d_;
+		//ch= _data[_id];
+		ch= gf.get(_id,gf.char);
+		drawStatus();
+	}
+	
+	function drawStatus()
+	{
+		if( ch.index>0 ){
+		
+			visible= true;
+			
+			var viewhp= 0.0;
+			if( ch.HP.max!=0 && ch.HP.now!=0 ) viewhp= ch.HP.now/ch.HP.max;
+			
+			//fillRect( 0,20, width,42, 0x00000000 );
+			fillRect( 0,0, width,height, 0x00000000 );
+			fillRect( 1,21, width-2,42, 0x99000000 );
+			
+			if( ch.HP.now==0 ) fillRect( 1,21, width-2,20, 0x66ff0000 );
+			
+			if(Storages.isExistentStorage(ch.image[2].file+".png")) drawImageFile( 0,20, ch.image[2].file);
+			//drawImageFile( 0,20, "uw_2061" );
+			
+			//ライフ
+			fillRect( 0,41, width,3, 0xffaa0000 );
+			fillRect( 0,41, width*viewhp,3, 0xff00f68c );
+			
+			fillRect( 1,  50, 5,8, 0xfffe0000 );
+			fillRect( 36, 50, 5,8, 0xffffbb02 );
+			fillRect( 71, 50, 5,8, 0xff02fec1 );
+			fillRect( 106,50, 5,8, 0xff00aefd );
+			
+			drawText4( 0,  5, "%s".sprintf(ch.uniqueName),0xffbb02, 114 );
+			//drawText4( 103,  2, "Lv%3d".sprintf(ch.level),, 112 );
+			
+			var fn= _getLiteralf( _CHAR_DATA_TYPE, ch.type, 1 );
+			if(fn!==void) drawImageFile( 0,21, fn[2]);
+			
+			drawText4( 23,  22, "%4d".sprintf(ch.HP.now),, 216 );
+			
+			var stat= [ 0, 0, 0, 0 ];
+			
+			stat[0]= ch.pow+ch.revise.pow+ch.equipedADD.pow;
+			stat[1]= ch.def+ch.revise.def+ch.equipedADD.def;
+			stat[2]= ch.spd+ch.revise.spd+ch.equipedADD.spd;
+			stat[3]= ch.mor+ch.revise.mor+ch.equipedADD.mor;
+			
+			stat[0]= calc.StatusCalc( stat[0], ch.experience );
+			stat[1]= calc.StatusCalc( stat[1], ch.experience );
+			stat[2]= calc.StatusCalc( stat[2], ch.experience );
+			stat[3]= calc.StatusCalc( stat[3], ch.experience, 'mor' );
+			
+			drawText4( 7,   48, "%3d".sprintf(stat[0]),0xfe0000, 114 );
+			drawText4( 42,  48, "%3d".sprintf(stat[1]),0xffbb02, 114 );
+			drawText4( 77,  48, "%3d".sprintf(stat[2]),0x02fec1, 114 );
+			drawText4( 112, 48, "%3d".sprintf(stat[3]),0x00aefd, 114 );
+		
+		} else visible= false;
+	}
+}

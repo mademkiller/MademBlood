@@ -1,0 +1,86 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	SpriteBase3D
+//
+/////////////////////////////////////////////////////////////////////////
+// 3次元表示用
+class SpriteBase3D2
+{
+	var trans= []; // 座標
+	var transOrig= []; // 元座標
+	var drawTrans= []; // 描画時座標
+	
+	var world3d= void;
+	
+	// コンストラクタ
+	function SpriteBase3D2( n_=2, w_ )
+	{
+		world3d= w_;
+		
+		for( var i=0; i<n_; i++){
+//			trans[i]= new Vector3D();
+//			transOrig[i]= new Vector3D();
+//			drawTrans[i]= new Vector3D();
+			trans[i]=  %[ x:0, y:0, z:0 ];
+			transOrig[i]=  %[ x:0, y:0, z:0 ];
+			drawTrans[i]=  %[ x:0, y:0, z:0 ];
+		}
+	}
+	// デストラクタ
+	function finalize(){
+		for( var i=0; i<trans.count; i++){
+			invalidate trans[i];
+			invalidate transOrig[i];
+			invalidate drawTrans[i];
+		}
+		invalidate trans;
+		invalidate transOrig;
+		invalidate drawTrans;
+	}
+	
+	// 原点、現在座標の設定
+	function setPosSet( p_ ){
+		var ii= 0;
+		for( var i=0; i<trans.count; i++){
+//			transOrig[i].set( p_[ii], p_[ii+1], p_[ii+2] );
+//			trans[i].set( transOrig[i].x, transOrig[i].y, transOrig[i].z );
+			
+			transOrig[i].x= p_[ii];
+			transOrig[i].y= p_[ii+1];
+			transOrig[i].z= p_[ii+2];
+			trans[i].x= transOrig[i].x;
+			trans[i].y= transOrig[i].y;
+			trans[i].z= transOrig[i].z;
+			
+			ii+=3;
+		}
+	}
+	
+	// 原点からの移動量
+	function setPosSetEx( x=0, y=0, z=0 ){
+		var ii= 0;
+		for( var i=0; i<trans.count; i++){
+			trans[i].x= x+transOrig[i].x;
+			trans[i].y= y+transOrig[i].y;
+			trans[i].z= z+transOrig[i].z;
+			ii+=3;
+		}
+	}
+	
+	// 2次元座標出力
+	function getViewPos(){
+		var rx= drawTrans[0].x;
+		var ry= drawTrans[0].y;
+		var rw= Math.abs(drawTrans[1].x-drawTrans[0].x);
+		var rh= Math.abs(drawTrans[1].y-drawTrans[0].y);
+		return %[ x:rx, y:ry, w:rw, h:rh ];
+	}
+	
+	// 2次元座標出力
+	function setViewEnabled(v_=0){
+		var ret= false;
+		if( drawTrans[0].x>-v_ && drawTrans[0].x<v_+v_+world3d.width &&
+		    drawTrans[0].y>-v_ && drawTrans[0].y<v_+v_+world3d.height ) ret= true;
+		return ret;
+	}
+}

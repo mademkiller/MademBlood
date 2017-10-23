@@ -1,0 +1,2546 @@
+//=============================
+//■バトルシーン用各種関数
+//=============================
+// battleFuncsからアクセス
+//kag.fore.message[n].font.mapPrerenderedFont( "uppg12.tft" );
+
+global.battleFuncsView= new Tbattlefunctions();
+
+//バトル用関数群
+class Tbattlefunctions
+{
+	//コンストラクタ
+	function Tbattlefunctions(){
+	}
+	
+	//finalize
+	function finalize(){
+		invalidate unitDataWindowFace;
+		invalidate unitDataWindowtype;
+		invalidate gaugeHpBarBase;
+		invalidate moonPanel;
+		invalidate numImage;
+		invalidate gaugeImage;
+		invalidate panelImage;
+		invalidate unitImage;
+		invalidate unitImageR;
+		invalidate unitImageL;
+		invalidate unitImageRTmp;
+		invalidate unitImageLTmp;
+		invalidate Images;
+		invalidate txtLayer;
+		invalidate txtLayerBack;
+	}
+
+	//隊列ユニット画像表示
+	function unitImageDraw(){
+		var unitImageR = new Array();
+		var unitImageL = new Array();
+		var abnormalR  = new Array();
+		var abnormalL  = new Array();
+
+		var  newWidthR = new Array();
+		var  newWidthL = new Array();
+		var newHeightR = new Array();
+		var newHeightL = new Array();
+		//表示座標設定
+		//標準: 560* 454
+		//横長: 800* 454
+		//最大:1200*1000
+		var x = %['R' => [405, 458, 517, 582, 635, 694],
+				  'L' => [223, 156,  84,  46, -20, -96],
+				  'reviseR' => [ 0, 0, 0, 0, 0, 0],	//補正座標
+				  'reviseL' => [ 0, 0, 0, 0, 0, 0]];//補正座標
+		var y = %['R' => [-22,  95, 234, -22,  95, 234],
+				  'L' => [-22,  95, 234, -22,  95, 234],
+				  'reviseR' => [ 0, 0, 0, 0, 0, 0],	//補正座標
+				  'reviseL' => [ 0, 0, 0, 0, 0, 0]];//補正座標
+		for(var i=0;i<6;i++){
+			//右側
+			if(tf.rightParty[i].id != 0){
+dm("R["+i+"].id="+tf.rightParty[i].id);
+				var unitImageRTmp = new Layer(kag, kag.fore.base);
+					unitImageRTmp.loadImages("bf_"+tf.rightParty[i].id.substring(1,4));
+					unitImageRTmp.setSizeToImageSize();
+					//ユニット別補正座標値
+					if(unitImageRTmp.imageWidth == 800){x.reviseR[i] = 75;y.reviseR[i] =   0;}
+					if(unitImageRTmp.imageWidth ==1200){x.reviseR[i] =192;y.reviseR[i] = -90;}
+dm("R.座標補正:"+x.reviseR[i]);
+				//縮小
+				if(i==0 || i==3){newWidthR[i] = int(unitImageRTmp.imageWidth * 0.55);newHeightR[i] = int(unitImageRTmp.imageHeight * 0.55);}//55%
+				if(i==1 || i==4){newWidthR[i] = int(unitImageRTmp.imageWidth *0.575);newHeightR[i] = int(unitImageRTmp.imageHeight *0.575);}//57.5%
+				if(i==2 || i==5){newWidthR[i] = int(unitImageRTmp.imageWidth * 0.6) ;newHeightR[i] = int(unitImageRTmp.imageHeight * 0.6);}	//60%
+				unitImageR[i] = new Layer(kag, kag.fore.base);
+				unitImageR[i].setImageSize(newWidthR[i], newHeightR[i]);
+				unitImageR[i].stretchCopy(0, 0, newWidthR[i], newHeightR[i], unitImageRTmp, 0, 0, unitImageRTmp.imageWidth, unitImageRTmp.imageHeight, stLinear);
+				//状態異常ガンマ補正
+				     if(tf.rightParty[i].poison      > 0){unitImageR[i].adjustGamma(2.0,  64, 255, 1.0,   0, 255, 2.0,  64, 255);dm("["+i+"]毒:"+tf.rightParty[i].poison);}
+				else if(tf.rightParty[i].curse       > 0){unitImageR[i].adjustGamma(1.5, 255,   0, 1.5, 255,   0, 1.5, 255,   0);dm("["+i+"]呪:"+tf.rightParty[i].curse);}
+				else if(tf.rightParty[i].seal        > 0){unitImageR[i].adjustGamma(2.0,   0, 255, 2.0,   0, 255, 2.0,   0, 255);dm("["+i+"]封:"+tf.rightParty[i].seal);}
+				else if(tf.rightParty[i].cutDown.mor > 0){unitImageR[i].adjustGamma(1.0,   0, 255, 1.0,   0, 255, 3.0,   0, 255);dm("["+i+"]士:"+tf.rightParty[i].cutDown.mor);}
+				else if(tf.rightParty[i].cutDown.spd > 0){unitImageR[i].adjustGamma(1.5,   0, 255, 1.5,   0, 255, 1.0,   0, 255);dm("["+i+"]速:"+tf.rightParty[i].cutDown.spd);}
+				else if(tf.rightParty[i].cutDown.def > 0){unitImageR[i].adjustGamma(1.0,   0, 255, 2.5,   0, 255, 1.0,   0, 255);dm("["+i+"]防:"+tf.rightParty[i].cutDown.def);}
+				else if(tf.rightParty[i].cutDown.pow > 0){unitImageR[i].adjustGamma(3.0,   0, 255, 1.0,   0, 255, 1.0,   0, 255);dm("["+i+"]攻:"+tf.rightParty[i].cutDown.pow);}
+				//状態異常マーク
+				var abnormalIcon2 = new Layer(kag, kag.fore.base);
+					abnormalIcon2.setImageSize(newWidthR[i], newHeightR[i]);
+				if(tf.rightParty[i].seal      > 0){
+					unitImageRTmp.loadImages("abnormalIcon_seal");
+					abnormalIcon2.stretchCopy(0, 0, newWidthR[i], newHeightR[i], unitImageRTmp, 0, 0, unitImageRTmp.imageWidth, unitImageRTmp.imageHeight, stLinear);
+				}
+				var abnormalIcon3 = new Layer(kag, kag.fore.base);
+					abnormalIcon3.setImageSize(newWidthR[i], newHeightR[i]);
+				if(tf.rightParty[i].poison      > 0){
+					unitImageRTmp.loadImages("abnormalIcon_poison");
+					abnormalIcon3.stretchCopy(0, 0, newWidthR[i], newHeightR[i], unitImageRTmp, 0, 0, unitImageRTmp.imageWidth, unitImageRTmp.imageHeight, stLinear);
+				}
+				var abnormalIcon4 = new Layer(kag, kag.fore.base);
+					abnormalIcon4.setImageSize(newWidthR[i], newHeightR[i]);
+				if(tf.rightParty[i].curse       > 0){
+					unitImageRTmp.loadImages("abnormalIcon_curse");
+					abnormalIcon4.stretchCopy(0, 0, newWidthR[i], newHeightR[i], unitImageRTmp, 0, 0, unitImageRTmp.imageWidth, unitImageRTmp.imageHeight, stLinear);
+				}
+				var abnormalIcon5 = new Layer(kag, kag.fore.base);
+					abnormalIcon5.setImageSize(newWidthR[i], newHeightR[i]);
+				if(tf.rightParty[i].seal        > 0){
+					unitImageRTmp.loadImages("abnormalIcon_seal");
+					abnormalIcon5.stretchCopy(0, 0, newWidthR[i], newHeightR[i], unitImageRTmp, 0, 0, unitImageRTmp.imageWidth, unitImageRTmp.imageHeight, stLinear);
+				}
+
+				abnormalR[i] = new Layer(kag, kag.fore.base);
+dm("R["+i+"]W="+newWidthR[i]+"/H="+newHeightR[i]);
+				abnormalR[i].setImageSize(newWidthR[i], newHeightR[i]);
+				abnormalR[i].operateRect(0, 0, abnormalIcon2, 0, 0, newWidthR[i], newHeightR[i]);
+				abnormalR[i].operateRect(0, 0, abnormalIcon3, 0, 0, newWidthR[i], newHeightR[i]);
+				abnormalR[i].operateRect(0, 0, abnormalIcon4, 0, 0, newWidthR[i], newHeightR[i]);
+				abnormalR[i].operateRect(0, 0, abnormalIcon5, 0, 0, newWidthR[i], newHeightR[i]);
+dm("Ra.w"+abnormalR[i].imageWidth+":Ra.h"+abnormalR[i].imageHeight);
+			}
+			//左側
+			if(tf.leftParty[i].id != 0){
+dm("L["+i+"].id="+tf.leftParty[i].id);
+				var unitImageLTmp = new Layer(kag, kag.fore.base);
+					unitImageLTmp.loadImages("bf_"+tf.leftParty[i].id.substring(1,4));
+					unitImageLTmp.setSizeToImageSize();
+					//ユニット別補正座標値
+					if(unitImageLTmp.imageWidth == 800){
+					x.reviseL[i] = -75;y.reviseL[i] =   0;
+					if(tf.leftParty[i].id == 'm1700'){x.reviseL[i] = -175;y.reviseL[i] =   0;}
+					if(tf.leftParty[i].id == 'm1701'){x.reviseL[i] = -175;y.reviseL[i] =   0;}
+					if(tf.leftParty[i].id == 'm1703'){x.reviseL[i] = -175;y.reviseL[i] =   0;}
+
+					}
+					if(unitImageLTmp.imageWidth ==1200){x.reviseL[i] =-192;y.reviseL[i] = -90;}
+dm("L.座標補正:"+x.reviseL[i]);
+				//縮小
+				if(i==0 || i==3){newWidthL[i] = int(unitImageLTmp.imageWidth * 0.55);newHeightL[i] = int(unitImageLTmp.imageHeight * 0.55);}//55%
+				if(i==1 || i==4){newWidthL[i] = int(unitImageLTmp.imageWidth *0.575);newHeightL[i] = int(unitImageLTmp.imageHeight *0.575);}//57.5%
+				if(i==2 || i==5){newWidthL[i] = int(unitImageLTmp.imageWidth * 0.6);newHeightL[i] = int(unitImageLTmp.imageHeight * 0.6);}	//60%
+				unitImageL[i] = new Layer(kag, kag.fore.base);
+				unitImageL[i].setImageSize(newWidthL[i], newHeightL[i]);
+				unitImageL[i].stretchCopy(0, 0, newWidthL[i], newHeightL[i], unitImageLTmp, 0, 0, unitImageLTmp.imageWidth, unitImageLTmp.imageHeight, stLinear);
+				unitImageL[i].flipLR();//左側は反転
+				//状態異常ガンマ補正
+				     if(tf.leftParty[i].poison      > 0){unitImageL[i].adjustGamma(2.0,  64, 255, 1.0,   0, 255, 2.0,  64, 255);dm("["+i+"]毒:"+tf.leftParty[i].poison);}
+				else if(tf.leftParty[i].curse       > 0){unitImageL[i].adjustGamma(1.5, 255,   0, 1.5, 255,   0, 1.5, 255,   0);dm("["+i+"]呪:"+tf.leftParty[i].curse);}
+				else if(tf.leftParty[i].seal        > 0){unitImageL[i].adjustGamma(2.0,   0, 255, 2.0,   0, 255, 2.0,   0, 255);dm("["+i+"]封:"+tf.leftParty[i].seal);}
+				else if(tf.leftParty[i].cutDown.mor > 0){unitImageL[i].adjustGamma(1.0,   0, 255, 1.0,   0, 255, 3.0,   0, 255);dm("["+i+"]士:"+tf.leftParty[i].cutDown.mor);}
+				else if(tf.leftParty[i].cutDown.spd > 0){unitImageL[i].adjustGamma(1.5,   0, 255, 1.5,   0, 255, 1.0,   0, 255);dm("["+i+"]速:"+tf.leftParty[i].cutDown.spd);}
+				else if(tf.leftParty[i].cutDown.def > 0){unitImageL[i].adjustGamma(1.0,   0, 255, 2.5,   0, 255, 1.0,   0, 255);dm("["+i+"]防:"+tf.leftParty[i].cutDown.def);}
+				else if(tf.leftParty[i].cutDown.pow > 0){unitImageL[i].adjustGamma(3.0,   0, 255, 1.0,   0, 255, 1.0,   0, 255);dm("["+i+"]攻:"+tf.leftParty[i].cutDown.pow);}
+				//状態異常マーク
+				var abnormalIcon2 = new Layer(kag, kag.fore.base);
+					abnormalIcon2.setImageSize(newWidthL[i], newHeightL[i]);
+				if(tf.leftParty[i].seal      > 0){
+					unitImageLTmp.loadImages("abnormalIcon_seal");
+					abnormalIcon2.stretchCopy(0, 0, newWidthL[i], newHeightL[i], unitImageLTmp, 0, 0, unitImageLTmp.imageWidth, unitImageLTmp.imageHeight, stLinear);
+				}
+				var abnormalIcon3 = new Layer(kag, kag.fore.base);
+					abnormalIcon3.setImageSize(newWidthL[i], newHeightL[i]);
+				if(tf.leftParty[i].poison      > 0){
+					unitImageLTmp.loadImages("abnormalIcon_poison");
+					abnormalIcon3.stretchCopy(0, 0, newWidthL[i], newHeightL[i], unitImageLTmp, 0, 0, unitImageLTmp.imageWidth, unitImageLTmp.imageHeight, stLinear);
+				}
+				var abnormalIcon4 = new Layer(kag, kag.fore.base);
+					abnormalIcon4.setImageSize(newWidthL[i], newHeightL[i]);
+				if(tf.leftParty[i].curse       > 0){
+					unitImageLTmp.loadImages("abnormalIcon_curse");
+					abnormalIcon4.stretchCopy(0, 0, newWidthL[i], newHeightL[i], unitImageLTmp, 0, 0, unitImageLTmp.imageWidth, unitImageLTmp.imageHeight, stLinear);
+				}
+				var abnormalIcon5 = new Layer(kag, kag.fore.base);
+					abnormalIcon5.setImageSize(newWidthL[i], newHeightL[i]);
+				if(tf.leftParty[i].seal        > 0){
+					unitImageLTmp.loadImages("abnormalIcon_seal");
+					abnormalIcon5.stretchCopy(0, 0, newWidthL[i], newHeightL[i], unitImageLTmp, 0, 0, unitImageLTmp.imageWidth, unitImageLTmp.imageHeight, stLinear);
+				}
+
+				abnormalL[i] = new Layer(kag, kag.fore.base);
+dm("L["+i+"]W="+newWidthL[i]+"/H="+newHeightL[i]);
+				abnormalL[i].setImageSize(newWidthL[i], newHeightL[i]);
+				abnormalL[i].operateRect(0, 0, abnormalIcon2, 0, 0, newWidthL[i], newHeightL[i]);
+				abnormalL[i].operateRect(0, 0, abnormalIcon3, 0, 0, newWidthL[i], newHeightL[i]);
+				abnormalL[i].operateRect(0, 0, abnormalIcon4, 0, 0, newWidthL[i], newHeightL[i]);
+				abnormalL[i].operateRect(0, 0, abnormalIcon5, 0, 0, newWidthL[i], newHeightL[i]);
+				abnormalL[i].flipLR();//左側は反転
+dm("La.w"+abnormalL[i].imageWidth+":La.h"+abnormalL[i].imageHeight);
+			}
+		}
+		//レイヤー貼付（右）
+		if((tf.rightParty[3].id != void) && (tf.rightParty[3].HP.now > 0)){
+			unitImageRight.operateRect(x.R[3]+x.reviseR[3], y.R[3]+y.reviseR[3], unitImageR[3], 0, 0, newWidthR[3], newHeightR[3]);
+			unitImageRight.operateRect(x.R[3]+x.reviseR[3], y.R[3]+y.reviseR[3],  abnormalR[3], 0, 0, newWidthR[3], newHeightR[3]);
+		}
+		if((tf.rightParty[0].id != void) && (tf.rightParty[0].HP.now > 0)){
+			unitImageRight.operateRect(x.R[0]+x.reviseR[0], y.R[0]+y.reviseR[0], unitImageR[0], 0, 0, newWidthR[0], newHeightR[0]);
+			unitImageRight.operateRect(x.R[0]+x.reviseR[0], y.R[0]+y.reviseR[0],  abnormalR[0], 0, 0, newWidthR[0], newHeightR[0]);
+		}
+		if((tf.rightParty[4].id != void) && (tf.rightParty[4].HP.now > 0)){
+			unitImageRight.operateRect(x.R[4]+x.reviseR[4], y.R[4]+y.reviseR[4], unitImageR[4], 0, 0, newWidthR[4], newHeightR[4]);
+			unitImageRight.operateRect(x.R[4]+x.reviseR[4], y.R[4]+y.reviseR[4],  abnormalR[4], 0, 0, newWidthR[4], newHeightR[4]);
+		}
+		if((tf.rightParty[1].id != void) && (tf.rightParty[1].HP.now > 0)){
+			unitImageRight.operateRect(x.R[1]+x.reviseR[1], y.R[1]+y.reviseR[1], unitImageR[1], 0, 0, newWidthR[1], newHeightR[1]);
+			unitImageRight.operateRect(x.R[1]+x.reviseR[1], y.R[1]+y.reviseR[1],  abnormalR[1], 0, 0, newWidthR[1], newHeightR[1]);
+		}
+		if((tf.rightParty[5].id != void) && (tf.rightParty[5].HP.now > 0)){
+			unitImageRight.operateRect(x.R[5]+x.reviseR[5], y.R[5]+y.reviseR[5], unitImageR[5], 0, 0, newWidthR[5], newHeightR[5]);
+			unitImageRight.operateRect(x.R[5]+x.reviseR[5], y.R[5]+y.reviseR[5],  abnormalR[5], 0, 0, newWidthR[5], newHeightR[5]);
+		}
+		if((tf.rightParty[2].id != void) && (tf.rightParty[2].HP.now > 0)){
+			unitImageRight.operateRect(x.R[2]+x.reviseR[2], y.R[2]+y.reviseR[2], unitImageR[2], 0, 0, newWidthR[2], newHeightR[2]);
+			unitImageRight.operateRect(x.R[2]+x.reviseR[2], y.R[2]+y.reviseR[2],  abnormalR[2], 0, 0, newWidthR[2], newHeightR[2]);
+		}
+
+		//レイヤー貼付（左）
+		if((tf.leftParty[3].id != void)  &&  (tf.leftParty[3].HP.now > 0)){
+			unitImageLeft.operateRect(x.L[3]+x.reviseL[3], y.L[3]+y.reviseL[3], unitImageL[3], 0, 0, newWidthL[3], newHeightL[3]);
+			unitImageLeft.operateRect(x.L[3]+x.reviseL[3], y.L[3]+y.reviseL[3],  abnormalL[3], 0, 0, newWidthL[3], newHeightL[3]);
+		}
+		if((tf.leftParty[0].id != void)  &&  (tf.leftParty[0].HP.now > 0)){
+			unitImageLeft.operateRect(x.L[0]+x.reviseL[0], y.L[0]+y.reviseL[0], unitImageL[0], 0, 0, newWidthL[0], newHeightL[0]);
+			unitImageLeft.operateRect(x.L[0]+x.reviseL[0], y.L[0]+y.reviseL[0],  abnormalL[0], 0, 0, newWidthL[0], newHeightL[0]);
+		}
+		if((tf.leftParty[4].id != void)  &&  (tf.leftParty[4].HP.now > 0)){
+			unitImageLeft.operateRect(x.L[4]+x.reviseL[4], y.L[4]+y.reviseL[4], unitImageL[4], 0, 0, newWidthL[4], newHeightL[4]);
+			unitImageLeft.operateRect(x.L[4]+x.reviseL[4], y.L[4]+y.reviseL[4],  abnormalL[4], 0, 0, newWidthL[4], newHeightL[4]);
+		}
+		if((tf.leftParty[1].id != void)  &&  (tf.leftParty[1].HP.now > 0)){
+			unitImageLeft.operateRect(x.L[1]+x.reviseL[1], y.L[1]+y.reviseL[1], unitImageL[1], 0, 0, newWidthL[1], newHeightL[1]);
+			unitImageLeft.operateRect(x.L[1]+x.reviseL[1], y.L[1]+y.reviseL[1],  abnormalL[1], 0, 0, newWidthL[1], newHeightL[1]);
+		}
+		if((tf.leftParty[5].id != void)  &&  (tf.leftParty[5].HP.now > 0)){
+			unitImageLeft.operateRect(x.L[5]+x.reviseL[5], y.L[5]+y.reviseL[5], unitImageL[5], 0, 0, newWidthL[5], newHeightL[5]);
+			unitImageLeft.operateRect(x.L[5]+x.reviseL[5], y.L[5]+y.reviseL[5],  abnormalL[5], 0, 0, newWidthL[5], newHeightL[5]);
+		}
+		if((tf.leftParty[2].id != void)  &&  (tf.leftParty[2].HP.now > 0)){
+			unitImageLeft.operateRect(x.L[2]+x.reviseL[2], y.L[2]+y.reviseL[2], unitImageL[2], 0, 0, newWidthL[2], newHeightL[2]);
+			unitImageLeft.operateRect(x.L[2]+x.reviseL[2], y.L[2]+y.reviseL[2],  abnormalL[2], 0, 0, newWidthL[2], newHeightL[2]);
+		}
+	}
+
+	//ユニットステータスウインドウ描画
+	function unitStatusWindowDraw(){
+		for(var i=0;i<6;i++){
+			tf.rightParty[i].revise = %[pow:0, def:0, spd:0, mor:0];
+			tf.leftParty[i].revise  = %[pow:0, def:0, spd:0, mor:0];
+//dm("tf.rightParty["+i+"].revise:[pow:"+tf.rightParty[i].revise.pow+"]/[def:"+tf.rightParty[i].revise.def+"]/[spd:"+tf.rightParty[i].revise.spd+"]/[mor:"+tf.rightParty[i].revise.mor+"]");
+//dm(" tf.leftParty["+i+"].revise:[pow:"+ tf.leftParty[i].revise.pow+"]/[def:"+ tf.leftParty[i].revise.def+"]/[spd:"+ tf.leftParty[i].revise.spd+"]/[mor:"+ tf.leftParty[i].revise.mor+"]");
+			//加護補正
+			if(tf.rightParty[i].divine == '火'){if(tf.day_moon == 0){divineReviseUP(i,'right');dm("R.加算火");}if(tf.day_moon == 1){divineReviseDown(i,'right');dm("R.減算水");}}
+			if(tf.rightParty[i].divine == '氷'){if(tf.day_moon == 1){divineReviseUP(i,'right');dm("R.加算水");}if(tf.day_moon == 0){divineReviseDown(i,'right');dm("R.減算火");}}
+			if(tf.rightParty[i].divine == '風'){if(tf.day_moon == 2){divineReviseUP(i,'right');dm("R.加算風");}if(tf.day_moon == 3){divineReviseDown(i,'right');dm("R.減算土");}}
+			if(tf.rightParty[i].divine == '土'){if(tf.day_moon == 3){divineReviseUP(i,'right');dm("R.加算土");}if(tf.day_moon == 2){divineReviseDown(i,'right');dm("R.減算風");}}
+			if(tf.rightParty[i].divine == '雷'){if(tf.day_moon == 4){divineReviseUP(i,'right');dm("R.加算雷");}if(tf.day_moon == 5){divineReviseDown(i,'right');dm("R.減算水");}}
+			if(tf.rightParty[i].divine == '水'){if(tf.day_moon == 5){divineReviseUP(i,'right');dm("R.加算水");}if(tf.day_moon == 4){divineReviseDown(i,'right');dm("R.減算雷");}}
+			if(tf.rightParty[i].divine == '光'){if(tf.day_moon == 6){divineReviseUP(i,'right');dm("R.加算光");}if(tf.day_moon == 7){divineReviseDown(i,'right');dm("R.減算闇");}}
+			if(tf.rightParty[i].divine == '闇'){if(tf.day_moon == 7){divineReviseUP(i,'right');dm("R.加算闇");}if(tf.day_moon == 6){divineReviseDown(i,'right');dm("R.減算光");}}
+
+			if(tf.leftParty[i].divine == '火'){if(tf.day_moon == 0){divineReviseUP(i,'left');dm("L.加算火");}if(tf.day_moon == 1){divineReviseDown(i,'left');dm("L.減算水");}}
+			if(tf.leftParty[i].divine == '氷'){if(tf.day_moon == 1){divineReviseUP(i,'left');dm("L.加算水");}if(tf.day_moon == 0){divineReviseDown(i,'left');dm("L.減算火");}}
+			if(tf.leftParty[i].divine == '風'){if(tf.day_moon == 2){divineReviseUP(i,'left');dm("L.加算風");}if(tf.day_moon == 3){divineReviseDown(i,'left');dm("L.減算土");}}
+			if(tf.leftParty[i].divine == '土'){if(tf.day_moon == 3){divineReviseUP(i,'left');dm("L.加算土");}if(tf.day_moon == 2){divineReviseDown(i,'left');dm("L.減算風");}}
+			if(tf.leftParty[i].divine == '雷'){if(tf.day_moon == 4){divineReviseUP(i,'left');dm("L.加算雷");}if(tf.day_moon == 5){divineReviseDown(i,'left');dm("L.減算水");}}
+			if(tf.leftParty[i].divine == '水'){if(tf.day_moon == 5){divineReviseUP(i,'left');dm("L.加算水");}if(tf.day_moon == 4){divineReviseDown(i,'left');dm("L.減算雷");}}
+			if(tf.leftParty[i].divine == '光'){if(tf.day_moon == 6){divineReviseUP(i,'left');dm("L.加算光");}if(tf.day_moon == 7){divineReviseDown(i,'left');dm("L.減算闇");}}
+			if(tf.leftParty[i].divine == '闇'){if(tf.day_moon == 7){divineReviseUP(i,'left');dm("L.加算闇");}if(tf.day_moon == 6){divineReviseDown(i,'left');dm("L.減算光");}}
+		}
+		turnStartSkillCheck();		//ターン開始スキルチェック
+
+		//戦術スキル補正
+		while(tf.tacticsSkillCountR.count > 10){tf.tacticsSkillCountR.shift();}//古い方から順に削除
+		while(tf.tacticsSkillCountL.count > 10){tf.tacticsSkillCountL.shift();}//古い方から順に削除
+		//ｽﾃ関係の重ね掛け（相殺して削除[右]）
+		for(var i=0;i<tf.tacticsSkillCountR.count-1;i++){
+			for(var k=1;k<tf.tacticsSkillCountR.count;k++){
+				if(tf.tacticsSkillCountR[i].substring(0,1) == tf.tacticsSkillCountR[k].substring(0,1)){
+					if(tf.tacticsSkillCountR[i] == '攻U' && tf.tacticsSkillCountR[k] == '攻D'){
+						     if(tf.PowUpR   > tf.PowDownR){tf.PowUpR   -= tf.PowDownR;tf.tacticsSkillCountR[k] = '';}
+						else if(tf.PowDownR > tf.PowUpR  ){tf.PowDownR -= tf.PowUpR;  tf.tacticsSkillCountR[i] = '';}
+						else{tf.PowDownR=0;tf.PowUpR=0;tf.tacticsSkillCountR[i] = '';tf.tacticsSkillCountR[k] = '';}
+					}
+					if(tf.tacticsSkillCountR[i] == '防U' && tf.tacticsSkillCountR[k] == '防D'){
+						     if(tf.DefUpR   > tf.DefDownR){tf.DefUpR   -= tf.DefDownR;tf.tacticsSkillCountR[k] = '';}
+						else if(tf.DefDownR > tf.DefUpR  ){tf.DefDownR -= tf.DefUpR;  tf.tacticsSkillCountR[i] = '';}
+						else{tf.DefDownR=0;tf.DefUpR=0;tf.tacticsSkillCountR[i] = '';tf.tacticsSkillCountR[k] = '';}
+					}
+					if(tf.tacticsSkillCountR[i] == '速U' && tf.tacticsSkillCountR[k] == '速D'){
+						     if(tf.SpdUpR   > tf.SpdDownR){tf.SpdUpR   -= tf.SpdDownR;tf.tacticsSkillCountR[k] = '';}
+						else if(tf.SpdDownR > tf.SpdUpR  ){tf.SpdDownR -= tf.SpdUpR;  tf.tacticsSkillCountR[i] = '';}
+						else{tf.SpdDownR=0;tf.SpdUpR=0;tf.tacticsSkillCountR[i] = '';tf.tacticsSkillCountR[k] = '';}
+					}
+					if(tf.tacticsSkillCountR[i] == '士U' && tf.tacticsSkillCountR[k] == '士D'){
+						     if(tf.MorUpR   > tf.MorDownR){tf.MorUpR   -= tf.MorDownR;tf.tacticsSkillCountR[k] = '';}
+						else if(tf.MorDownR > tf.MorUpR  ){tf.MorDownR -= tf.MorUpR;  tf.tacticsSkillCountR[i] = '';}
+						else{tf.MorDownR=0;tf.MorUpR=0;tf.tacticsSkillCountR[i] = '';tf.tacticsSkillCountR[k] = '';}
+					}
+
+					if(tf.tacticsSkillCountR[i] == '攻D' && tf.tacticsSkillCountR[k] == '攻U'){
+						     if(tf.PowUpR   > tf.PowDownR){tf.PowUpR   -= tf.PowDownR;tf.tacticsSkillCountR[i] = '';}
+						else if(tf.PowDownR > tf.PowUpR  ){tf.PowDownR -= tf.PowUpR;  tf.tacticsSkillCountR[k] = '';}
+						else{tf.PowDownR=0;tf.PowUpR=0;tf.tacticsSkillCountR[i] = '';tf.tacticsSkillCountR[k] = '';}
+					}
+					if(tf.tacticsSkillCountR[i] == '防D' && tf.tacticsSkillCountR[k] == '防U'){
+						     if(tf.DefUpR   > tf.DefDownR){tf.DefUpR   -= tf.DefDownR;tf.tacticsSkillCountR[i] = '';}
+						else if(tf.DefDownR > tf.DefUpR  ){tf.DefDownR -= tf.DefUpR;  tf.tacticsSkillCountR[k] = '';}
+						else{tf.DefDownR=0;tf.DefUpR=0;tf.tacticsSkillCountR[i] = '';tf.tacticsSkillCountR[k] = '';}
+					}
+					if(tf.tacticsSkillCountR[i] == '速D' && tf.tacticsSkillCountR[k] == '速U'){
+						     if(tf.SpdUpR   > tf.SpdDownR){tf.SpdUpR   -= tf.SpdDownR;tf.tacticsSkillCountR[i] = '';}
+						else if(tf.SpdDownR > tf.SpdUpR  ){tf.SpdDownR -= tf.SpdUpR;  tf.tacticsSkillCountR[k] = '';}
+						else{tf.SpdDownR=0;tf.SpdUpR=0;tf.tacticsSkillCountR[i] = '';tf.tacticsSkillCountR[k] = '';}
+					}
+					if(tf.tacticsSkillCountR[i] == '士D' && tf.tacticsSkillCountR[k] == '士U'){
+						     if(tf.MorUpR   > tf.MorDownR){tf.MorUpR   -= tf.MorDownR;tf.tacticsSkillCountR[i] = '';}
+						else if(tf.MorDownR > tf.MorUpR  ){tf.MorDownR -= tf.MorUpR;  tf.tacticsSkillCountR[k] = '';}
+						else{tf.MorDownR=0;tf.MorUpR=0;tf.tacticsSkillCountR[i] = '';tf.tacticsSkillCountR[k] = '';}
+					}
+				}
+			}
+		}
+		//ｽﾃ関係の重ね掛け（上書して削除[右]）
+		for(var i=0;i<tf.tacticsSkillCountR.count-1;i++){
+			for(var k=1;k<tf.tacticsSkillCountR.count;k++){
+dm(i+":"+tf.tacticsSkillCountR[i]+"/"+k+":"+tf.tacticsSkillCountR[k]);
+				if(tf.tacticsSkillCountR[i].substring(0,1) == tf.tacticsSkillCountR[k].substring(0,1)){
+					if(tf.tacticsSkillCountR[i] == '攻U' && tf.tacticsSkillCountR[k] == '攻U' && i != k){tf.tacticsSkillCountR[i] = '';}
+					if(tf.tacticsSkillCountR[i] == '防U' && tf.tacticsSkillCountR[k] == '防U' && i != k){tf.tacticsSkillCountR[i] = '';}
+					if(tf.tacticsSkillCountR[i] == '速U' && tf.tacticsSkillCountR[k] == '速U' && i != k){tf.tacticsSkillCountR[i] = '';}
+					if(tf.tacticsSkillCountR[i] == '士U' && tf.tacticsSkillCountR[k] == '士U' && i != k){tf.tacticsSkillCountR[i] = '';}
+
+					if(tf.tacticsSkillCountR[i] == '攻D' && tf.tacticsSkillCountR[k] == '攻D' && i != k){tf.tacticsSkillCountR[i] = '';}
+					if(tf.tacticsSkillCountR[i] == '防D' && tf.tacticsSkillCountR[k] == '防D' && i != k){tf.tacticsSkillCountR[i] = '';}
+					if(tf.tacticsSkillCountR[i] == '速D' && tf.tacticsSkillCountR[k] == '速D' && i != k){tf.tacticsSkillCountR[i] = '';}
+					if(tf.tacticsSkillCountR[i] == '士D' && tf.tacticsSkillCountR[k] == '士D' && i != k){tf.tacticsSkillCountR[i] = '';}
+				}
+			}
+		}
+
+		//ｽﾃ関係の重ね掛け（相殺して削除[左]）
+		for(var i=0;i<tf.tacticsSkillCountL.count-1;i++){
+			for(var k=1;k<tf.tacticsSkillCountL.count;k++){
+				if(tf.tacticsSkillCountL[i].substring(0,1) == tf.tacticsSkillCountL[k].substring(0,1)){
+					if(tf.tacticsSkillCountL[i] == '攻U' && tf.tacticsSkillCountL[k] == '攻D'){
+						     if(tf.PowUpL   > tf.PowDownL){tf.PowUpL   -= tf.PowDownL;tf.tacticsSkillCountL[k] = '';}
+						else if(tf.PowDownL > tf.PowUpL  ){tf.PowDownL -= tf.PowUpL;  tf.tacticsSkillCountL[i] = '';}
+						else{tf.PowDownL=0;tf.PowUpL=0;tf.tacticsSkillCountL[i] = '';tf.tacticsSkillCountL[k] = '';}
+					}
+					if(tf.tacticsSkillCountL[i] == '防U' && tf.tacticsSkillCountL[k] == '防D'){
+						     if(tf.DefUpL   > tf.DefDownL){tf.DefUpL   -= tf.DefDownL;tf.tacticsSkillCountL[k] = '';}
+						else if(tf.DefDownL > tf.DefUpL  ){tf.DefDownL -= tf.DefUpL;  tf.tacticsSkillCountL[i] = '';}
+						else{tf.DefDownL=0;tf.DefUpL=0;tf.tacticsSkillCountL[i] = '';tf.tacticsSkillCountL[k] = '';}
+					}
+					if(tf.tacticsSkillCountL[i] == '速U' && tf.tacticsSkillCountL[k] == '速D'){
+						     if(tf.SpdUpL   > tf.SpdDownL){tf.SpdUpL   -= tf.SpdDownL;tf.tacticsSkillCountL[k] = '';}
+						else if(tf.SpdDownL > tf.SpdUpL  ){tf.SpdDownL -= tf.SpdUpL;  tf.tacticsSkillCountL[i] = '';}
+						else{tf.SpdDownL=0;tf.SpdUpL=0;tf.tacticsSkillCountL[i] = '';tf.tacticsSkillCountL[k] = '';}
+					}
+					if(tf.tacticsSkillCountL[i] == '士U' && tf.tacticsSkillCountL[k] == '士D'){
+						     if(tf.MorUpL   > tf.MorDownL){tf.MorUpL   -= tf.MorDownL;tf.tacticsSkillCountL[k] = '';}
+						else if(tf.MorDownL > tf.MorUpL  ){tf.MorDownL -= tf.MorUpL;  tf.tacticsSkillCountL[i] = '';}
+						else{tf.MorDownL=0;tf.MorUpL=0;tf.tacticsSkillCountL[i] = '';tf.tacticsSkillCountL[k] = '';}
+					}
+
+					if(tf.tacticsSkillCountL[i] == '攻D' && tf.tacticsSkillCountL[k] == '攻U'){
+						     if(tf.PowUpL   > tf.PowDownL){tf.PowUpL   -= tf.PowDownL;tf.tacticsSkillCountL[i] = '';}
+						else if(tf.PowDownL > tf.PowUpL  ){tf.PowDownL -= tf.PowUpL;  tf.tacticsSkillCountL[k] = '';}
+						else{tf.PowDownL=0;tf.PowUpL=0;tf.tacticsSkillCountL[i] = '';tf.tacticsSkillCountL[k] = '';}
+					}
+					if(tf.tacticsSkillCountL[i] == '防D' && tf.tacticsSkillCountL[k] == '防U'){
+						     if(tf.DefUpL   > tf.DefDownL){tf.DefUpL   -= tf.DefDownL;tf.tacticsSkillCountL[i] = '';}
+						else if(tf.DefDownL > tf.DefUpL  ){tf.DefDownL -= tf.DefUpL;  tf.tacticsSkillCountL[k] = '';}
+						else{tf.DefDownL=0;tf.DefUpL=0;tf.tacticsSkillCountL[i] = '';tf.tacticsSkillCountL[k] = '';}
+					}
+					if(tf.tacticsSkillCountL[i] == '速D' && tf.tacticsSkillCountL[k] == '速U'){
+						     if(tf.SpdUpL   > tf.SpdDownL){tf.SpdUpL   -= tf.SpdDownL;tf.tacticsSkillCountL[i] = '';}
+						else if(tf.SpdDownL > tf.SpdUpL  ){tf.SpdDownL -= tf.SpdUpL;  tf.tacticsSkillCountL[k] = '';}
+						else{tf.SpdDownL=0;tf.SpdUpL=0;tf.tacticsSkillCountL[i] = '';tf.tacticsSkillCountL[k] = '';}
+					}
+					if(tf.tacticsSkillCountL[i] == '士D' && tf.tacticsSkillCountL[k] == '士U'){
+						     if(tf.MorUpL   > tf.MorDownL){tf.MorUpL   -= tf.MorDownL;tf.tacticsSkillCountL[i] = '';}
+						else if(tf.MorDownL > tf.MorUpL  ){tf.MorDownL -= tf.MorUpL;  tf.tacticsSkillCountL[k] = '';}
+						else{tf.MorDownL=0;tf.MorUpL=0;tf.tacticsSkillCountL[i] = '';tf.tacticsSkillCountL[k] = '';}
+					}
+				}
+			}
+		}
+		//ｽﾃ関係の重ね掛け（上書して削除[左]）
+		for(var i=0;i<tf.tacticsSkillCountL.count-1;i++){
+			for(var k=1;k<tf.tacticsSkillCountL.count;k++){
+dm(i+":"+tf.tacticsSkillCountL[i]+"/"+k+":"+tf.tacticsSkillCountL[k]);
+				if(tf.tacticsSkillCountL[i].substring(0,1) == tf.tacticsSkillCountL[k].substring(0,1)){
+					if(tf.tacticsSkillCountL[i] == '攻U' && tf.tacticsSkillCountL[k] == '攻U' && i != k){tf.tacticsSkillCountL[i] = '';}
+					if(tf.tacticsSkillCountL[i] == '防U' && tf.tacticsSkillCountL[k] == '防U' && i != k){tf.tacticsSkillCountL[i] = '';}
+					if(tf.tacticsSkillCountL[i] == '速U' && tf.tacticsSkillCountL[k] == '速U' && i != k){tf.tacticsSkillCountL[i] = '';}
+					if(tf.tacticsSkillCountL[i] == '士U' && tf.tacticsSkillCountL[k] == '士U' && i != k){tf.tacticsSkillCountL[i] = '';}
+
+					if(tf.tacticsSkillCountL[i] == '攻D' && tf.tacticsSkillCountL[k] == '攻D' && i != k){tf.tacticsSkillCountL[i] = '';}
+					if(tf.tacticsSkillCountL[i] == '防D' && tf.tacticsSkillCountL[k] == '防D' && i != k){tf.tacticsSkillCountL[i] = '';}
+					if(tf.tacticsSkillCountL[i] == '速D' && tf.tacticsSkillCountL[k] == '速D' && i != k){tf.tacticsSkillCountL[i] = '';}
+					if(tf.tacticsSkillCountL[i] == '士D' && tf.tacticsSkillCountL[k] == '士D' && i != k){tf.tacticsSkillCountL[i] = '';}
+				}
+			}
+		}
+
+		tf.tacticsSkillCountR.remove('',true);
+		tf.tacticsSkillCountL.remove('',true);
+
+		for(var i=0;i<6;i++){
+			for(var n=0;n<tf.tacticsSkillCountR.count;n++){
+				if(tf.tacticsSkillCountR[n] == '攻U'){tf.rightParty[i].revise.pow += calc.tacticsSkillStatus(tf.rightParty[i].pow,tf.PowUpR);}
+				if(tf.tacticsSkillCountR[n] == '防U'){tf.rightParty[i].revise.def += calc.tacticsSkillStatus(tf.rightParty[i].def,tf.DefUpR);}
+				if(tf.tacticsSkillCountR[n] == '速U'){tf.rightParty[i].revise.spd += calc.tacticsSkillStatus(tf.rightParty[i].spd,tf.SpdUpR);}
+				if(tf.tacticsSkillCountR[n] == '士U'){tf.rightParty[i].revise.mor += calc.tacticsSkillStatus(tf.rightParty[i].mor,tf.MorUpR);}
+
+				if(tf.tacticsSkillCountR[n] == '攻D'){tf.rightParty[i].revise.pow -= calc.tacticsSkillStatus(tf.rightParty[i].pow,tf.PowDownR);}
+				if(tf.tacticsSkillCountR[n] == '防D'){tf.rightParty[i].revise.def -= calc.tacticsSkillStatus(tf.rightParty[i].def,tf.DefDownR);}
+				if(tf.tacticsSkillCountR[n] == '速D'){tf.rightParty[i].revise.spd -= calc.tacticsSkillStatus(tf.rightParty[i].spd,tf.SpdDownR);}
+				if(tf.tacticsSkillCountR[n] == '士D'){tf.rightParty[i].revise.mor -= calc.tacticsSkillStatus(tf.rightParty[i].mor,tf.MorDownR);}
+			}
+
+			for(var n=0;n<tf.tacticsSkillCountL.count;n++){
+				if(tf.tacticsSkillCountL[n] == '攻U'){tf.leftParty[i].revise.pow += calc.tacticsSkillStatus(tf.leftParty[i].pow,tf.PowUpL);}
+				if(tf.tacticsSkillCountL[n] == '防U'){tf.leftParty[i].revise.def += calc.tacticsSkillStatus(tf.leftParty[i].def,tf.DefUpL);}
+				if(tf.tacticsSkillCountL[n] == '速U'){tf.leftParty[i].revise.spd += calc.tacticsSkillStatus(tf.leftParty[i].spd,tf.SpdUpL);}
+				if(tf.tacticsSkillCountL[n] == '士U'){tf.leftParty[i].revise.mor += calc.tacticsSkillStatus(tf.leftParty[i].mor,tf.MorUpL);}
+
+				if(tf.tacticsSkillCountL[n] == '攻D'){tf.leftParty[i].revise.pow -= calc.tacticsSkillStatus(tf.leftParty[i].pow,tf.PowDownL);}
+				if(tf.tacticsSkillCountL[n] == '防D'){tf.leftParty[i].revise.def -= calc.tacticsSkillStatus(tf.leftParty[i].def,tf.DefDownL);}
+				if(tf.tacticsSkillCountL[n] == '速D'){tf.leftParty[i].revise.spd -= calc.tacticsSkillStatus(tf.leftParty[i].spd,tf.SpdDownL);}
+				if(tf.tacticsSkillCountL[n] == '士D'){tf.leftParty[i].revise.mor -= calc.tacticsSkillStatus(tf.leftParty[i].mor,tf.MorDownL);}
+			}
+		}
+
+		var   _left =[672,672,672,816,816,816];
+		var    _top =[574,620,666,574,620,666];
+		var unitDataWindowFace = new Layer(kag, kag.fore.base);
+		var unitDataWindowtype = new Layer(kag, kag.fore.base);
+		var     gaugeHpBarBase = new Layer(kag, kag.fore.base);
+				gaugeHpBarBase.loadImages("btl_GaugeHPbase");//HP下地読込
+				gaugeHpBarBase.setSizeToImageSize();
+		//地形無効スキルセット
+		for(var i=0;i<6;i++){
+			var SkillValue = battleFuncSkillSet.searchSkill(i,'地形無効','right');if(SkillValue[0] == 1){tf.mapReviseClear = 1;}
+			var SkillValue = battleFuncSkillSet.searchSkill(i,'地形無効','left') ;if(SkillValue[0] == 1){tf.mapReviseClear = 1;}
+
+			var SkillValue = battleFuncSkillSet.searchSkill(i,'兵士運搬','right');if(SkillValue[0] == 1){tf.mapReviseCarryR = 1;}
+			var SkillValue = battleFuncSkillSet.searchSkill(i,'兵士運搬','left') ;if(SkillValue[0] == 1){tf.mapReviseCarryL = 1;}
+		}
+
+
+		for(var i=0;i<6;i++){
+			if(tf.rightParty[i].id != void){
+				unitDataWindowFace.loadImages("uw_"+tf.rightParty[i].id.substring(1,4));
+				unitDataWindowtype.loadImages("ch_type"+tf.rightParty[i].type);
+				unitDataWindowFace.setSizeToImageSize();
+				unitDataWindowtype.setSizeToImageSize();
+				if(tf.rightParty[i].HP.now == 0){unitDataWindowFace.doGrayScale();}//HP0ならグレー
+				unitPanel.copyRect(   _left[i]  , _top[i]   ,   unitDataWindowR, 0, 0,    unitDataWindowR.width, unitDataWindowR.height);//枠
+				unitPanel.operateRect(_left[i]  , _top[i]   ,unitDataWindowFace, 0, 0, unitDataWindowFace.width, unitDataWindowFace.height,omPsNormal,255);//顔
+				unitPanel.operateRect(_left[i]+1, _top[i]+1 ,unitDataWindowtype, 0, 0, unitDataWindowtype.width, unitDataWindowtype.height,omPsNormal,255);//職
+				unitPanel.operateRect(_left[i]+1, _top[i]+22,    gaugeHpBarBase, 0, 0,     gaugeHpBarBase.width,     gaugeHpBarBase.height,omPsNormal,255);//HP下地
+
+				//補正値の夜補正(右)
+				//if(tf.day_time== 0){nightRevise(i,'right');}else{dayRevise(i,'right');}
+				//地形補正
+				if(tf.mapReviseClear == 0){mapRevise(i,'right');}
+				//能力値補正計算
+				var pow = calc.allStatusCalc(tf.rightParty[i].pow, tf.rightParty[i].revise.pow,i,'right','pow');
+				var def = calc.allStatusCalc(tf.rightParty[i].def, tf.rightParty[i].revise.def,i,'right','def');
+				var spd = calc.allStatusCalc(tf.rightParty[i].spd, tf.rightParty[i].revise.spd,i,'right','spd');
+				var mor = calc.allStatusCalc(tf.rightParty[i].mor, tf.rightParty[i].revise.mor,i,'right','mor');
+				//作戦補正加算
+				strategyRevise(i);//作戦補正
+				pow += tf.rightParty[i].strategy.pow;
+				def += tf.rightParty[i].strategy.def;
+				spd += tf.rightParty[i].strategy.spd;
+				mor += tf.rightParty[i].strategy.mor;
+				if(tf.rightParty[i].HP.now < 1){tf.rightParty[i].HP.now = 0;}
+				if(tf.rightParty[i].HP.now > tf.rightParty[i].HP.max){tf.rightParty[i].HP.now = tf.rightParty[i].HP.max;}
+				numDraw(tf.rightParty[i].HP.now, 'btl_Number0-9HP' ,unitPanel,_left[i]+27 ,_top[i]+ 4,4);	//HP
+				numDraw( pow, 'btl_Number0-9pow',unitPanel,_left[i]+16 ,_top[i]+30,3);	//pow
+				numDraw( def, 'btl_Number0-9def',unitPanel,_left[i]+53 ,_top[i]+30,3);	//def
+				numDraw( spd, 'btl_Number0-9spd',unitPanel,_left[i]+90 ,_top[i]+30,3);	//spd
+				numDraw( mor, 'btl_Number0-9mor',unitPanel,_left[i]+127,_top[i]+30,2);	//mor
+//dm("R"+i+"="+tf.rightParty[i].id);
+
+				gaugeDraw(tf.rightParty[i].HP.now,tf.rightParty[i].HP.max,140,'btl_GaugeHP',unitPanel,_left[i]+1,_top[i]+22,'left');// HPバー
+			}
+		}
+
+		_left =[146,146,146,  2,  2,  2];
+		for(var i=0;i<6;i++){
+			if(tf.leftParty[i].id != void){
+				unitDataWindowFace.loadImages("uw_"+tf.leftParty[i].id.substring(1,4));
+				unitDataWindowtype.loadImages("ch_type"+tf.leftParty[i].type);
+				unitDataWindowFace.setSizeToImageSize();
+				unitDataWindowtype.setSizeToImageSize();
+				unitDataWindowFace.flipLR();//反転
+				unitDataWindowtype.flipLR();
+				if(tf.leftParty[i].HP.now == 0){unitDataWindowFace.doGrayScale();}
+				unitPanel.copyRect(_left[i], _top[i], unitDataWindowL   , 0, 0, unitDataWindowL.width   , unitDataWindowL.height   );//枠
+				unitPanel.operateRect(_left[i], _top[i], unitDataWindowFace, 0, 0, unitDataWindowFace.width, unitDataWindowFace.height,omPsNormal,255);//顔
+				unitPanel.operateRect(_left[i]+121, _top[i]+ 1, unitDataWindowtype, 0, 0, unitDataWindowtype.width, unitDataWindowtype.height,omPsNormal,255);//職
+				unitPanel.operateRect(_left[i]+  1, _top[i]+22,     gaugeHpBarBase, 0, 0,     gaugeHpBarBase.width,     gaugeHpBarBase.height,omPsNormal,255);//HP下地
+
+				//補正値の夜補正(左)と昼補正
+				//if(tf.day_time== 0){nightRevise(i,'left');}else{dayRevise(i,'left');}
+				//地形補正
+				if(tf.mapReviseClear == 0){mapRevise(i,'left');}
+				//能力値補正計算
+				var pow = calc.allStatusCalc(tf.leftParty[i].pow, tf.leftParty[i].revise.pow,i,'left','pow');
+				var def = calc.allStatusCalc(tf.leftParty[i].def, tf.leftParty[i].revise.def,i,'left','def');
+				var spd = calc.allStatusCalc(tf.leftParty[i].spd, tf.leftParty[i].revise.spd,i,'left','spd');
+				var mor = calc.allStatusCalc(tf.leftParty[i].mor, tf.leftParty[i].revise.mor,i,'left','mor');
+				if(tf.leftParty[i].HP.now < 1){tf.leftParty[i].HP.now = 0;}
+				if(tf.leftParty[i].HP.now > tf.leftParty[i].HP.max){tf.leftParty[i].HP.now = tf.leftParty[i].HP.max;}
+				numDraw(tf.leftParty[i].HP.now,'btl_Number0-9HP' ,unitPanel,_left[i]+ 67,_top[i]+ 4,4);	//HP
+				numDraw(pow, 'btl_Number0-9pow',unitPanel,_left[i]+ 16,_top[i]+30,3);	//pow
+				numDraw(def, 'btl_Number0-9def',unitPanel,_left[i]+ 53,_top[i]+30,3);	//def
+				numDraw(spd, 'btl_Number0-9spd',unitPanel,_left[i]+ 90,_top[i]+30,3);	//spd
+				numDraw(mor, 'btl_Number0-9mor',unitPanel,_left[i]+127,_top[i]+30,2);	//mor
+//dm("L"+i+"="+tf.leftParty[i].id);
+
+				gaugeDraw(tf.leftParty[i].HP.now,tf.leftParty[i].HP.max,140,'btl_GaugeHP',unitPanel,_left[i]+1,_top[i]+22,'right');// HPバー
+			}
+		}
+		//targetSelection(tf.selectTarget);
+	}
+
+	//戦場ステータス表示
+	function battleFieldStatusDraw(){
+		fieldDataWindow.colorRect(0, 0, fieldDataWindow.width, fieldDataWindow.height, 0x000000, -255);
+		var   _left =%[
+						'moon'           => 593,
+						'tendencyRight'  => 319,	'tendencyLeft'   => 319,
+						'forGaugeRight'  => 498,	'forGaugeLeft'   => 310,
+						'forNumberRight' => 651,	'forNumberLeft'  => 293,
+						'MovPointRight'  => 498,	'MovPointLeft'   => 446,//-17
+						'LndGaugeRight'  => 498,	'LndGaugeLeft'   => 293,
+						'StaPointRight'  => 498,	'StaPointLeft'   => 293,//+17
+						'WallRight'      => 498,	'WallLeft'       => 414,
+						];
+		var    _top =%[
+						'moon'           => 549,
+						'tendencyRight'  => 602,	'tendencyLeft'   => 602,
+						'forGaugeRight'  => 621,	'forGaugeLeft'   => 621,
+						'forNumberRight' => 621,	'forNumberLeft'  => 621,
+						'MovPointRight'  => 639,	'MovPointLeft'   => 639,
+						'LndGaugeRight'  => 657,	'LndGaugeLeft'   => 657,
+						'StaPointRight'  => 675,	'StaPointLeft'   => 675,
+						'WallRight'      => 692,	'WallLeft'       => 692,
+						];
+
+		//月齢
+		var moonPanel = new Layer(kag, kag.fore.base);
+			moonPanel.loadImages("btl_chip_day");
+			moonPanel.setSizeToImageSize();
+		var chWidth  = moonPanel.imageWidth \ 8;	// 幅
+		var chHeight = moonPanel.imageHeight;		// 高
+		fieldDataWindow.copyRect(_left.moon,_top.moon,moonPanel, chWidth * tf.day_moon, 0, chWidth, chHeight);//月齢表示
+
+		//フォース
+		var rightForNum = tf.rightFor\100;
+		var leftForNum  = tf.leftFor\100;
+		var rightForGag = tf.rightFor%100;
+		var leftForGag  = tf.leftFor%100;
+dm("rightForGag="+rightForGag);
+dm("leftForGag ="+leftForGag);
+		numDraw(rightForNum, 'btl_Number0-9For'         , fieldDataWindow, _left.forNumberRight, _top.forNumberRight, 1);	//For値R
+		numDraw(leftForNum , 'btl_Number0-9For'         , fieldDataWindow, _left.forNumberLeft , _top.forNumberLeft , 1);	//For値L
+		gaugeDraw(rightForGag, 99, 152, 'btl_GaugeFor'  , fieldDataWindow, _left.forGaugeRight , _top.forGaugeRight, 'left');// ForバーR
+		gaugeDraw(leftForGag , 99, 152, 'btl_GaugeFor'  , fieldDataWindow, _left.forGaugeLeft  , _top.forGaugeLeft , 'right');// ForバーL
+
+		//地形耐久力
+		gaugeDraw(tf.rightLndM, 500, 169, 'btl_GaugeLndDown', fieldDataWindow, _left.LndGaugeRight , _top.LndGaugeRight, 'left');// Lnd初期値バーR
+		gaugeDraw(tf.leftLndM , 500, 169, 'btl_GaugeLndDown', fieldDataWindow, _left.LndGaugeLeft  , _top.LndGaugeLeft , 'right');// Lnd初期値バーL
+		gaugeDraw(tf.rightLnd , 500, 169, 'btl_GaugeLndUP'  , fieldDataWindow, _left.LndGaugeRight , _top.LndGaugeRight, 'left');// LndバーR
+		gaugeDraw(tf.leftLnd  , 500, 169, 'btl_GaugeLndUP'  , fieldDataWindow, _left.LndGaugeLeft  , _top.LndGaugeLeft , 'right');// LndバーL
+
+		//行動ポイント
+		movGaugeDraw(fieldDataWindow, _left.MovPointRight, _top.MovPointRight,_left.MovPointLeft, _top.MovPointLeft);
+
+		//勢力ゲージ
+		//PartyHPSum('both');
+		var hpmaxR = new Array();
+		var hpmaxL = new Array();
+		var hpnowR = new Array();
+		var hpnowL = new Array();
+		var allCostL,allCostR;
+
+		for(var i=0;i<6;i++){
+			hpmaxR[i] = tf.rightParty[i].HP.max;
+			hpmaxL[i] =  tf.leftParty[i].HP.max;
+			hpnowR[i] = tf.rightParty[i].HP.now;
+			hpnowL[i] =  tf.leftParty[i].HP.now;
+			allCostR += tf.rightParty[i].cost;
+			allCostL +=  tf.leftParty[i].cost;
+
+		}
+		tf.RightPartyHPSumMax = calc.DivisonHPSumAll(hpmaxR) * allCostR;
+		tf.LeftPartyHPSumMax  = calc.DivisonHPSumAll(hpmaxL) * allCostL;
+		tf.RightPartyHPSumNow = calc.DivisonHPSumAll(hpnowR) * allCostR;
+		tf.LeftPartyHPSumNow  = calc.DivisonHPSumAll(hpnowL) * allCostL;
+
+		tf.MaxHPSum   = tf.RightPartyHPSumMax + tf.LeftPartyHPSumMax;
+		//tf.AdvantageRight = tf.LeftPartyHPSumMax  - tf.LeftPartyHPSumNow  + tf.RightPartyHPSumNow;
+		//tf.AdvantageLeft  = tf.RightPartyHPSumMax - tf.RightPartyHPSumNow + tf.LeftPartyHPSumNow;
+
+		tf.HPNowSum = tf.RightPartyHPSumNow + tf.LeftPartyHPSumNow; 
+//dm("tf.MaxHPSum:"+tf.MaxHPSum+"/tf.HPNowSum:"+tf.HPNowSum);
+//dm("tf.LeftPartyHPSumNow:"+tf.LeftPartyHPSumNow+"/tf.RightPartyHPSumNow:"+tf.RightPartyHPSumNow);
+		gaugeDraw(tf.RightPartyHPSumNow, tf.HPNowSum, 322, 'btl_GaugepowRatioBlue', fieldDataWindow, _left.tendencyRight, _top.tendencyRight, 'right');// powRatioバーR
+		gaugeDraw(tf.LeftPartyHPSumNow , tf.HPNowSum, 322, 'btl_GaugepowRatioRed' , fieldDataWindow, _left.tendencyLeft , _top.tendencyLeft , 'left' );// powRatioバーL
+
+		//旗
+		var flag = new Layer(kag, kag.fore.base);
+		flag.loadImages("btl_mini_flag01");
+		flag.setSizeToImageSize();
+		fieldDataWindow.operateRect( 644,603, flag, 0, 0, flag.imageWidth, flag.imageHeight);
+
+		flag.loadImages("btl_mini_flag01");
+		switch(gf.enemy[tf.enemySelectNumber].troopsNo){
+			case  2:flag.loadImages("btl_mini_flag02");break;	// 1エッダ軍(ティルカ)
+			case  3:flag.loadImages("btl_mini_flag03");;break;	// 2フォルク軍(フレイヤ)
+			case  4:flag.loadImages("btl_mini_flag04");;break;	// 3トルドハイム軍(トール)
+			case  5:flag.loadImages("btl_mini_flag05");;break;	// 4グラーズ軍(リグレット)
+			case  6:flag.loadImages("btl_mini_flag06");;break;	// 5ヴァルハラ軍(おでん)
+			case  7:flag.loadImages("btl_mini_flag07");;break;	// 6ヨルム軍
+			case  8:flag.loadImages("btl_mini_flag08");;break;	// 7フェンリル軍
+			case  9:flag.loadImages("btl_mini_flag09");;break;	// 8ヘル軍
+			case 10:flag.loadImages("btl_mini_flag10");;break;	// 9イミル軍
+			case 11:flag.loadImages("btl_mini_flag11");;break;	//10ウトガルド軍
+			case 12:flag.loadImages("btl_mini_flag12");;break;	//11魔族反乱軍
+			case 13:flag.loadImages("btl_mini_flag13");;break;	//12人間反乱軍
+			case 14:flag.loadImages("btl_mini_flag14");;break;	//13新生ウトガルド軍
+			case 15:flag.loadImages("btl_mini_flag15");;break;	//14新生ヴァルハラ軍
+		}
+		flag.setSizeToImageSize();
+		fieldDataWindow.operateRect( 293,603, flag, 0, 0, flag.imageWidth, flag.imageHeight);
+
+		//壁耐久値
+		numDraw(tf.rightWall, 'btl_Number0-9HP', fieldDataWindow, _left.WallRight, _top.WallRight, 4);	//壁耐久値R
+		numDraw(tf.leftWall , 'btl_Number0-9HP', fieldDataWindow, _left.WallLeft , _top.WallLeft , 4);	//壁耐久値L
+
+		//戦術スキルステータス
+		var rx=499,lx=447,mx=17,y=676;
+		var specialityCountR=[];
+		var specialityCountL=[];
+		var color1,color2;
+		while(tf.tacticsSkillCountR.count > 10){tf.tacticsSkillCountR.shift();}//古い方から順に削除
+		while(tf.tacticsSkillCountL.count > 10){tf.tacticsSkillCountL.shift();}//古い方から順に削除
+		var txtLayer = new Layer(kag, kag.fore.base);
+			txtLayer.font.mapPrerenderedFont( "uppg14.tft" );
+			txtLayer.setSize(960,720);
+		for(var i=0;i<tf.tacticsSkillCountR.count;i++){
+			     if(tf.tacticsSkillCountR[i].substring(1,1) == 'U'){color1='0x476eff';color2='0xb5c5ff';}
+			else if(tf.tacticsSkillCountR[i].substring(1,1) == 'D'){color1='0xdb0a0a';color2='0xff9898';}
+			else                                                   {color1='0xebe806';color2='0xfdfcb4';}
+			_text_draw_super_(txtLayer, rx+i*mx, y, tf.tacticsSkillCountR[i].substring(0,1), 0xffffff, 14,%[ outline:0, outlinecolor:0xffffff,shadow:1, shadowopacity:128, shadowblur:1,gradcolor1:color1, gradcolor2:color2] );
+dm("####> 戦術スキルステータス");
+dm(i+".戦術ｽﾃ:"+tf.tacticsSkillCountR[i].substring(0,1));
+		}
+		for(var i=0;i<tf.tacticsSkillCountL.count;i++){
+			     if(tf.tacticsSkillCountL[i].substring(1,1) == 'U'){color1='0x476eff';color2='0xb5c5ff';}
+			else if(tf.tacticsSkillCountL[i].substring(1,1) == 'D'){color1='0xdb0a0a';color2='0xff9898';}
+			else                                                   {color1='0xebe806';color2='0xfdfcb4';}
+			_text_draw_super_(txtLayer, lx-i*mx, y, tf.tacticsSkillCountL[i].substring(0,1), 0xffffff, 14,%[ outline:0, outlinecolor:0xffffff,shadow:1, shadowopacity:128, shadowblur:1,gradcolor1:color1, gradcolor2:color2] );
+		}
+		fieldDataWindow.operateRect(0, 0, txtLayer, 0, 0, txtLayer.imageWidth, txtLayer.imageHeight);
+	}
+
+	//行動ポイントゲージ描画
+	function movGaugeDraw(layer,rx,ry,lx,ly){
+		//初回は行動系スキル補正を追加
+		if(tf.turn == 0 && tf.init == 0){
+dm("(算前)自軍行動値:"+tf.rightMov);
+dm("(算前)敵軍行動値:"+tf.leftMov);
+			for(var i=0;i<6;i++){
+				if(tf.rightParty[i].id != void){
+					var SkillValue = battleFuncSkillSet.searchSkill(i,'行動増加','right');if(SkillValue[0] == 1){tf.rightMov += SkillValue[1];dm("自[行動増加]:"+SkillValue[1]);}
+					var SkillValue = battleFuncSkillSet.searchSkill(i,'行動阻害','right');if(SkillValue[0] == 1){tf.leftMov  -= SkillValue[1];dm("敵[行動阻害]:"+SkillValue[1]);}//敵軍減算
+				}
+			}
+			for(var i=0;i<tf.leftParty.count;i++){
+				if(tf.leftParty[i].id != void){
+					var SkillValue = battleFuncSkillSet.searchSkill(i,'行動増加','left');if(SkillValue[0] == 1){tf.leftMov  += SkillValue[1];dm("敵[行動増加]:"+SkillValue[1]);}
+					var SkillValue = battleFuncSkillSet.searchSkill(i,'行動阻害','left');if(SkillValue[0] == 1){tf.rightMov -= SkillValue[1];dm("自[行動阻害]:"+SkillValue[1]);}//自軍減算
+				}
+			}
+			//初期値を保存
+			if(tf.rightMov > 10){tf.rightMov = 10;}
+			if(tf.rightMov <  1){tf.rightMov =  1;}
+			if(tf.leftMov  > 10){tf.leftMov  = 10;}
+			if(tf.leftMov  <  1){tf.leftMov  =  1;}
+			tf.rightMovMax = tf.rightMov;
+			tf.leftMovMax  = tf.leftMov;
+dm("(算後)自軍行動値:"+tf.rightMov);
+dm("(算後)敵軍行動値:"+tf.leftMov);
+		}
+
+		//最大値貼付
+		var numImage = new Layer(kag, kag.fore.base);	// レイヤー準備
+			numImage.loadImages("btl_GaugeMovUsed");	// 画像読込(Max)
+			numImage.setSizeToImageSize;
+			for(var i=0;i<tf.rightMovMax;i++){layer.operateRect(rx + i * 17, ry, numImage, 0, 0, numImage.imageWidth, numImage.imageHeight, omPsNormal,255);}
+			for(var i=0;i<tf.leftMovMax;i++) {layer.operateRect(lx - i * 17, ly, numImage, 0, 0, numImage.imageWidth, numImage.imageHeight, omPsNormal,255);}
+
+		//現在値貼付
+		var numImage = new Layer(kag, kag.fore.base);	// レイヤー準備
+			numImage.loadImages("btl_GaugeMovIntact");	// 画像読込(Now)
+			numImage.setSizeToImageSize;
+			for(var i=0;i<tf.rightMov;i++){layer.operateRect(rx + i * 17, ry, numImage, 0, 0, numImage.imageWidth, numImage.imageHeight, omPsNormal,255);}
+			for(var i=0;i<tf.leftMov;i++) {layer.operateRect(lx - i * 17, ly, numImage, 0, 0, numImage.imageWidth, numImage.imageHeight, omPsNormal,255);}
+	}
+
+
+	// 画像数字表示 numDraw(表示値,画像,描画レイヤ,描画座標ｘ,描画座標ｙ,桁[0=無制限])
+	function numDraw(value,storage,layer,x,y,figure=0){
+//dm("###N "+storage+" N###");
+//dm("value="+value);
+//dm("figure="+figure);
+//dm("    x="+x+"/y="+y);
+		var numImage = new Layer(kag, kag.fore.base);	// レイヤー準備
+			numImage.loadImages(storage);				// 画像読込
+			numImage.setSizeToImageSize;
+var v=value;
+		var chWidth  = numImage.imageWidth \ 11;	// 文字幅
+		var chHeight = numImage.imageHeight;		// 文字高
+		var num = new Array();
+		do{
+			num.add(value % 10);
+			value \= 10;
+		}while(value != 0);				// 桁取得
+
+		// 数値貼付
+		var n = num.count;
+		var l;
+		if(figure == 0 || figure == n){
+			var a=0;
+			for(var i=n;i>0;i--){
+				l=x+chWidth * a;
+				layer.operateRect(l, y, numImage, num[i-1]*chWidth , 0, chWidth, chHeight, omPsNormal,255);
+				a++;
+			}
+		}else if(figure > n){
+			for(var i=n;i>0;i--){
+				l=x+(chWidth * (figure - i));
+				layer.operateRect(l, y, numImage, num[i-1]*chWidth , 0, chWidth, chHeight, omPsNormal,255);
+			}
+		}
+	}
+
+	// 画像ゲージ表示 gaugeDraw(現在値,最高値,ゲージ幅,画像,描画レイヤ,描画座標ｘ,描画座標ｙ,表示方向)
+	function gaugeDraw(now,max,width,storage,layer,x,y,side='left'){
+		var gaugeImage = new Layer(kag, kag.fore.base);	// レイヤー準備
+			gaugeImage.loadImages(storage);				// 画像読込
+			gaugeImage.setSizeToImageSize;
+		if(now>max){now = max;}							//オーバー処理
+		var gauges = (int)((now/max)*width);					//表示値の取得
+//dm("###G "+storage+" G###");
+//dm("(now/max)="+(now/max));
+//dm("(now/max)*width="+(now/max)*width);
+		if(gauges > 0){
+			if(side == 'left'){layer.operateRect(x, y, gaugeImage, 0, 0, gauges, gaugeImage.imageHeight, omPsNormal,255);}
+			              else{layer.operateRect(x+(width-gauges), y, gaugeImage, 0, 0, gauges, gaugeImage.imageHeight, omPsNormal,255);}
+		}
+	}
+
+	//師団HP合計算出
+	function PartyHPSum(side){
+		if(side == 'right' || side == 'both'){
+			tf.RightPartyHPSumMax = 0;
+			tf.RightPartyHPSumNow = 0;
+			for(var i=0;i<6;i++){
+				tf.RightPartyHPSumMax = tf.RightPartyHPSumMax + tf.rightParty[i].HP.max;
+				tf.RightPartyHPSumNow = tf.RightPartyHPSumNow + tf.rightParty[i].HP.now;
+			}
+		}
+		if(side == 'left' || side == 'both'){
+			tf.LeftPartyHPSumMax = 0;
+			tf.LeftPartyHPSumNow = 0;
+			for(var i=0;i<6;i++){
+				tf.LeftPartyHPSumMax = tf.LeftPartyHPSumMax + tf.leftParty[i].HP.max;
+				tf.LeftPartyHPSumNow = tf.LeftPartyHPSumNow + tf.leftParty[i].HP.now;
+			}
+		}
+	}
+
+	//ターゲットカーソル
+	function targetSelection(owner){
+		var tmpNOnowR,tmpHPnowR;
+		var tmpNOnowL,tmpHPnowL;
+
+		//ＨＰｘ防御が一番少ないキャラ右用
+		var targetList  = [];
+		var targetValue = [];
+		for(var i=0;i<6;i++){
+			targetList[i]  = i;
+		var defTmp = tf.rightParty[i].def + tf.rightParty[i].revise.def + tf.rightParty[i].strategy.def;
+		if(defTmp < 1){defTmp = 1;}
+			targetValue[i] = tf.rightParty[i].HP.now * defTmp;
+dm("R["+tf.rightParty[i].uniqueName+"] :"+targetList[i]+"/targetValue:"+targetValue[i]+".HP"+tf.rightParty[i].HP.now+"/.def"+defTmp);
+		}
+
+		if(f.used.difficulty == 1){
+			for(var i=0;i<targetValue.count;i++){
+				if(targetValue[0] >= targetValue[1] ){targetValue[0]  <-> targetValue[1]; targetList[0]  <-> targetList[1]; }
+				if(targetValue[1] >= targetValue[2] ){targetValue[1]  <-> targetValue[2]; targetList[1]  <-> targetList[2]; }
+			}
+		}else{
+			for(var i=0;i<targetValue.count;i++){
+				if(targetValue[0] >= targetValue[1] ){targetValue[0]  <-> targetValue[1]; targetList[0]  <-> targetList[1]; }
+				if(targetValue[2] >= targetValue[3] ){targetValue[2]  <-> targetValue[3]; targetList[2]  <-> targetList[3]; }
+				if(targetValue[4] >= targetValue[5] ){targetValue[4]  <-> targetValue[5]; targetList[4]  <-> targetList[5]; }
+
+				if(targetValue[1] >= targetValue[2] ){targetValue[1]  <-> targetValue[2]; targetList[1]  <-> targetList[2]; }
+				if(targetValue[3] >= targetValue[4] ){targetValue[3]  <-> targetValue[4]; targetList[3]  <-> targetList[4]; }
+			}
+		}
+
+		//削除右
+		var targetListTMP = [];
+		targetListTMP.assignStruct(targetList);
+		for(var n=0;n<6;n++){
+			for(var i=0;i<targetList.count;i++){
+				if(targetList[i] == n){
+					if(tf.rightParty[n].id == 0 || tf.rightParty[n].HP.now < 1){
+dm("R-No:"+i+"/erase:"+n+" /.id="+tf.rightParty[n].id);
+						targetValue.erase(i);
+						targetList.erase(i);
+					}
+				}
+			}
+		}
+
+		for(var i=0;i<6;i++){
+//dm("targetValue["+i+"]:"+targetValue[i]);
+//dm("targetList["+i+"] :"+targetList[i]);
+//dm("["+i+"]HP.now:"+tf.rightParty[i].HP.now);
+			if(targetValue[i] > 0){tmpNOnowR = targetList[i];break;}
+		}
+//for(var i=0;i<targetList.count;i++){dm("No."+i+":R-targetList="+targetList[i]+"/VL="+targetValue[i]);}
+
+		//ＨＰｘ防御が一番少ないキャラ左用
+		var targetList  = [];
+		var targetValue = [];
+		for(var i=0;i<6;i++){
+			targetList[i]  = i;
+		var defTmp = tf.leftParty[i].def + tf.leftParty[i].revise.def;
+		if(defTmp < 1){defTmp = 1;}
+			targetValue[i] = tf.leftParty[i].HP.now * defTmp;
+dm("L["+tf.leftParty[i].uniqueName+"] :"+targetList[i]+"/targetValue:"+targetValue[i]+".HP"+tf.leftParty[i].HP.now+"/.def"+defTmp);
+		}
+		for(var i=0;i<targetValue.count;i++){
+			if(targetValue[0] >= targetValue[1] ){targetValue[0]  <-> targetValue[1]; targetList[0]  <-> targetList[1]; }
+			if(targetValue[2] >= targetValue[3] ){targetValue[2]  <-> targetValue[3]; targetList[2]  <-> targetList[3]; }
+			if(targetValue[4] >= targetValue[5] ){targetValue[4]  <-> targetValue[5]; targetList[4]  <-> targetList[5]; }
+
+			if(targetValue[1] >= targetValue[2] ){targetValue[1]  <-> targetValue[2]; targetList[1]  <-> targetList[2]; }
+			if(targetValue[3] >= targetValue[4] ){targetValue[3]  <-> targetValue[4]; targetList[3]  <-> targetList[4]; }
+		}
+
+		//削除左
+		var targetListTMP = [];
+		targetListTMP.assignStruct(targetList);
+		for(var n=0;n<6;n++){
+			for(var i=0;i<targetList.count;i++){
+				if(targetList[i] == n){
+					if(tf.leftParty[n].id == 0 || tf.leftParty[n].HP.now < 1){
+dm("L-No:"+i+"/erase:"+n+" /.id="+tf.leftParty[n].id);
+						targetValue.erase(i);
+						targetList.erase(i);
+					}
+				}
+			}
+		}
+
+for(var i=0;i<6;i++){dm("L.ﾀｹﾞarray="+targetValue[i]);if(targetValue[i] > 0){tmpNOnowL = targetList[i];break;}}
+//for(var i=0;i<targetList.count;i++){dm("No."+i+":L-targetList="+targetList[i]+"/VL="+targetValue[i]);}
+
+	//全滅終了
+	PartyHPSum('both');
+	if(tf.RightPartyHPSumNow < 1){return;}
+	if(tf.LeftPartyHPSumNow  < 1){return;}
+
+dm("tmpNOnowR="+tmpNOnowR);dm("tmpNOnowL="+tmpNOnowL);
+dm("#1tf.selectTarget="+tf.selectTarget);
+dm("#1tf.enemyTarget ="+tf.enemyTarget);
+dm("#1tf.allyTarget  ="+tf.allyTarget);
+			//if( tf.leftParty[0].HP.now < tf.leftParty[1].HP.now ){tmpNOnowL = 0;tmpHPnowL =  tf.leftParty[0].HP.now;}else{tmpNOnowL = 1;tmpHPnowL =  tf.leftParty[1].HP.now;}
+			//if( tf.leftParty[2].HP.now < tmpHPnowL            ){tmpNOnowL = 2;}
+		//自動判定
+		if(owner == ''){
+			var _left =[672,672,672,816,816,816];
+			var _top  =[574,620,666,574,620,666];
+			var Images = new Layer(kag, kag.fore.base);
+			kag.tagHandlers.image(%[layer:'10', page:'back', storage:'btl_targetR', left:_left[tmpNOnowR], top:_top[tmpNOnowR], opacity:255, visible:true]) ;//　ターゲットカーソルR
+			if(tf.turn > 0 || tf.surpriseL != 0){kag.tagHandlers.image(%[layer:'10', page:'fore', storage:'btl_targetR', left:_left[tmpNOnowR], top:_top[tmpNOnowR], opacity:255, visible:true]);}//　ターゲットカーソルR
+			_left =[146,146,146,  2,  2,  2];
+			kag.tagHandlers.image(%[layer:'11', page:'back', storage:'btl_targetL', left:_left[tmpNOnowL], top:_top[tmpNOnowL], opacity:255, visible:true]) ;//　ターゲットカーソルL
+			if(tf.turn > 0 || tf.surpriseR != 0){kag.tagHandlers.image(%[layer:'11', page:'fore', storage:'btl_targetL', left:_left[tmpNOnowL], top:_top[tmpNOnowL], opacity:255, visible:true]);}//　ターゲットカーソルR
+			tf.allyTarget  = tmpNOnowL;//ターゲット自軍→敵軍
+			tf.selectTarget= tmpNOnowL;//ターゲット自軍→敵軍
+			tf.enemyTarget = tmpNOnowR;//ターゲット敵軍→自軍
+			tf.LockTarget  = tf.enemyTarget;//ターゲットロック
+dm("#2tf.selectTarget  ="+tf.selectTarget);
+dm("#2tf.enemyTarget   ="+tf.enemyTarget);
+dm("#2tf.allyTarget    ="+tf.allyTarget);
+dm("#2tf.LockTarget    ="+tf.LockTarget);
+		//手動設定
+		}else{
+//dm("tf.rightParty[tf.enemyTarget].HP.now  ="+tf.rightParty[tf.enemyTarget].HP.now);
+			if(tf.rightParty[tf.LockTarget].HP.now > 0){tf.enemyTarget = tf.LockTarget;}//タゲが生きているなら
+			if(tf.rightParty[tf.enemyTarget].HP.now < 1){tf.enemyTarget = tmpNOnowR;}//HP<1で自動選択
+			var _left =[672,672,672,816,816,816];
+			var _top  =[574,620,666,574,620,666];
+			kag.tagHandlers.image(%[layer:'10', page:'fore', storage:'btl_targetR', left:_left[tf.enemyTarget], top:_top[tf.enemyTarget], opacity:255, visible:true]) ;//　ターゲットカーソルR
+
+//			if(tf.leftParty[tf.allyTarget].HP.now < 1){owner = tmpNOnowL;tf.selectTarget = tmpNOnowL;}//選択されてるタゲがHP<1で自動選択
+			if(tf.leftParty[owner].HP.now < 1){owner = tmpNOnowL;tf.selectTarget = tmpNOnowL;}//選択されてるタゲがHP<1で自動選択
+			var _left =[146,146,146,  2,  2,  2];
+			kag.tagHandlers.image(%[layer:'11', page:'fore', storage:'btl_targetL', left:_left[owner], top:_top[owner], opacity:255, visible:true]) ;//　ターゲットカーソルL
+			if(tf.selectTarget != ''){tf.allyTarget = tf.selectTarget;}//ターゲット自軍→敵軍
+dm("#3.selectTarget    ="+tf.selectTarget);
+dm("#3.enemyTarget     ="+tf.enemyTarget);
+dm("#3tf.allyTarget    ="+tf.allyTarget);
+dm("#3tf.tf.LockTarget ="+tf.LockTarget);
+		//tf.selectTarget = '';
+		}
+	}
+
+	//popupWindow
+	function popupWindow(side,No){
+		//ポップアップ用テンポラリ
+		var popupUnitData = new Dictionary();
+		if(side == 'right'){(Dictionary.assign incontextof popupUnitData)(tf.rightParty[No]);}
+		else               {(Dictionary.assign incontextof popupUnitData)(tf.leftParty[No]);}
+dm("["+No+"].name:"+popupUnitData.unitName);
+		if(popupUnitData.id === void){return;}
+		var unitImage  = new Layer(kag, kag.fore.base);
+		var rx=0,ry=0;
+		unitImage.loadImages("bf_"+popupUnitData.id.substring(1,4));
+		unitImage.setSizeToImageSize();
+		if(unitImage.imageWidth == 800){
+			if(side == 'right'){
+				rx =  50;ry = 0;
+				if(popupUnitData.id == 'm1700'){rx =  75;ry =  0;}
+				if(popupUnitData.id == 'm1701'){rx = 100;ry = 25;}
+				if(popupUnitData.id == 'm1703'){rx = 100;ry = 25;}
+			}else{
+				rx =-150;ry = 0;
+				if(popupUnitData.id == 'm1700'){rx = -210;ry =  0;}
+				if(popupUnitData.id == 'm1701'){rx = -175;ry = 25;}
+				if(popupUnitData.id == 'm1703'){rx = -175;ry = 25;}
+			}
+		}
+		if(unitImage.imageWidth ==1200){
+			if(side == 'right'){
+				rx =  50;ry = 0;
+			}else{
+				rx =-110;ry = 0;
+			}
+		}
+
+		//ユニットイメージ縮小率
+		var newWidth  = int(unitImage.imageWidth  * 0.6);
+		var newHeight = int(unitImage.imageHeight * 0.6);
+		//ユニット画像コピー
+		var Images  = new Layer(kag, kag.fore.base);
+		Images.setImageSize(300, 425);
+		if(popupUnitData.HP.now < 1){unitImage.doGrayScale();}//HP0ならグレー
+		if(side == 'left'){//左は反転
+			unitImage.flipLR();
+			Images.stretchCopy(-14+rx,-18+ry, newWidth, newHeight, unitImage, 0, 0, unitImage.imageWidth, unitImage.imageHeight, stLinear);
+		}else{
+			Images.stretchCopy(-48+rx,-18+ry, newWidth, newHeight, unitImage, 0, 0, unitImage.imageWidth, unitImage.imageHeight, stLinear);
+		}
+		Images.setImageSize(294,252);
+
+		//パネル表示(パネル+ユニット)
+		var panelImage = new Layer(kag, kag.fore.base);
+		panelImage.loadImages("btl_unitPopup");
+		panelImage.setSizeToImageSize();
+		var popupPanel = kag.fore.layers[5];//参照レイヤー
+		popupPanel.operateRect( 330, 80, panelImage, 0, 0, panelImage.imageWidth, panelImage.imageHeight);
+		popupPanel.operateRect( 332, 82, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+
+		//シンボル表示(加護＆職/武器＆防具/状態異常)
+		Images.loadImages("ch_type"+popupUnitData.type);//職
+		Images.setSizeToImageSize();
+		popupPanel.operateRect( 345, 112, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+
+		//加護
+		switch(popupUnitData.divine){
+			case '火':Images.loadImages("moon01");break;
+			case '風':Images.loadImages("moon02");break;
+			case '水':Images.loadImages("moon03");break;
+			case '闇':Images.loadImages("moon04");break;
+			case '氷':Images.loadImages("moon05");break;
+			case '土':Images.loadImages("moon06");break;
+			case '雷':Images.loadImages("moon07");break;
+			case '光':Images.loadImages("moon08");break;
+		}
+		Images.setSizeToImageSize();
+		popupPanel.operateRect( 345, 92, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+		Images.fillRect(0, 0, Images.width, Images.height, 0x00000000);
+		//状態異常
+		if(popupUnitData.poison > 0){
+			Images.loadImages("icon_poison");//毒
+			Images.setSizeToImageSize();
+			popupPanel.operateRect( 345, 160, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+			Images.fillRect(0, 0, Images.width, Images.height, 0x00000000);
+		}
+		if(popupUnitData.paralyze == 1){
+			Images.loadImages("icon_paralyze");//麻痺
+			Images.setSizeToImageSize();
+			popupPanel.operateRect( 365, 160, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+			Images.fillRect(0, 0, Images.width, Images.height, 0x00000000);
+		}
+		if(popupUnitData.paralyze == 2){
+			Images.loadImages("icon_paralyze2");//麻痺
+			Images.setSizeToImageSize();
+			popupPanel.operateRect( 365, 160, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+			Images.fillRect(0, 0, Images.width, Images.height, 0x00000000);
+		}
+		if(popupUnitData.seal > 0){
+			Images.loadImages("icon_seal");//封印
+			Images.setSizeToImageSize();
+			popupPanel.operateRect( 385, 160, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+			Images.fillRect(0, 0, Images.width, Images.height, 0x00000000);
+		}
+		if(popupUnitData.cutDown.pow > 0 || popupUnitData.cutDown.def > 0 || popupUnitData.cutDown.spd > 0 || popupUnitData.cutDown.mor > 0){
+			Images.loadImages("icon_cut");//削減
+			Images.setSizeToImageSize();
+			popupPanel.operateRect( 345, 180, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+			Images.fillRect(0, 0, Images.width, Images.height, 0x00000000);
+		}
+		if(popupUnitData.curse > 0){
+			Images.loadImages("icon_curse");//呪い
+			Images.setSizeToImageSize();
+			popupPanel.operateRect( 365, 180, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+			Images.fillRect(0, 0, Images.width, Images.height, 0x00000000);
+		}
+		if(popupUnitData.charm > 0){
+			Images.loadImages("icon_charm");//魅了
+			Images.setSizeToImageSize();
+			popupPanel.operateRect( 385, 180, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+			Images.fillRect(0, 0, Images.width, Images.height, 0x00000000);
+		}
+		//装備（武器）
+		Images.fillRect(0, 0, Images.width, Images.height, 0x00000000);
+		if(popupUnitData.equipment.weapon != ''){
+			if(popupUnitData.equipment.weapon == '片手'){Images.loadImages("item_icon00");}
+			if(popupUnitData.equipment.weapon == '両手'){Images.loadImages("item_icon01");}
+			if(popupUnitData.equipment.weapon == '射撃'){Images.loadImages("item_icon02");}
+			if(popupUnitData.equipment.weapon == '杖'  ){Images.loadImages("item_icon03");}
+			if(popupUnitData.equipment.weapon == '鞭'  ){Images.loadImages("item_icon04");}
+			if(popupUnitData.equipment.weapon == '爪'  ){Images.loadImages("item_icon05");}
+			if(popupUnitData.equipment.weapon == '盾'  ){Images.loadImages("item_icon06");}
+			if(popupUnitData.equipment.weapon == '鎧'  ){Images.loadImages("item_icon07");}
+			if(popupUnitData.equipment.weapon == '獣装'){Images.loadImages("item_icon08");}
+			if(popupUnitData.equipment.weapon == '法衣'){Images.loadImages("item_icon09");}
+			if(popupUnitData.equipment.weapon == '道具'){Images.loadImages("item_icon10");}
+			Images.setSizeToImageSize();
+			popupPanel.operateRect( 500, 343, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+		}
+		//装備（防具）
+		if(popupUnitData.equipment.armor != ''){
+			if(popupUnitData.equipment.armor  == '盾'  ){Images.loadImages("item_icon06");}
+			if(popupUnitData.equipment.armor  == '鎧'  ){Images.loadImages("item_icon07");}
+			if(popupUnitData.equipment.armor  == '獣装'){Images.loadImages("item_icon08");}
+			if(popupUnitData.equipment.armor  == '法衣'){Images.loadImages("item_icon09");}
+			if(popupUnitData.equipment.armor  == '道具'){Images.loadImages("item_icon10");}
+			if(popupUnitData.equipment.armor  == '片手'){Images.loadImages("item_icon00");}
+			if(popupUnitData.equipment.armor  == '両手'){Images.loadImages("item_icon01");}
+			if(popupUnitData.equipment.armor  == '射撃'){Images.loadImages("item_icon02");}
+			if(popupUnitData.equipment.armor  == '杖'  ){Images.loadImages("item_icon03");}
+			if(popupUnitData.equipment.armor  == '鞭'  ){Images.loadImages("item_icon04");}
+			if(popupUnitData.equipment.armor  == '爪'  ){Images.loadImages("item_icon05");}
+			Images.setSizeToImageSize();
+			popupPanel.operateRect( 500, 363, Images, 0, 0, Images.imageWidth, Images.imageHeight);
+		}
+
+		invalidate Images;
+
+		//テキスト表示（名前）
+		var txtLayer     = new Layer(kag, kag.fore.base);//名前レイヤ
+		var txtLayerBack = new Layer(kag, kag.fore.base);//名前背景
+		txtLayer.setPos(popupPanel.left, popupPanel.top, panelImage.imageWidth, panelImage.imageHeight);
+		txtLayer.font.mapPrerenderedFont( "uppg24.tft" );//
+		//txtLayer.drawText(40+1, 40+1, popupUnitData.uniqueName, 0xFEFEFE);
+		//txtLayer.drawText(40  , 40  , popupUnitData.uniqueName, 0xFFFFFF);
+		_text_draw_super_(txtLayer, 40, 28, popupUnitData.uniqueName, 0xffffff, 24,%[ outline:1, outlinecolor:0x664927,shadow:1, shadowopacity:200, shadowblur:2,gradcolor1:0xa68667, gradcolor2:0xffffff] );
+		txtLayer.setSizeToImageSize();
+		txtLayerBack.setSize(popupUnitData.uniqueName.length*23+2,30);
+		txtLayerBack.colorRect(0, 0, txtLayerBack.width, txtLayerBack.height, 0x000000, 64);
+//dm(popupUnitData.uniqueName);
+		popupPanel.operateRect( 370,107, txtLayerBack, 0, 0, txtLayerBack.imageWidth, txtLayerBack.imageHeight);
+		popupPanel.operateRect( 330, 80, txtLayer    , 0, 0, txtLayer.imageWidth    , txtLayer.imageHeight);
+
+		//テキスト表示（称号）
+		txtLayer.fillRect(    0, 0, txtLayer.width,     txtLayer.height,     0x00000000);
+		txtLayerBack.fillRect(0, 0, txtLayerBack.width, txtLayerBack.height, 0x00000000);
+		var txtLayerBack = new Layer(kag, kag.fore.base);//名前背景
+		var titleText = (string)popupUnitData.prefix+popupUnitData.suffix;
+		if(titleText !=''){
+			txtLayer.font.mapPrerenderedFont( "uppg14.tft" );//
+			//txtLayer.drawText(44+1, 16+1, titleText, 0xFFFFFF);
+			//txtLayer.drawText(44  , 16  , titleText, 0xFFFFFF);
+			_text_draw_super_(txtLayer, 40, 14, titleText, 0xffffff, 14,%[ outline:1, outlinecolor:0x664927,shadow:1, shadowopacity:200, shadowblur:2,gradcolor1:0xffffff, gradcolor2:0xa68667] );
+			txtLayer.setSizeToImageSize();
+			txtLayerBack.setSize(titleText.length*15+2,18);
+			txtLayerBack.colorRect(0, 0, txtLayerBack.width, txtLayerBack.height, 0x000000, 64);
+			popupPanel.operateRect( 370, 92, txtLayerBack , 0, 0, txtLayerBack.imageWidth, txtLayerBack.imageHeight);
+			popupPanel.operateRect( 330, 80, txtLayer     , 0, 0, txtLayer.imageWidth    , txtLayer.imageHeight);
+		}
+
+		//テキスト表示（能力値）
+		txtLayer.fillRect(    0, 0, txtLayer.width,     txtLayer.height,     0x00000000);
+		txtLayerBack.fillRect(0, 0, txtLayerBack.width, txtLayerBack.height, 0x00000000);
+		txtLayer.font.mapPrerenderedFont( "uppg16.tft" );//
+		var powText = "攻撃[　　]";
+		var defText = "防御[　　]";
+		var spdText = "速度[　　]";
+		var morText = "士気[　　]";
+
+		if(side == 'right'){
+			var divisionNo = (int)tf.allysSelectNumber+1;
+			var divisonText = (string)"第 "+divisionNo+" 師団";
+			txtLayer.drawText(16, 63, divisonText, 0xFFFFFFF);
+		}
+
+		txtLayer.drawText(10,180, powText, 0xFFFFFFF);
+		txtLayer.drawText(10,200, defText, 0xFFFFFFF);
+		txtLayer.drawText(10,220, spdText, 0xFFFFFFF);
+		txtLayer.drawText(10,240, morText, 0xFFFFFFF);
+		txtLayer.setSizeToImageSize();
+		txtLayerBack.setSize(80,80);
+		txtLayerBack.colorRect(0, 0, txtLayerBack.width, txtLayerBack.height, 0x000000, 192);
+		popupPanel.operateRect( 340,253, txtLayerBack, 0, 0, txtLayerBack.imageWidth, txtLayerBack.imageHeight);
+		popupPanel.operateRect( 330, 80, txtLayer    , 0, 0, txtLayer.imageWidth     , txtLayer.imageHeight);
+
+		var pow = calc.allStatusCalc(popupUnitData.pow, popupUnitData.revise.pow,No,side,'pow');
+		var def = calc.allStatusCalc(popupUnitData.def, popupUnitData.revise.def,No,side,'def');
+		var spd = calc.allStatusCalc(popupUnitData.spd, popupUnitData.revise.spd,No,side,'spd');
+		var mor = calc.allStatusCalc(popupUnitData.mor, popupUnitData.revise.mor,No,side,'mor');
+
+		//作戦補正加算
+		if(side == 'right'){
+			//strategyRevise(No);//作戦補正
+			pow += popupUnitData.strategy.pow;
+			def += popupUnitData.strategy.def;
+			spd += popupUnitData.strategy.spd;
+			mor += popupUnitData.strategy.mor;
+		}
+		if(pow < 10){txtLayer.drawText(70,180, pow, 0xFFFFFFF);}else if(pow < 100){txtLayer.drawText(60,180, pow, 0xFFFFFFF);}else{txtLayer.drawText(50,180, pow, 0xFFFFFFF);}
+		if(def < 10){txtLayer.drawText(70,200, def, 0xFFFFFFF);}else if(def < 100){txtLayer.drawText(60,200, def, 0xFFFFFFF);}else{txtLayer.drawText(50,200, def, 0xFFFFFFF);}
+		if(spd < 10){txtLayer.drawText(70,220, spd, 0xFFFFFFF);}else if(spd < 100){txtLayer.drawText(60,220, spd, 0xFFFFFFF);}else{txtLayer.drawText(50,220, spd, 0xFFFFFFF);}
+		if(mor < 10){txtLayer.drawText(70,240, mor, 0xFFFFFFF);}else if(mor < 100){txtLayer.drawText(60,240, mor, 0xFFFFFFF);}else{txtLayer.drawText(50,240, mor, 0xFFFFFFF);}
+		popupPanel.operateRect( 330, 80, txtLayer     , 0, 0, txtLayer.imageWidth     , txtLayer.imageHeight);
+
+		//テキスト表示（スキル
+		txtLayer.fillRect(    0, 0, txtLayer.width,     txtLayer.height,     0x00000000);
+		txtLayerBack.fillRect(0, 0, txtLayerBack.width, txtLayerBack.height, 0x00000000);
+		txtLayer.font.mapPrerenderedFont( "uppg14.tft" );//
+		var skillBox = "[　 ]";
+		var backlayerCount = 0;
+		var textcolor;
+		var Images  = new Layer(kag, kag.fore.base);
+		Images.font.mapPrerenderedFont( "uppg14.tft" );//
+		Images.setPos(0, 0, 960, 720);
+		Images.fillRect(0,0,Images.width,Images.height,0x00000000);
+		for(var i=0;i<popupUnitData.skill.count;i++){
+			if(i<8){textcolor = 0xFFFFFF;}else{textcolor = 0xD1FDFF;}
+			if(popupUnitData.skill[i].name != ''){
+				txtLayer.drawText(200,238-backlayerCount*16,popupUnitData.skill[i].name,textcolor);
+				if(popupUnitData.skill[i].value != 0){
+					txtLayer.drawText(260,238-backlayerCount*16,skillBox,textcolor);
+					if(popupUnitData.skill[i].value < 10){txtLayer.drawText(275,238-backlayerCount*16,popupUnitData.skill[i].value,textcolor);}else{txtLayer.drawText(267,238-backlayerCount*16,popupUnitData.skill[i].value,textcolor);}
+				}
+				//スキル説明
+				for(var j=0;j<tf.skill.count;j++){
+					if(popupUnitData.skill[i].name == tf.skill[j].name){
+						Images.drawText(650,238-backlayerCount*16,tf.skill[j].comm,textcolor);
+						//dm(tf.skill[j].comm);
+					}
+				}
+				backlayerCount++;
+			}
+		}
+		Images.setSizeToImageSize();
+		txtLayerBack.setSize(98,16*backlayerCount);
+		txtLayerBack.colorRect(0, 0, txtLayerBack.width, txtLayerBack.height, 0x000000, 192);
+		popupPanel.operateRect( 523,332-backlayerCount*16, txtLayerBack, 0, 0, txtLayerBack.imageWidth, txtLayerBack.imageHeight);
+		popupPanel.operateRect( 330, 80, txtLayer    , 0, 0, txtLayer.imageWidth     , txtLayer.imageHeight);
+
+		if(tf.skiilText){
+			txtLayerBack.fillRect(0,0,txtLayerBack.width,txtLayerBack.height,0x00000000);
+			txtLayerBack.setSize(305,16*backlayerCount);
+			txtLayerBack.colorRect(0, 0, txtLayerBack.width, txtLayerBack.height, 0x000000, 192);
+			popupPanel.operateRect( 645,332-backlayerCount*16, txtLayerBack, 0, 0, txtLayerBack.imageWidth, txtLayerBack.imageHeight);
+			popupPanel.operateRect( 0,80, Images , 0, 0, Images.imageWidth , Images.imageHeight);
+		}
+
+		invalidate Images;
+
+		//テキスト表示（levelとか）
+		var Images  = new Layer(kag, kag.fore.base);
+		Images.setPos(popupPanel.left, popupPanel.top, panelImage.imageWidth, panelImage.imageHeight);
+		var textcolor = 0xFFFFFFF;var shadcolor = 0x0000000;
+		txtLayer.fillRect(    0, 0, txtLayer.width,     txtLayer.height,     0x00000000);
+		txtLayerBack.fillRect(0, 0, txtLayerBack.width, txtLayerBack.height, 0x00000000);
+		txtLayer.font.mapPrerenderedFont( "uppg16.tft" );//
+		txtLayer.drawText(6+1,265+1, "Lv:", shadcolor);txtLayer.drawText( 60+1,265+1, "HP:", shadcolor);
+		txtLayer.drawText(6  ,265  , "Lv:", textcolor);txtLayer.drawText( 60  ,265  , "HP:", textcolor);
+
+		txtLayer.drawText(6+1,285+1, "成長:"+popupUnitData.growth, shadcolor);txtLayer.drawText( 60+1,285+1, "Ex:", shadcolor);
+		txtLayer.drawText(6  ,285  , "成長:"+popupUnitData.growth, textcolor);txtLayer.drawText( 60  ,285  , "Ex:", textcolor);
+		txtLayer.drawText(6+1,305+1, "属性:", shadcolor);txtLayer.drawText(160+1,305+1, "特攻:", shadcolor);
+		txtLayer.drawText(6  ,305  , "属性:", textcolor);txtLayer.drawText(160  ,305  , "特攻:", textcolor);
+		var  c = new Array();
+		var _x = 6, _y = 322, _r = 0, _l = 0;
+		if(side == 'right'){
+			     if(popupUnitData.loyalty <= 15){popupUnitData.comment = popupUnitData.script[0]+popupUnitData.comment;}
+			else if(popupUnitData.loyalty <= 35){popupUnitData.comment = popupUnitData.script[1]+popupUnitData.comment;}
+			else if(popupUnitData.loyalty <= 55){popupUnitData.comment = popupUnitData.script[2]+popupUnitData.comment;}
+			else if(popupUnitData.loyalty <= 75){popupUnitData.comment = popupUnitData.script[3]+popupUnitData.comment;}
+			else                                {popupUnitData.comment = popupUnitData.script[4]+popupUnitData.comment;}
+		}else{
+			popupUnitData.comment = popupUnitData.script[1]+popupUnitData.comment;
+		}
+		for(var i=0;i<popupUnitData.comment.length;i++){
+			c = popupUnitData.comment.substring(i,1);
+			if( c == ';'){_r++;_l=0;}
+			else{
+				if(_l >18){_l=0;_r++;}
+				//txtLayer.drawText(_x+_l*15+1,_y+_r*20+1, c, shadcolor);
+				//txtLayer.drawText(_x+_l*15  ,_y+_r*20  , c, textcolor);
+				_text_draw_super_(txtLayer, _x+_l*15, _y+_r*20, c, 0xffffff, 16,%[ outline:1, outlinecolor:0x545429,shadow:1, shadowopacity:128, shadowblur:1,gradcolor1:0xfffff3, gradcolor2:0x686852] );
+				_l++;
+			}
+		}
+		popupPanel.operateRect( 330, 80, txtLayer, 0, 0, txtLayer.imageWidth, txtLayer.imageHeight);
+
+		txtLayer.fillRect(    0, 0, txtLayer.width,     txtLayer.height,     0x00000000);
+		txtLayerBack.fillRect(0, 0, txtLayerBack.width, txtLayerBack.height, 0x00000000);
+
+		txtLayer.font.mapPrerenderedFont( "uppg14.tft" );//
+		txtLayer.drawText( 30+1,265+1, popupUnitData.level, shadcolor);txtLayer.drawText(86+1,265+1, popupUnitData.HP.now+"/"+popupUnitData.HP.max, shadcolor);
+		txtLayer.drawText( 30  ,265  , popupUnitData.level, textcolor);txtLayer.drawText(86  ,265  , popupUnitData.HP.now+"/"+popupUnitData.HP.max, textcolor);
+		txtLayer.drawText( 86+1,285+1, popupUnitData.experience, shadcolor);
+		txtLayer.drawText( 86  ,285  , popupUnitData.experience, textcolor);
+		txtLayer.drawText( 46+1,305+1, popupUnitData.attribute, shadcolor);txtLayer.drawText(200+1,305+1, popupUnitData.special, shadcolor);
+		txtLayer.drawText( 46  ,305  , popupUnitData.attribute, textcolor);txtLayer.drawText(200  ,305  , popupUnitData.special, textcolor);
+		popupPanel.operateRect( 330, 80, txtLayer, 0, 0, txtLayer.imageWidth, txtLayer.imageHeight);
+
+		//txtLayer.font.mapPrerenderedFont( "uppg12.tft" );//
+		txtLayer.fillRect(    0, 0, txtLayer.width,     txtLayer.height,     0x00000000);
+		txtLayerBack.fillRect(0, 0, txtLayerBack.width, txtLayerBack.height, 0x00000000);
+		txtLayer.font.unmapPrerenderedFont();
+		txtLayer.font.face  = 'ＭＳ　ゴシック';
+		txtLayer.font.height= 11;
+		txtLayer.drawText(186+1,267+1, popupUnitData.equiped.weapon, shadcolor);
+		txtLayer.drawText(186  ,267  , popupUnitData.equiped.weapon, textcolor);
+		txtLayer.drawText(186+1,287+1, popupUnitData.equiped.armor, shadcolor);
+		txtLayer.drawText(186  ,287  , popupUnitData.equiped.armor, textcolor);
+		popupPanel.operateRect( 330, 80, txtLayer, 0, 0, txtLayer.imageWidth, txtLayer.imageHeight);
+
+		//txtLayer.fillRect(    0, 0, txtLayer.width,     txtLayer.height,     0x00000000);
+		//txtLayerBack.fillRect(0, 0, txtLayerBack.width, txtLayerBack.height, 0x00000000);
+		//txtLayer.font.mapPrerenderedFont( "uppg12.tft" );//
+		txtLayer.font.height= 14;
+		txtLayer.drawText( 10+1,405+1, "治療コスト： "+popupUnitData.cost, shadcolor);
+		txtLayer.drawText( 10  ,405  , "治療コスト： "+popupUnitData.cost, textcolor);
+		if(popupUnitData.unitClass > 0){
+			var rankText;
+			if(popupUnitData.rank >=  0 ){rankText = 'Ｆ';}
+			if(popupUnitData.rank >=  4 ){rankText = 'Ｅ';}
+			if(popupUnitData.rank >=  8 ){rankText = 'Ｄ';}
+			if(popupUnitData.rank >= 12 ){rankText = 'Ｃ';}
+			if(popupUnitData.rank >= 16 ){rankText = 'Ｂ';}
+			if(popupUnitData.rank >= 20 ){rankText = 'Ａ';}
+			if(popupUnitData.rank >= 24 ){rankText = 'Ｓ';}
+			txtLayer.drawText( 136+1,405+1, rankText+"級　"+popupUnitData.unitName, shadcolor);
+			txtLayer.drawText( 136  ,405  , rankText+"級　"+popupUnitData.unitName, textcolor);
+		}
+
+		popupPanel.operateRect( 330, 80, txtLayer, 0, 0, txtLayer.imageWidth, txtLayer.imageHeight);
+		popupPanel.visible=true;
+	}
+
+	//popupWindowErase
+	function popupWindowErase(){
+		var popupPanel = kag.fore.layers[5];//参照レイヤー
+		popupPanel.visible=false;
+		popupPanel.fillRect(0, 0, popupPanel.width, popupPanel.height, 0x00000000);
+//dm("## popupWindowErase ##");
+	}
+
+	//奇襲攻撃
+	function surpriseCheck(){
+		tf.surpriseR = 0,tf.antiSurpriseR = 0;
+		tf.surpriseL = 0,tf.antiSurpriseL = 0;
+		for(var i=0;i<6;i++){
+			if(tf.rightParty[i].id != void){
+				for(var j=0;j<tf.rightParty[i].skill.count;j++){
+					if(tf.rightParty[i].skill[j].name == '奇襲戦法'){tf.surpriseR     += tf.rightParty[i].skill[j].value;}
+					if(tf.rightParty[i].skill[j].name == '奇襲警戒'){tf.antiSurpriseR += tf.rightParty[i].skill[j].value;}
+//dm("surpriseR="+tf.surpriseR+" /tf.antiSurpriseR="+tf.antiSurpriseR);
+				}
+			}
+		}
+		for(var i=0;i<tf.leftParty.count;i++){
+			if(tf.leftParty[i].id != void){
+				for(var j=0;j<tf.leftParty[i].skill.count;j++){
+					if(tf.leftParty[i].skill[j].name == '奇襲戦法'){tf.surpriseL     += tf.leftParty[i].skill[j].value;}
+					if(tf.leftParty[i].skill[j].name == '奇襲警戒'){tf.antiSurpriseL += tf.leftParty[i].skill[j].value;}
+//dm("surpriseL="+tf.surpriseL+" /tf.antiSurpriseL="+tf.antiSurpriseL);
+				}
+			}
+		}
+		//左隊列変更
+		if(tf.day_time == 0){tf.surpriseR += 9;}//夜+9
+dm("R奇襲値計="+tf.surpriseR+" - "+tf.antiSurpriseL+" \\ 10");
+		tf.surpriseR = (tf.surpriseR - tf.antiSurpriseL)\ 10;//奇襲戦法合計\10-敵奇襲警戒
+dm("R奇襲可否="+tf.surpriseR);
+		if(tf.surpriseR > 0){
+			var a = [%[]];
+			var b;
+			a.assignStruct(gf.enemy[tf.enemySelectNumber].dev);
+			//for(var i=0;i<6;i++){a[i] = gf.enemy[tf.enemySelectNumber].dev[i];}
+			for(var i=0;i<tf.surpriseR;i++){
+				b = a.pop();
+				a.unshift(b);
+			}
+			//隊列再構築
+			tf.leftParty.clear;
+	 		tf.leftParty = new Array();
+			for(var i=0;i<6;i++){tf.leftParty[i] = new Dictionary();}
+
+			for(var i=0;i<gf.char.count;i++){
+				if(gf.char[i] !== void){
+					if(a[0].id == gf.char[i].index){(Dictionary.assignStruct incontextof tf.leftParty[0])(gf.char[i]);}
+					if(a[1].id == gf.char[i].index){(Dictionary.assignStruct incontextof tf.leftParty[1])(gf.char[i]);}
+					if(a[2].id == gf.char[i].index){(Dictionary.assignStruct incontextof tf.leftParty[2])(gf.char[i]);}
+					if(a[3].id == gf.char[i].index){(Dictionary.assignStruct incontextof tf.leftParty[3])(gf.char[i]);}
+					if(a[4].id == gf.char[i].index){(Dictionary.assignStruct incontextof tf.leftParty[4])(gf.char[i]);}
+					if(a[5].id == gf.char[i].index){(Dictionary.assignStruct incontextof tf.leftParty[5])(gf.char[i]);}
+				}
+			}
+			//能力値算出（パラメータ計算）
+			//baseUnitInitialize(tf.enemySelectNumber,'left');
+			for(var i=0;i<6;i++){
+				tf.leftParty[i].level            = a[i].level;
+				tf.leftParty[i].experience       = a[i].exp;dm(tf.leftParty[i].uniqueName+"["+i+"].exp:"+a[i].exp);
+				tf.leftParty[i].HP.max           = a[i].mhp;dm(tf.leftParty[i].uniqueName+"["+i+"].mhp:"+a[i].mhp);
+				tf.leftParty[i].HP.now           = a[i].hp; dm(tf.leftParty[i].uniqueName+"["+i+"].hp :"+a[i].hp);
+				tf.leftParty[i].equipedID.weapon = a[i].item0;
+				tf.leftParty[i].equipedID.armor  = a[i].item1;
+				tf.leftParty[i].equiped.weapon   = "";
+				tf.leftParty[i].equiped.armor    = "";
+				tf.leftParty[i].uniqueName       = tf.leftParty[i].unitName;
+
+				if(tf.leftParty[i].id == 0){tf.leftParty[i].HP.max = 0;tf.leftParty[i].HP.now =0;}
+
+				//バックアップより復帰
+				if(tf.leftParty[i].troopsNo != -2){
+					tf.leftParty[i].pow    = tf.leftParty[i].parbackup.pow;
+					tf.leftParty[i].def    = tf.leftParty[i].parbackup.def;
+					tf.leftParty[i].spd    = tf.leftParty[i].parbackup.spd;
+					tf.leftParty[i].mor    = tf.leftParty[i].parbackup.mor;
+					tf.leftParty[i].divine = tf.leftParty[i].parbackup.divine;
+					tf.leftParty[i].special= tf.leftParty[i].parbackup.special;
+				}
+
+				tf.leftParty[i].HP.recovery     = 0;
+				tf.leftParty[i].equipedADD.pow  = 0;
+				tf.leftParty[i].equipedADD.def  = 0;
+				tf.leftParty[i].equipedADD.spd  = 0;
+				tf.leftParty[i].equipedADD.mor  = 0;
+
+				tf.leftParty[i].skill[6].name  = "";
+				tf.leftParty[i].skill[6].value = 0;
+				tf.leftParty[i].skill[7].name  = "";
+				tf.leftParty[i].skill[7].value = 0;
+
+				tf.leftParty[i].skill[8].name  = "";
+				tf.leftParty[i].skill[8].value = 0;
+				tf.leftParty[i].skill[9].name  = "";
+				tf.leftParty[i].skill[9].value = 0;
+				tf.leftParty[i].skill[10].name = "";
+				tf.leftParty[i].skill[10].value= 0;
+				tf.leftParty[i].skill[11].name = "";
+				tf.leftParty[i].skill[11].value= 0;
+
+				tf.leftParty[i].prefixID = 0;
+				tf.leftParty[i].suffixID = 0;
+				tf.leftParty[i].prefix   = "";
+				tf.leftParty[i].suffix   = "";
+				tf.leftParty[i].equipedID.weapon = gf.enemy[tf.enemySelectNumber].dev[i].item0;
+				tf.leftParty[i].equipedID.armor  = gf.enemy[tf.enemySelectNumber].dev[i].item1;
+				tf.leftParty[i].equiped.weapon   = "";
+				tf.leftParty[i].equiped.armor    = "";
+
+				for(var k=0;k<gf.list.item.count;k++){
+					//武器
+					if(gf.list.item[k].index == tf.leftParty[i].equipedID.weapon){
+						tf.leftParty[i].equiped.weapon = gf.list.item[k].name;
+
+						tf.leftParty[i].equipedADD.pow  += gf.list.item[k].pow;
+						tf.leftParty[i].equipedADD.def  += gf.list.item[k].pow;
+						tf.leftParty[i].equipedADD.spd  += gf.list.item[k].pow;
+						tf.leftParty[i].equipedADD.mor  += gf.list.item[k].pow;
+
+						tf.leftParty[i].skill[8].name    = gf.list.item[k].attach[0].name;
+						tf.leftParty[i].skill[8].value   = gf.list.item[k].attach[0].value;
+						tf.leftParty[i].skill[9].name    = gf.list.item[k].attach[1].name;
+						tf.leftParty[i].skill[9].value   = gf.list.item[k].attach[1].value;
+					}
+
+					//防具
+					if(gf.list.item[k].index == tf.leftParty[i].equipedID.armor){
+						tf.leftParty[i].equiped.armor = gf.list.item[k].name;
+
+						tf.leftParty[i].equipedADD.pow  += gf.list.item[k].pow;
+						tf.leftParty[i].equipedADD.def  += gf.list.item[k].pow;
+						tf.leftParty[i].equipedADD.spd  += gf.list.item[k].pow;
+						tf.leftParty[i].equipedADD.mor  += gf.list.item[k].pow;
+
+						tf.leftParty[i].skill[10].name   = gf.list.item[k].attach[0].name;
+						tf.leftParty[i].skill[10].value  = gf.list.item[k].attach[0].value;
+						tf.leftParty[i].skill[11].name   = gf.list.item[k].attach[1].name;
+						tf.leftParty[i].skill[11].value  = gf.list.item[k].attach[1].value;
+					}
+				}
+
+				if(tf.leftParty[i].HP.max > tf.leftParty[i].HP.now){
+					tf.leftParty[i].HP.max = tf.leftParty[i].HP.now;
+				}
+				tf.leftParty[i].pow       = calc.StatusCalc(tf.leftParty[i].pow,tf.leftParty[i].experience);
+				tf.leftParty[i].def       = calc.StatusCalc(tf.leftParty[i].def,tf.leftParty[i].experience);
+				tf.leftParty[i].spd       = calc.StatusCalc(tf.leftParty[i].spd,tf.leftParty[i].experience);
+				tf.leftParty[i].mor       = calc.StatusCalc(tf.leftParty[i].mor,tf.leftParty[i].experience,'mor');
+				tf.leftParty[i].effTMP    = tf.leftParty[i].effect;
+
+				//装備加算
+				tf.leftParty[i].pow    += tf.leftParty[i].equipedADD.pow;
+				tf.leftParty[i].def    += tf.leftParty[i].equipedADD.def;
+				tf.leftParty[i].spd    += tf.leftParty[i].equipedADD.spd;
+				tf.leftParty[i].mor    += tf.leftParty[i].equipedADD.mor;
+				if(tf.leftParty[i].pow < 1){tf.leftParty[i].pow = 1;}
+				if(tf.leftParty[i].def < 1){tf.leftParty[i].def = 1;}
+				if(tf.leftParty[i].spd < 1){tf.leftParty[i].spd = 1;}
+				if(tf.leftParty[i].mor < 1){tf.leftParty[i].mor = 1;}
+
+				//能力加算補正
+				tf.leftParty[i].pow    += f.used.enemyadd;
+				tf.leftParty[i].def    += f.used.enemyadd;
+				tf.leftParty[i].spd    += f.used.enemyadd;
+				tf.leftParty[i].mor    += f.used.enemyadd \ 4;
+
+				//能力倍加補正
+				tf.leftParty[i].pow    = (int)(tf.leftParty[i].pow * f.used.enemypar);
+				tf.leftParty[i].def    = (int)(tf.leftParty[i].def * f.used.enemypar);
+				tf.leftParty[i].spd    = (int)(tf.leftParty[i].spd * f.used.enemypar);
+				tf.leftParty[i].mor    = (int)(tf.leftParty[i].mor * f.used.enemypar);
+
+				if(tf.leftParty[i].id !=0 && tf.leftParty[i].HP.now > 0){
+					var SkillValue = battleFuncSkillSet.searchSkill(i,'リカバリ','left');
+					if(SkillValue[0] == 1){
+						if(SkillValue[1] > 100){SkillValue[1] = 100;}
+						tf.leftParty[i].HP.recovery = SkillValue[1];
+					}
+				}
+			}
+			//夜の防御減算(def=50%)
+			if(tf.day_time == 0){for(var i=0;i<6;i++){nightDef(i,'left');}}
+			if(tf.day_time == 1){for(var i=0;i<6;i++){dayDef(i,'left');}}
+		}else{tf.surpriseR = 0;}//奇襲失敗
+
+		//右隊列変更
+		if(tf.day_time == 0){tf.surpriseL += 9;}//夜+9
+dm("L奇襲値計="+tf.surpriseL+" - "+tf.antiSurpriseR+" \\ 10");
+		tf.surpriseL = (tf.surpriseL - tf.antiSurpriseR) \ 10;//奇襲戦法-敵奇襲警戒\10
+dm("L奇襲可否="+tf.surpriseL);
+		if(tf.surpriseL > 0){
+			var a = [];
+			var b;
+			a.assignStruct(f.used.party[tf.allysSelectNumber].division);
+			for(var i=0;i<tf.surpriseL;i++){
+				b = a.pop();
+				a.unshift(b);
+			}
+			//隊列再構築
+			tf.rightParty.clear;
+	 		tf.rightParty = new Array();
+			for(var i=0;i<6;i++){tf.rightParty[i] = new Dictionary();}
+			for(var i=0;i<gf.char.count;i++){
+				if(a[0] == gf.char[i].index){(Dictionary.assignStruct incontextof tf.rightParty[0])(gf.char[i]);}
+				if(a[1] == gf.char[i].index){(Dictionary.assignStruct incontextof tf.rightParty[1])(gf.char[i]);}
+				if(a[2] == gf.char[i].index){(Dictionary.assignStruct incontextof tf.rightParty[2])(gf.char[i]);}
+				if(a[3] == gf.char[i].index){(Dictionary.assignStruct incontextof tf.rightParty[3])(gf.char[i]);}
+				if(a[4] == gf.char[i].index){(Dictionary.assignStruct incontextof tf.rightParty[4])(gf.char[i]);}
+				if(a[5] == gf.char[i].index){(Dictionary.assignStruct incontextof tf.rightParty[5])(gf.char[i]);}
+			}
+			//能力値算出（パラメータ計算）
+			baseUnitInitialize(tf.enemySelectNumber,'right');
+			//夜の防御減算(def=50%)
+			if(tf.day_time == 0){for(var i=0;i<6;i++){nightDef(i,'right');}}
+			//昼の防御減算(def=50%)
+			if(tf.day_time == 1){for(var i=0;i<6;i++){dayDef(i,'right');}}
+		}else{tf.surpriseL = 0;}//奇襲失敗
+	}
+
+	//生存報告
+	function survivalReport(side){
+		var reports = new Array();
+		var survivCount = 0;
+		if(side == 'right'){reports = tf.rightParty;}
+		               else{reports = tf.leftParty;}
+		for(var i=0;i<6;i++){
+			if(reports[i].id !== void ){
+				if(reports[i].HP.now > 0 && reports[i].id != 0){
+					survivCount += 1;
+				}
+			}
+		}
+		return survivCount;
+	}
+
+	//前衛検索
+	function frontSearch(side){
+		var front = new Array();
+		var count = new Array();
+		if(side == 'right'){front = tf.rightParty;}
+		               else{front = tf.leftParty;}
+		for(var i=0;i<3;i++){
+			if(front[i].HP.now > 0 && front[i].id != 0){count[i] = 1;}else{count[i] = 0;}
+dm("HP="+front[i].HP.now+"count["+i+"]="+count[i]);
+		}
+		return count;
+	}
+
+
+	//ターン開始スキルチェック
+	function turnStartSkillCheck(){
+		var survivR  = survivalReport('right');//生存報告(右)
+		var survivL  = survivalReport('left'); //生存報告(左)
+		var supportR = new Dictionary();//支援R
+		var supportL = new Dictionary();//支援L
+		tf.defenseR  = new Dictionary();//防御スキルフラグ右
+		tf.defenseL  = new Dictionary();//防御スキルフラグ左
+		tf.offenseR  = new Dictionary();//攻撃スキルフラグ右
+		tf.offenseL  = new Dictionary();//攻撃スキルフラグ左
+
+
+dm("生存数.R="+survivR);
+dm("生存数.L="+survivL);
+		//右側
+		for(var i=0;i<6;i++){
+			if(tf.rightParty[i].id != void && tf.rightParty[i].HP.now > 1){
+				for(var j=0;j<tf.rightParty[i].skill.count;j++){
+					//時間補正スキル
+					if(tf.rightParty[i].skill[j].name == '太陽信仰'){
+						if(tf.day_time == 1){//昼
+							tf.rightParty[i].revise.pow += (int)tf.rightParty[i].pow * (tf.rightParty[i].skill[j].value / 100);
+							tf.rightParty[i].revise.def += (int)tf.rightParty[i].def * (tf.rightParty[i].skill[j].value / 100);
+							tf.rightParty[i].revise.spd += (int)tf.rightParty[i].spd * (tf.rightParty[i].skill[j].value / 100);
+							tf.rightParty[i].revise.mor += (int)tf.rightParty[i].mor * (tf.rightParty[i].skill[j].value / 100);
+						}else{			//夜
+							tf.rightParty[i].revise.pow -= (int)tf.rightParty[i].pow * (tf.rightParty[i].skill[j].value / 100);
+							tf.rightParty[i].revise.def -= (int)tf.rightParty[i].def * (tf.rightParty[i].skill[j].value / 100);
+							tf.rightParty[i].revise.spd -= (int)tf.rightParty[i].spd * (tf.rightParty[i].skill[j].value / 100);
+							tf.rightParty[i].revise.mor -= (int)tf.rightParty[i].mor * (tf.rightParty[i].skill[j].value / 100);
+						}
+					}
+					if(tf.rightParty[i].skill[j].name == '夜行生物'){
+						if(tf.day_time == 1){//昼
+							tf.rightParty[i].revise.pow -= (int)tf.rightParty[i].pow * (tf.rightParty[i].skill[j].value / 100);
+							tf.rightParty[i].revise.def -= (int)tf.rightParty[i].def * (tf.rightParty[i].skill[j].value / 100);
+							tf.rightParty[i].revise.spd -= (int)tf.rightParty[i].spd * (tf.rightParty[i].skill[j].value / 100);
+							tf.rightParty[i].revise.mor -= (int)tf.rightParty[i].mor * (tf.rightParty[i].skill[j].value / 100);
+						}else{			//夜
+							tf.rightParty[i].revise.pow += (int)tf.rightParty[i].pow * (tf.rightParty[i].skill[j].value / 100);
+							tf.rightParty[i].revise.def += (int)tf.rightParty[i].def * (tf.rightParty[i].skill[j].value / 100);
+							tf.rightParty[i].revise.spd += (int)tf.rightParty[i].spd * (tf.rightParty[i].skill[j].value / 100);
+							tf.rightParty[i].revise.mor += (int)tf.rightParty[i].mor * (tf.rightParty[i].skill[j].value / 100);
+						}
+					}
+
+					//支援系スキル(4人以上で発動)
+					if(survivR >= 4){
+						if(tf.rightParty[i].skill[j].name == '攻撃陣形'){supportR.pow += tf.rightParty[i].skill[j].value;  }
+						if(tf.rightParty[i].skill[j].name == '防御陣形'){supportR.def += tf.rightParty[i].skill[j].value;  }
+						if(tf.rightParty[i].skill[j].name == '速度陣形'){supportR.spd += tf.rightParty[i].skill[j].value;  }
+						if(tf.rightParty[i].skill[j].name == '士気陣形'){supportR.mor += tf.rightParty[i].skill[j].value*4;}
+					}
+
+					//味方活性化スキル
+					if(tf.rightParty[i].skill[j].name == '男性活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '女性活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '人間活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '魔族活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '神族活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '聖職活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '器兵活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '竜族活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '魔獣活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '水棲活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '飛行活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '火霊活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '雷霊活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '樹霊活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '毒性活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '氷霊活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '不死活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '騎士活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '夜行活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '超越活性'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '師団指揮'){battleFuncSkillSet.setActivity(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+
+					//敵弱体化スキル
+					if(tf.rightParty[i].skill[j].name == '男性弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '女性弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '人間弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '魔族弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '神族弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '聖職弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '器兵弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '竜族弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '魔獣弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '水棲弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '飛行弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '火霊弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '雷霊弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '樹霊弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '毒性弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '氷霊弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '不死弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '騎士弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '夜行弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '超越弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '師団弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '攻撃弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '防御弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '速度弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+					if(tf.rightParty[i].skill[j].name == '士気弱体'){battleFuncSkillSet.setWeaken(tf.rightParty[i].skill[j].name,tf.rightParty[i].skill[j].value,'right',i);}
+				}
+			}
+		}
+
+		//左側
+		for(var i=0;i<6;i++){
+			if(tf.leftParty[i].id != void && tf.leftParty[i].HP.now > 1){
+				for(var j=0;j<tf.leftParty[i].skill.count;j++){
+					//時間補正スキル
+					if(tf.leftParty[i].skill[j].name == '太陽信仰'){
+						if(tf.day_time == 1){//昼
+							tf.leftParty[i].revise.pow += (int)tf.leftParty[i].pow * (tf.leftParty[i].skill[j].value / 100);
+							tf.leftParty[i].revise.def += (int)tf.leftParty[i].def * (tf.leftParty[i].skill[j].value / 100);
+							tf.leftParty[i].revise.spd += (int)tf.leftParty[i].spd * (tf.leftParty[i].skill[j].value / 100);
+							tf.leftParty[i].revise.mor += (int)tf.leftParty[i].mor * (tf.leftParty[i].skill[j].value / 100);
+						}else{			//夜
+							tf.leftParty[i].revise.pow -= (int)tf.leftParty[i].pow * (tf.leftParty[i].skill[j].value / 100);
+							tf.leftParty[i].revise.def -= (int)tf.leftParty[i].def * (tf.leftParty[i].skill[j].value / 100);
+							tf.leftParty[i].revise.spd -= (int)tf.leftParty[i].spd * (tf.leftParty[i].skill[j].value / 100);
+							tf.leftParty[i].revise.mor -= (int)tf.leftParty[i].mor * (tf.leftParty[i].skill[j].value / 100);
+						}
+					}
+					if(tf.leftParty[i].skill[j].name == '夜行生物'){
+						if(tf.day_time == 1){//昼
+							tf.leftParty[i].revise.pow -= (int)tf.leftParty[i].pow * (tf.leftParty[i].skill[j].value / 100);
+							tf.leftParty[i].revise.def -= (int)tf.leftParty[i].def * (tf.leftParty[i].skill[j].value / 100);
+							tf.leftParty[i].revise.spd -= (int)tf.leftParty[i].spd * (tf.leftParty[i].skill[j].value / 100);
+							tf.leftParty[i].revise.mor -= (int)tf.leftParty[i].mor * (tf.leftParty[i].skill[j].value / 100);
+						}else{			//夜
+							tf.leftParty[i].revise.pow += (int)tf.leftParty[i].pow * (tf.leftParty[i].skill[j].value / 100);
+							tf.leftParty[i].revise.def += (int)tf.leftParty[i].def * (tf.leftParty[i].skill[j].value / 100);
+							tf.leftParty[i].revise.spd += (int)tf.leftParty[i].spd * (tf.leftParty[i].skill[j].value / 100);
+							tf.leftParty[i].revise.mor += (int)tf.leftParty[i].mor * (tf.leftParty[i].skill[j].value / 100);
+						}
+					}
+					//支援系スキル(4人以上で発動)
+					if(survivL >= 4){
+						if(tf.leftParty[i].skill[j].name == '攻撃陣形'){supportL.pow += tf.leftParty[i].skill[j].value;  }
+						if(tf.leftParty[i].skill[j].name == '防御陣形'){supportL.def += tf.leftParty[i].skill[j].value;  }
+						if(tf.leftParty[i].skill[j].name == '速度陣形'){supportL.spd += tf.leftParty[i].skill[j].value;  }
+						if(tf.leftParty[i].skill[j].name == '士気陣形'){supportL.mor += tf.leftParty[i].skill[j].value*4;}
+					}
+
+					//味方活性化スキル
+					if(tf.leftParty[i].skill[j].name == '男性活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '女性活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '人間活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '魔族活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '神族活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '聖職活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '器兵活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '竜族活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '魔獣活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '水棲活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '飛行活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '火霊活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '雷霊活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '樹霊活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '毒性活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '氷霊活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '不死活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '騎士活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '夜行活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '超越活性'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					if(tf.leftParty[i].skill[j].name == '師団指揮'){battleFuncSkillSet.setActivity(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);dm(tf.leftParty[i].skill[j].name);}
+					//敵弱体化スキル
+					if(tf.leftParty[i].skill[j].name == '男性弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '女性弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '人間弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '魔族弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '神族弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '聖職弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '器兵弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '竜族弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '魔獣弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '水棲弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '飛行弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '火霊弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '雷霊弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '樹霊弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '毒性弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '氷霊弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '不死弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '騎士弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '夜行弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '超越弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '師団弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '攻撃弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '防御弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '速度弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+					if(tf.leftParty[i].skill[j].name == '士気弱体'){battleFuncSkillSet.setWeaken(tf.leftParty[i].skill[j].name,tf.leftParty[i].skill[j].value,'left',i);}
+				}
+			}
+		}
+
+		//補正値算出
+		for(var i=0;i<6;i++){
+			if(tf.rightParty[i].id != 0 && tf.rightParty[i].HP.now > 1){
+				tf.rightParty[i].revise.pow += supportR.pow;
+				tf.rightParty[i].revise.def += supportR.def;
+				tf.rightParty[i].revise.spd += supportR.spd;
+				tf.rightParty[i].revise.mor += supportR.mor\4;
+//dm(tf.rightParty[i].uniqueName+")r.pow="+tf.rightParty[i].revise.pow+"/sp.pow="+supportR.pow+"/r.pow="+tf.rightParty[i].pow);
+//dm(tf.rightParty[i].uniqueName+")r.def="+tf.rightParty[i].revise.def+"/sp.def="+supportR.def+"/r.def="+tf.rightParty[i].def);
+//dm(tf.rightParty[i].uniqueName+")r.spd="+tf.rightParty[i].revise.spd+"/sp.spd="+supportR.spd+"/r.spd="+tf.rightParty[i].spd);
+//dm(tf.rightParty[i].uniqueName+")r.mor="+tf.rightParty[i].revise.mor+"/sp.mor="+supportR.mor+"/r.mor="+tf.rightParty[i].mor);
+			}
+			if(tf.leftParty[i].id != 0 && tf.leftParty[i].HP.now > 1){
+				tf.leftParty[i].revise.pow += supportL.pow;
+				tf.leftParty[i].revise.def += supportL.def;
+				tf.leftParty[i].revise.spd += supportL.spd;
+				tf.leftParty[i].revise.mor += supportL.mor\4;
+//dm(tf.leftParty[i].uniqueName+")l.rv.pow="+tf.leftParty[i].revise.pow+"/sp.pow="+supportL.pow+"/l.pow="+tf.leftParty[i].pow);
+//dm(tf.leftParty[i].uniqueName+")l.rv.def="+tf.leftParty[i].revise.def+"/sp.def="+supportL.def+"/l.def="+tf.leftParty[i].def);
+//dm(tf.leftParty[i].uniqueName+")l.rv.spd="+tf.leftParty[i].revise.spd+"/sp.spd="+supportL.spd+"/l.spd="+tf.leftParty[i].spd);
+//dm(tf.leftParty[i].uniqueName+")l.rv.mor="+tf.leftParty[i].revise.mor+"/sp.mor="+supportL.mor+"/l.mor="+tf.leftParty[i].mor);
+			}
+		}
+	}
+
+	//夜のdef減算
+	function nightDef(i,side){
+		var Def = new Array();
+		var threw = 0;
+		if(side == 'right'){Def = tf.rightParty;}
+		               else{Def = tf.leftParty;}
+		if(Def[i].id != 0 && Def[i].HP.now > 0){
+			var SkillValue = battleFuncSkillSet.searchSkill(i,'夜戦適応',side);if(SkillValue[0] == 1){threw = 1;dm("夜戦適応.Hit!!");}
+			var SkillValue = battleFuncSkillSet.searchSkill(i,'夜行生物',side);if(SkillValue[0] == 1){threw = 1;dm("夜行生物.Hit!!");}
+			if(Def[i].attribute.indexOf('夜') != -1 || Def[i].attribute.indexOf('超') != -1){threw = 1;dm("属性'夜or超'.Hit!!");}
+			if(threw == 0){
+				dm(Def[i].uniqueName+"."+i+":.夜減def前="+Def[i].def);
+				Def[i].def = (int)(Def[i].def / 2);
+				dm(Def[i].uniqueName+"."+i+":.夜減def後="+Def[i].def);
+			}
+		}
+	}
+
+	//昼のdef減算
+	function dayDef(i,side){
+		var Def = new Array();
+		var threw = 0;
+		if(side == 'right'){Def = tf.rightParty;}
+		               else{Def = tf.leftParty;}
+		if(Def[i].id != 0 && Def[i].HP.now > 0){
+			if(Def[i].attribute.indexOf('夜') != -1){
+				threw = 1;dm("属性'夜'.Hit!!");
+				var SkillValue = battleFuncSkillSet.searchSkill(i,'昼戦適応',side);if(SkillValue[0] == 1){threw = 0;dm("昼戦適応.Hit!!");}
+				var SkillValue = battleFuncSkillSet.searchSkill(i,'日中適応',side);if(SkillValue[0] == 1){threw = 0;dm("日中適応.Hit!!");}
+				var SkillValue = battleFuncSkillSet.searchSkill(i,'太陽信仰',side);if(SkillValue[0] == 1){threw = 0;dm("太陽信仰.Hit!!");}
+			}
+			if(threw == 1){
+				dm(Def[i].uniqueName+"."+i+":.昼減def前="+Def[i].def);
+				Def[i].def = (int)(Def[i].def / 2);
+				dm(Def[i].uniqueName+"."+i+":.昼減def後="+Def[i].def);
+			}
+		}
+	}
+
+	//補正値の夜補正計算
+	function nightRevise(i,side){
+		var Revise = new Array();
+		var threw = 0;
+		if(side == 'right'){Revise = tf.rightParty;}
+		               else{Revise = tf.leftParty;}
+		if(Revise[i].id != 0 && Revise[i].HP.now > 0){
+			for(var j=0;j<Revise[i].skill.count;j++){
+				if(Revise[i].skill[j].name == '夜戦適応'){threw = 1;  dm("夜戦適応.Hit!!");}
+				if(Revise[i].skill[j].name == '夜行生物'){threw = 1;  dm("夜行生物.Hit!!");}
+				if(Revise[i].attribute.indexOf('夜') != -1 || Revise[i].attribute.indexOf('超') != -1){threw = 1;dm("属性'夜or超'.Hit!!");}
+			}
+			if(threw == 0){
+				Revise[i].revise.def = (int)(Revise[i].revise.def / 2);
+				dm(Revise[i].uniqueName+"."+i+":revise.def="+Revise[i].revise.def);
+				//Revise[i].def        = (int)(Revise[i].def / 2);       dm(side+"-"+i+":.def="+Revise[i].def);
+			}
+		}
+	}
+
+	//補正値の昼補正計算
+	function dayRevise(i,side){
+		var Revise = new Array();
+		var threw = 0;
+		if(side == 'right'){Revise = tf.rightParty;}
+		               else{Revise = tf.leftParty;}
+		if(Revise[i].id != 0 && Revise[i].HP.now > 0){
+			if(Revise[i].attribute.indexOf('夜') != -1){
+				threw = 0;dm("属性'夜'.Hit!!");
+				for(var j=0;j<Revise[i].skill.count;j++){
+					if(Revise[i].skill[j].name == '昼戦適応'){threw = 1;dm("昼戦適応.Hit!!");break;}
+				}
+			}
+			if(threw == 0){
+				Revise[i].revise.def = (int)(Revise[i].revise.def / 2);
+				dm(Revise[i].uniqueName+"."+i+":.revise.def="+Revise[i].revise.def);
+			}
+		}
+	}
+
+	//作戦補正計算
+	function  strategyRevise(i){
+		//if(tf.rightParty[i].troopsNo != 0){return;}
+		if(tf.Strategy == 0){//攻撃重視
+			tf.rightParty[i].strategy.pow = 3 + (int)(Math.sqrt(f.used.exp) / 20);
+			tf.rightParty[i].strategy.def = 0;
+			tf.rightParty[i].strategy.spd = 0;
+			tf.rightParty[i].strategy.mor = 0;
+		}
+		if(tf.Strategy == 1){//防御重視
+			tf.rightParty[i].strategy.pow = 0;
+			tf.rightParty[i].strategy.def = 5 + (int)(Math.sqrt(f.used.exp) / 20);
+			tf.rightParty[i].strategy.spd = 0;
+			tf.rightParty[i].strategy.mor = 0;
+		}
+		if(tf.Strategy == 2){//速度重視
+			tf.rightParty[i].strategy.pow = 0;
+			tf.rightParty[i].strategy.def = 0;
+			tf.rightParty[i].strategy.spd = 4 + (int)(Math.sqrt(f.used.exp) / 20);
+			tf.rightParty[i].strategy.mor = 1 + (int)(Math.sqrt(f.used.exp) / 60);
+		}
+		if(tf.Strategy == 3){//拠点重視
+		}
+	}
+
+	//加護補正(上昇)
+	function divineReviseUP(i,side){
+		var divine = new Array();
+		if(side == 'right'){divine = tf.rightParty;}
+					   else{divine = tf.leftParty;}
+		divine[i].revise.pow += (int)(divine[i].pow * 1.25)-divine[i].pow;
+		divine[i].revise.def += (int)(divine[i].def * 1.25)-divine[i].def;
+		divine[i].revise.spd += (int)(divine[i].spd * 1.25)-divine[i].spd;
+		divine[i].revise.mor += (int)(divine[i].mor * 1.25)-divine[i].mor;
+dm(divine[i].unitName+": +加護pow:"+divine[i].revise.pow);
+dm(divine[i].unitName+": +加護def:"+divine[i].revise.def);
+dm(divine[i].unitName+": +加護spd:"+divine[i].revise.spd);
+dm(divine[i].unitName+": +加護mor:"+divine[i].revise.mor);
+	}
+	//加護補正(下降)
+	function divineReviseDown(i,side){
+		var divine = new Array();
+		if(side == 'right'){divine = tf.rightParty;}
+					   else{divine = tf.leftParty;}
+		divine[i].revise.pow -= divine[i].pow - (int)(divine[i].pow * 0.75);
+		divine[i].revise.def -= divine[i].def - (int)(divine[i].def * 0.75);
+		divine[i].revise.spd -= divine[i].spd - (int)(divine[i].spd * 0.75);
+		divine[i].revise.mor -= divine[i].mor - (int)(divine[i].mor * 0.75);
+dm(divine[i].unitName+": -加護pow:"+divine[i].revise.pow);
+dm(divine[i].unitName+": -加護def:"+divine[i].revise.def);
+dm(divine[i].unitName+": -加護spd:"+divine[i].revise.spd);
+dm(divine[i].unitName+": -加護mor:"+divine[i].revise.mor);
+	}
+
+
+	function viewMapEffecter(){
+		var reviseTxT;
+		var reviseID;
+		var color1,color2;
+		var c,r;
+		if(tf.day_time == 1){reviseID = gf.map[tf.BattleFieldNo].image[2].revise;}else{reviseID = gf.map[tf.BattleFieldNo].image[3].revise;}
+		global.selectMid.font.mapPrerenderedFont( "uppg16.tft" );//
+		for(var i=0;i<gf.mapRevise[reviseID].revise.count;i++){
+			if(gf.mapRevise[reviseID].revise[i] != 0 && i !=5 && i !=19){
+				switch(i){
+					case  0:reviseTxT = '男';dm("効果表示:"+reviseTxT);break;
+					case  1:reviseTxT = '女';dm("効果表示:"+reviseTxT);break;
+					case  2:reviseTxT = '人';dm("効果表示:"+reviseTxT);break;
+					case  3:reviseTxT = '魔';dm("効果表示:"+reviseTxT);break;
+					case  4:reviseTxT = '神';dm("効果表示:"+reviseTxT);break;
+					case  5:reviseTxT = '聖';dm("効果表示:"+reviseTxT);break;
+					case  6:reviseTxT = '器';dm("効果表示:"+reviseTxT);break;
+					case  7:reviseTxT = '竜';dm("効果表示:"+reviseTxT);break;
+					case  8:reviseTxT = '獣';dm("効果表示:"+reviseTxT);break;
+					case  9:reviseTxT = '海';dm("効果表示:"+reviseTxT);break;
+					case 10:reviseTxT = '飛';dm("効果表示:"+reviseTxT);break;
+					case 11:reviseTxT = '火';dm("効果表示:"+reviseTxT);break;
+					case 12:reviseTxT = '氷';dm("効果表示:"+reviseTxT);break;
+					case 13:reviseTxT = '雷';dm("効果表示:"+reviseTxT);break;
+					case 14:reviseTxT = '樹';dm("効果表示:"+reviseTxT);break;
+					case 15:reviseTxT = '毒';dm("効果表示:"+reviseTxT);break;
+					case 16:reviseTxT = '死';dm("効果表示:"+reviseTxT);break;
+					case 17:reviseTxT = '騎';dm("効果表示:"+reviseTxT);break;
+					case 18:reviseTxT = '夜';dm("効果表示:"+reviseTxT);break;
+					case 19:reviseTxT = '超';dm("効果表示:"+reviseTxT);break;
+				}
+				if(gf.mapRevise[reviseID].revise[i] > 0){color1='0x525cd4';color2='0xd6d9ff';}else{color1='0xca0c15';color2='0xffd6d8';}
+				if(gf.mapRevise[reviseID].revise[i] > 1 && gf.mapRevise[reviseID].revise[i] < 10 ){r=6;}
+				if(gf.mapRevise[reviseID].revise[i] < 0 && gf.mapRevise[reviseID].revise[i] > -10){r=2;}
+				if(gf.mapRevise[reviseID].revise[i] >  11){r=0;}
+				if(gf.mapRevise[reviseID].revise[i] < -11){r=-2;}
+				_text_draw_super_(global.selectMid,112+c*30  ,489  , reviseTxT                     , 0xffffff, 16,%[ outline:1, outlinecolor:0x545429,shadow:0, shadowopacity:128, shadowblur:1,gradcolor1:0xcccccc, gradcolor2:0xcccccc] );
+				_text_draw_super_(global.selectMid,109+r+c*30,507, gf.mapRevise[reviseID].revise[i], 0xffffff, 16,%[ outline:1, outlinecolor:0x545429,shadow:0, shadowopacity:128, shadowblur:1,gradcolor1:color1  , gradcolor2:color2] );
+				c++;
+			}
+		}
+	
+	}
+
+	//地形補正
+//.0 .1 .2 .3 .4 .5 .6 .7 .8 .9 10 11 12 13 14 15 16 17 18 19
+//男 女 人 魔 神 聖 器 竜 獣 海 飛 火 氷 雷 樹 毒 死 騎 夜 超
+	function mapRevise(m,side){
+		var revise = new Array();
+		var revise;
+		var reviseCarry;
+		var reviseID;
+		var reviseSize;
+		var mapPow,mapDef,mapSpd,mapMor;
+		if(tf.mapReviseClear == 1){return;}//地形無効なら終了
+		if(side == 'right'){revise = tf.rightParty;reviseCarry =tf.mapReviseCarryR;}
+		               else{revise = tf.leftParty ;reviseCarry =tf.mapReviseCarryL;}
+		if(tf.day_time == 1){reviseID = gf.map[tf.BattleFieldNo].image[2].revise;}else{reviseID = gf.map[tf.BattleFieldNo].image[3].revise;}
+dm(".length:"+revise[m].attribute.length+"-"+revise[m].attribute);
+		//各属性による影響（兵士運搬持ちがいればマイナス分は無効化）
+		if(revise[m].attribute.indexOf('男') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[0]  > 0)){reviseSize +=gf.mapRevise[reviseID].revise[0]; }dm("男.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('女') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[1]  > 0)){reviseSize +=gf.mapRevise[reviseID].revise[1]; }dm("女.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('人') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[2]  > 0)){reviseSize +=gf.mapRevise[reviseID].revise[2]; }dm("人.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('魔') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[3]  > 0)){reviseSize +=gf.mapRevise[reviseID].revise[3]; }dm("魔.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('神') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[4]  > 0)){reviseSize +=gf.mapRevise[reviseID].revise[4]; }dm("神.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('聖') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[5]  > 0)){reviseSize +=gf.mapRevise[reviseID].revise[5]; }dm("聖.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('器') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[6]  > 0)){reviseSize +=gf.mapRevise[reviseID].revise[6]; }dm("器.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('竜') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[7]  > 0)){reviseSize +=gf.mapRevise[reviseID].revise[7]; }dm("竜.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('獣') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[8]  > 0)){reviseSize +=gf.mapRevise[reviseID].revise[8]; }dm("獣.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('海') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[9]  > 0)){reviseSize +=gf.mapRevise[reviseID].revise[9]; }dm("海.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('飛') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[10] > 0)){reviseSize +=gf.mapRevise[reviseID].revise[10];}dm("飛.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('火') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[11] > 0)){reviseSize +=gf.mapRevise[reviseID].revise[11];}dm("火.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('氷') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[12] > 0)){reviseSize +=gf.mapRevise[reviseID].revise[12];}dm("氷.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('雷') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[13] > 0)){reviseSize +=gf.mapRevise[reviseID].revise[13];}dm("雷.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('樹') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[14] > 0)){reviseSize +=gf.mapRevise[reviseID].revise[14];}dm("樹.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('毒') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[15] > 0)){reviseSize +=gf.mapRevise[reviseID].revise[15];}dm("毒.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('死') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[16] > 0)){reviseSize +=gf.mapRevise[reviseID].revise[16];}dm("死.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('騎') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[17] > 0)){reviseSize +=gf.mapRevise[reviseID].revise[17];}dm("騎.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('夜') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[18] > 0)){reviseSize +=gf.mapRevise[reviseID].revise[18];}dm("夜.補正:"+reviseSize);}
+		if(revise[m].attribute.indexOf('超') != -1){if(reviseCarry == 0 || (reviseCarry == 1 && gf.mapRevise[reviseID].revise[19] > 0)){reviseSize +=gf.mapRevise[reviseID].revise[19];}dm("超.補正:"+reviseSize);}
+//dm(reviseID+":"+gf.mapRevise[reviseID].name);
+//dm("reviseSize="+reviseSize);
+//dm("revise["+m+"].pow="+revise[m].pow);
+//if(side == 'right'){dm("変更前["+tf.rightParty[m].uniqueName+"].revise.pow="+revise[m].revise.pow);}else{dm("変更前["+tf.leftParty[m].uniqueName+"].revise.pow="+revise[m].revise.pow);}
+		revise[m].revise.pow += (int)((revise[m].pow+revise[m].revise.pow) * (reviseSize / 100));
+		revise[m].revise.def += (int)((revise[m].def+revise[m].revise.def) * (reviseSize / 100));
+		revise[m].revise.spd += (int)((revise[m].spd+revise[m].revise.spd) * (reviseSize / 100));
+		revise[m].revise.mor += (int)((revise[m].mor+revise[m].revise.mor) * (reviseSize / 100));
+//if(side == 'right'){dm("["+tf.rightParty[m].uniqueName+"].revise.pow="+revise[m].revise.pow);}else{dm("["+tf.leftParty[m].uniqueName+"].revise.pow="+revise[m].revise.pow);}
+//if(side == 'right'){dm("["+tf.rightParty[m].uniqueName+"].pow       ="+tf.rightParty[m].pow);}else{dm("["+tf.leftParty[m].uniqueName+"].pow       ="+tf.leftParty[m].pow);}
+	}
+
+	//追加アイテム収入
+	function getAddItem(){
+		//鉱石
+		var ingotHunt=[];
+		var count=[];
+		for(var i=0;i<6;i++){
+			if(tf.rightParty[i].id != 0 && tf.rightParty[i].HP.now > 0){
+				var search = new Array();
+				var SkillValue =  new Array();
+				for(var j=0;j<tf.rightParty[i].skill.count;j++){
+					if(tf.rightParty[i].skill[j].name == '撃破金運'){
+						if(tf.rightParty[i].skill[j].value == 1 && intrandom( 0,99) < 90){ingotHunt[0] += 1;count[0] = 1;}
+						if(tf.rightParty[i].skill[j].value == 2 && intrandom( 0,99) < 80){ingotHunt[1] += 1;count[1] = 1;}
+						if(tf.rightParty[i].skill[j].value == 3 && intrandom( 0,99) < 70){ingotHunt[2] += 1;count[2] = 1;}
+						if(tf.rightParty[i].skill[j].value == 4 && intrandom( 0,99) < 60){ingotHunt[3] += 1;count[3] = 1;}
+						if(tf.rightParty[i].skill[j].value == 5 && intrandom( 0,99) < 50){ingotHunt[4] += 1;count[4] = 1;}
+						if(tf.rightParty[i].skill[j].value == 6 && intrandom( 0,99) < 40){ingotHunt[5] += 1;count[5] = 1;}
+						if(tf.rightParty[i].skill[j].value == 7 && intrandom( 0,99) < 30){ingotHunt[6] += 1;count[6] = 1;}
+						if(tf.rightParty[i].skill[j].value == 8 && intrandom( 0,99) < 20){ingotHunt[7] += 1;count[7] = 1;}
+						if(tf.rightParty[i].skill[j].value == 9 && intrandom( 0,99) < 10){ingotHunt[8] += 1;count[8] = 1;}
+					}
+				}
+			}
+		}
+		for(var i=0;i<count.count;i++){tf.addItemCount += count[i];}
+		
+		//メダリオン
+		var addMedalHunt;
+		var addMedalList =[];
+		var getMedal=[];
+		var releaseMedal=[];
+		for(var i=0;i<6;i++){
+			if(tf.rightParty[i].id != 0 && tf.rightParty[i].HP.now > 0){
+				var SkillValue = battleFuncSkillSet.searchSkill(i,'トレハン','right');if(SkillValue[0] == 1){addMedalHunt += SkillValue[1];}
+			}
+		}
+		var count=0;
+		tf.medalion = [];
+		var a=1,b=2,c=3;
+		for(var i=0;i<30;i++){
+			tf.medalion[i] = %[];
+			tf.medalion[i].id     = _ITEM_MEDALION[a];//dm(".id    :"+_ITEM_MEDALION[a]);
+			tf.medalion[i].name   = _ITEM_MEDALION[b];//dm(".name  :"+_ITEM_MEDALION[b]);
+			tf.medalion[i].rarity = _ITEM_MEDALION[c];//dm(".rarity:"+_ITEM_MEDALION[c]);
+			a+=_ITEM_MEDALION[0];b+=_ITEM_MEDALION[0],c+=_ITEM_MEDALION[0];
+		}
+		for(var i=0;i<30;i++){
+			var getMedalRarityRandom = intrandom(0,99);
+//dm("["+i+"].rarity:"+tf.medalion[i].rarity+" < RND="+getMedalRarityRandom);
+			if(                                            tf.medalion[i].rarity == 0 && f.used.medalionopen[i] == true){addMedalList[count] = tf.medalion[i].id;count++;}//dm("ListUp:"+tf.medalion[i].name+"/"+count);
+			if(80 + addMedalHunt > getMedalRarityRandom && tf.medalion[i].rarity == 1 && f.used.medalionopen[i] == true){addMedalList[count] = tf.medalion[i].id;count++;}//dm("ListUp:"+tf.medalion[i].name+"/"+count);
+			if(60 + addMedalHunt > getMedalRarityRandom && tf.medalion[i].rarity == 2 && f.used.medalionopen[i] == true){addMedalList[count] = tf.medalion[i].id;count++;}//dm("ListUp:"+tf.medalion[i].name+"/"+count);
+			if(40 + addMedalHunt > getMedalRarityRandom && tf.medalion[i].rarity == 3 && f.used.medalionopen[i] == true){addMedalList[count] = tf.medalion[i].id;count++;}//dm("ListUp:"+tf.medalion[i].name+"/"+count);
+			if(20 + addMedalHunt > getMedalRarityRandom && tf.medalion[i].rarity == 4 && f.used.medalionopen[i] == true){addMedalList[count] = tf.medalion[i].id;count++;}//dm("ListUp:"+tf.medalion[i].name+"/"+count);
+			if(10 + addMedalHunt > getMedalRarityRandom && tf.medalion[i].rarity == 5 && f.used.medalionopen[i] == true){addMedalList[count] = tf.medalion[i].id;count++;}//dm("ListUp:"+tf.medalion[i].name+"/"+count);
+		}
+
+		//通常メダル入手処理
+		var getMedalRandom = intrandom(0,99);
+		var getMedalCount;
+		if(getMedalRandom < addMedalHunt){
+			dm("ﾒﾀﾞﾙ2ｺ中…");
+			if(intrandom(0,1) == 1){getMedalCount = 2;dm("ﾒﾀﾞﾙ2ｺ");}else{getMedalCount = 1;dm("ﾒﾀﾞﾙ1ｺ");}//入手確率1～2
+		}else{
+			dm("ﾒﾀﾞﾙ1ｺ中…");
+			if(intrandom(0,1) == 1){getMedalCount = 1;dm("ﾒﾀﾞﾙ1ｺ");}else{getMedalCount = 0;dm("ﾒﾀﾞﾙ0ｺ");}//入手確率0～1
+		}
+
+dm("getMedalRandom"+getMedalRandom+"/addMedalHunt"+addMedalHunt);
+		//メダル入手
+		for(var i=0;i<getMedalCount;i++){
+			var getMedalRandom = intrandom(0,(addMedalList.count-1));
+			getMedal[i] = addMedalList[getMedalRandom];tf.addItemCount++;
+//dm("ﾗﾝﾀﾞﾑ:"+getMedalRandom+"/ﾘｽﾄ:"+(addMedalList.count-1));
+//dm("ﾒﾀﾞﾙ"+i+":"+getMedal[i]);
+		}
+
+		//追加メダル素材入手処理
+		var getMedalRandom = intrandom(0,99);
+		var getAddMedalMat = Math.sqrt((f.used.difficulty + 1) * addMedalHunt) + 5;
+dm("追加用係数:"+getAddMedalMat+" RND:"+getMedalRandom);
+		var getaddMedalCount;
+		if(getMedalRandom < getAddMedalMat){getaddMedalCount = 1;}else{getaddMedalCount = 0;}
+dm("追加ﾒﾀﾞﾙ素材:"+getaddMedalCount);
+
+		//追加メダル素材
+		if(getaddMedalCount == 1){
+			getMedal[getMedalCount] = tf.medalion[29].id;
+dm("addﾒﾀﾞﾙ:"+getMedal[getMedalCount]);
+			tf.addItemCount++;getMedalCount++;
+		}
+		//イベント用メダル追加
+		if(gt.storybattle == 1){
+			getMedal[getMedalCount] = tf.medalion[29].id;tf.addItemCount++;getMedalCount++;
+			getMedal[getMedalCount] = tf.medalion[29].id;tf.addItemCount++;getMedalCount++;
+		}
+
+		tf.dropedAddItem = [];
+		tf.dropedAddItemValue = [];
+		var count=0;
+		var d1 = calc.item_getdata(1101);
+		var d2 = calc.item_getdata(1102);
+		var d3 = calc.item_getdata(1103);
+		var d4 = calc.item_getdata(1104);
+		var d5 = calc.item_getdata(1105);
+		var d6 = calc.item_getdata(1106);
+		var d7 = calc.item_getdata(1107);
+		var d8 = calc.item_getdata(1108);
+		var d9 = calc.item_getdata(1109);
+		if(ingotHunt[0] > 0){tf.dropedAddItem[count] = '銅鉱石'           ;tf.dropedAddItemValue[count] = ingotHunt[0];f.used.itemcount[d1.n] += ingotHunt[0];if(f.used.itemstockMat[d1.d.rarity-3]==-1){f.used.itemstockMat[d1.d.rarity-3]=0;}dm("1101/"+d1.n+":"+ingotHunt[0]);count++;}
+		if(ingotHunt[1] > 0){tf.dropedAddItem[count] = '鉄鉱石'           ;tf.dropedAddItemValue[count] = ingotHunt[1];f.used.itemcount[d2.n] += ingotHunt[1];if(f.used.itemstockMat[d2.d.rarity-3]==-1){f.used.itemstockMat[d2.d.rarity-3]=0;}dm("1102/"+d2.n+":"+ingotHunt[1]);count++;}
+		if(ingotHunt[2] > 0){tf.dropedAddItem[count] = '銀鉱石'           ;tf.dropedAddItemValue[count] = ingotHunt[2];f.used.itemcount[d3.n] += ingotHunt[2];if(f.used.itemstockMat[d3.d.rarity-3]==-1){f.used.itemstockMat[d3.d.rarity-3]=0;}dm("1103/"+d3.n+":"+ingotHunt[2]);count++;}
+		if(ingotHunt[3] > 0){tf.dropedAddItem[count] = '霊銀鉱石'         ;tf.dropedAddItemValue[count] = ingotHunt[3];f.used.itemcount[d4.n] += ingotHunt[3];if(f.used.itemstockMat[d4.d.rarity-3]==-1){f.used.itemstockMat[d4.d.rarity-3]=0;}dm("1104/"+d4.n+":"+ingotHunt[3]);count++;}
+		if(ingotHunt[4] > 0){tf.dropedAddItem[count] = '金鉱石'           ;tf.dropedAddItemValue[count] = ingotHunt[4];f.used.itemcount[d5.n] += ingotHunt[4];if(f.used.itemstockMat[d5.d.rarity-3]==-1){f.used.itemstockMat[d5.d.rarity-3]=0;}dm("1105/"+d5.n+":"+ingotHunt[4]);count++;}
+		if(ingotHunt[5] > 0){tf.dropedAddItem[count] = 'ミスリル鉱石'     ;tf.dropedAddItemValue[count] = ingotHunt[5];f.used.itemcount[d6.n] += ingotHunt[5];if(f.used.itemstockMat[d6.d.rarity-3]==-1){f.used.itemstockMat[d6.d.rarity-3]=0;}dm("1106/"+d6.n+":"+ingotHunt[5]);count++;}
+		if(ingotHunt[6] > 0){tf.dropedAddItem[count] = 'オリハルコン鉱石' ;tf.dropedAddItemValue[count] = ingotHunt[6];f.used.itemcount[d7.n] += ingotHunt[6];if(f.used.itemstockMat[d7.d.rarity-3]==-1){f.used.itemstockMat[d7.d.rarity-3]=0;}dm("1107/"+d7.n+":"+ingotHunt[6]);count++;}
+		if(ingotHunt[7] > 0){tf.dropedAddItem[count] = 'エスピリトメタル' ;tf.dropedAddItemValue[count] = ingotHunt[7];f.used.itemcount[d8.n] += ingotHunt[7];if(f.used.itemstockMat[d8.d.rarity-3]==-1){f.used.itemstockMat[d8.d.rarity-3]=0;}dm("1108/"+d8.n+":"+ingotHunt[7]);count++;}
+		if(ingotHunt[8] > 0){tf.dropedAddItem[count] = 'イシリアルマター' ;tf.dropedAddItemValue[count] = ingotHunt[8];f.used.itemcount[d9.n] += ingotHunt[8];if(f.used.itemstockMat[d9.d.rarity-3]==-1){f.used.itemstockMat[d9.d.rarity-3]=0;}dm("1109/"+d9.n+":"+ingotHunt[8]);count++;}
+		//自動売却
+		if(f.used.itemMatAutoSales == 1){
+			if(ingotHunt[0] > 0){calc.item_sales_get_gold(1101,ingotHunt[0]);calc.item_set_addstock(1101,ingotHunt[0]);dm(d1.d.type+"売却:"+ingotHunt[0]+"[\\"+f.used.stat.gold.now+"]="+f.used.itemstockMat[d1.d.rarity-3]);}
+			if(ingotHunt[1] > 0){calc.item_sales_get_gold(1102,ingotHunt[1]);calc.item_set_addstock(1102,ingotHunt[1]);dm(d2.d.type+"売却:"+ingotHunt[1]+"[\\"+f.used.stat.gold.now+"]="+f.used.itemstockMat[d2.d.rarity-3]);}
+			if(ingotHunt[2] > 0){calc.item_sales_get_gold(1103,ingotHunt[2]);calc.item_set_addstock(1103,ingotHunt[2]);dm(d3.d.type+"売却:"+ingotHunt[2]+"[\\"+f.used.stat.gold.now+"]="+f.used.itemstockMat[d3.d.rarity-3]);}
+			if(ingotHunt[3] > 0){calc.item_sales_get_gold(1104,ingotHunt[3]);calc.item_set_addstock(1104,ingotHunt[3]);dm(d4.d.type+"売却:"+ingotHunt[3]+"[\\"+f.used.stat.gold.now+"]="+f.used.itemstockMat[d4.d.rarity-3]);}
+			if(ingotHunt[4] > 0){calc.item_sales_get_gold(1105,ingotHunt[4]);calc.item_set_addstock(1105,ingotHunt[4]);dm(d5.d.type+"売却:"+ingotHunt[4]+"[\\"+f.used.stat.gold.now+"]="+f.used.itemstockMat[d5.d.rarity-3]);}
+			if(ingotHunt[5] > 0){calc.item_sales_get_gold(1106,ingotHunt[5]);calc.item_set_addstock(1106,ingotHunt[5]);dm(d6.d.type+"売却:"+ingotHunt[5]+"[\\"+f.used.stat.gold.now+"]="+f.used.itemstockMat[d6.d.rarity-3]);}
+			if(ingotHunt[6] > 0){calc.item_sales_get_gold(1107,ingotHunt[6]);calc.item_set_addstock(1107,ingotHunt[6]);dm(d7.d.type+"売却:"+ingotHunt[6]+"[\\"+f.used.stat.gold.now+"]="+f.used.itemstockMat[d7.d.rarity-3]);}
+			if(ingotHunt[7] > 0){calc.item_sales_get_gold(1108,ingotHunt[7]);calc.item_set_addstock(1108,ingotHunt[7]);dm(d8.d.type+"売却:"+ingotHunt[7]+"[\\"+f.used.stat.gold.now+"]="+f.used.itemstockMat[d8.d.rarity-3]);}
+			if(ingotHunt[8] > 0){calc.item_sales_get_gold(1109,ingotHunt[8]);calc.item_set_addstock(1109,ingotHunt[8]);dm(d9.d.type+"売却:"+ingotHunt[8]+"[\\"+f.used.stat.gold.now+"]="+f.used.itemstockMat[d9.d.rarity-3]);}
+		}
+		//リミット
+		if(f.used.itemcount[d1.n] > 999){f.used.itemcount[d1.n] = 999;}
+		if(f.used.itemcount[d2.n] > 999){f.used.itemcount[d2.n] = 999;}
+		if(f.used.itemcount[d3.n] > 999){f.used.itemcount[d3.n] = 999;}
+		if(f.used.itemcount[d4.n] > 999){f.used.itemcount[d4.n] = 999;}
+		if(f.used.itemcount[d5.n] > 999){f.used.itemcount[d5.n] = 999;}
+		if(f.used.itemcount[d6.n] > 999){f.used.itemcount[d6.n] = 999;}
+		if(f.used.itemcount[d7.n] > 999){f.used.itemcount[d7.n] = 999;}
+		if(f.used.itemcount[d8.n] > 999){f.used.itemcount[d8.n] = 999;}
+		if(f.used.itemcount[d9.n] > 999){f.used.itemcount[d9.n] = 999;}
+
+		for(var i=0;i<getMedal.count;i++){
+			if(getMedal[i] !=''){tf.dropedAddItem[count] = tf.medalion[getMedal[i]].name;tf.dropedAddItemValue[count] = 1;f.used.medalion[getMedal[i]] += 1;count++;}
+		}
+	}
+
+	//装備アイテム収入
+	function getEquipItem(){
+		var dropRateMax;
+		var dropRateMin;
+		var treasureHunt=0;
+		for(var i=0;i<6;i++){
+			if(tf.rightParty[i].id != 0 && tf.rightParty[i].HP.now > 0){
+				var SkillValue = battleFuncSkillSet.searchSkill(i,'トレハン','right');if(SkillValue[0] == 1){treasureHunt += SkillValue[1];}
+			}
+		}
+
+		var maximumLV=[];
+		var maximumCS=[];
+		var count;
+		//ドロップレート＝（敵の中の最大ＬＶ＋自軍のトレハン値合計）×（敵の治療コストの最大値＋敵の人数）
+		for(var i=0;i<6;i++){
+			maximumLV[i]=tf.leftParty[i].level;
+			maximumCS[i]=tf.leftParty[i].cost;
+			if(tf.leftParty[i].id != 0){count++;}
+		}
+
+		//MaxLevel
+		for(var i=0;i<maximumLV.count;i++){
+			if(maximumLV[0] <= maximumLV[1]){maximumLV[0] <-> maximumLV[1];}
+			if(maximumLV[2] <= maximumLV[3]){maximumLV[2] <-> maximumLV[3];}
+			if(maximumLV[4] <= maximumLV[5]){maximumLV[4] <-> maximumLV[5];}
+
+			if(maximumLV[1] <= maximumLV[2]){maximumLV[1] <-> maximumLV[2];}
+			if(maximumLV[3] <= maximumLV[4]){maximumLV[3] <-> maximumLV[4];}
+		}
+
+		//MaxCost
+		for(var i=0;i<maximumCS.count;i++){
+			if(maximumCS[0] <= maximumCS[1]){maximumCS[0] <-> maximumCS[1];}
+			if(maximumCS[2] <= maximumCS[3]){maximumCS[2] <-> maximumCS[3];}
+			if(maximumCS[4] <= maximumCS[5]){maximumCS[4] <-> maximumCS[5];}
+
+			if(maximumCS[1] <= maximumCS[2]){maximumCS[1] <-> maximumCS[2];}
+			if(maximumCS[3] <= maximumCS[4]){maximumCS[3] <-> maximumCS[4];}
+		}
+
+		dropRateMax = (maximumLV[0] + treasureHunt) * (maximumCS[0] + count);
+		if(dropRateMax > 32000){dropRateMax = 32000;}
+dm("Level="+maximumLV[0]);
+dm("Hunt ="+treasureHunt);
+dm("cost ="+maximumCS[0]);
+dm("count="+count);
+dm("ﾄﾞﾛｯﾌﾟﾚｰﾄ="+dropRateMax);
+		dropRateMin = (int)(dropRateMax / 2 );
+
+		var listMin,listMax;
+		if(dropRateMin >=     0){listMin = 1;}if(dropRateMax >=     0){listMax = 1;}
+		if(dropRateMin >=    20){listMin = 2;}if(dropRateMax >=    20){listMax = 2;}
+		if(dropRateMin >=    40){listMin = 3;}if(dropRateMax >=    40){listMax = 3;}
+		if(dropRateMin >=    80){listMin = 4;}if(dropRateMax >=    80){listMax = 4;}
+		if(dropRateMin >=   160){listMin = 5;}if(dropRateMax >=   160){listMax = 5;}
+		if(dropRateMin >=   240){listMin = 6;}if(dropRateMax >=   240){listMax = 6;}
+		if(dropRateMin >=   320){listMin = 7;}if(dropRateMax >=   320){listMax = 7;}
+		if(dropRateMin >=   480){listMin = 8;}if(dropRateMax >=   480){listMax = 8;}
+		if(dropRateMin >=   640){listMin = 9;}if(dropRateMax >=   640){listMax = 9;}
+		if(dropRateMin >=   800){listMin =10;}if(dropRateMax >=   800){listMax =10;}
+		if(dropRateMin >=   960){listMin =11;}if(dropRateMax >=   960){listMax =11;}
+		if(dropRateMin >=  1280){listMin =12;}if(dropRateMax >=  1280){listMax =12;}
+		if(dropRateMin >=  1600){listMin =13;}if(dropRateMax >=  1600){listMax =13;}
+		if(dropRateMin >=  3200){listMin =14;}if(dropRateMax >=  3200){listMax =14;}
+		if(dropRateMin >=  6400){listMin =15;}if(dropRateMax >=  6400){listMax =15;}
+		if(dropRateMin >=  8600){listMin =16;}if(dropRateMax >=  8600){listMax =16;}
+		if(dropRateMin >= 10800){listMin =17;}if(dropRateMax >= 10800){listMax =17;}
+		if(dropRateMin >= 12000){listMin =18;}if(dropRateMax >= 12000){listMax =18;}
+
+dm("listMin="+listMin+"/listMax"+listMax);
+		var randDropRate = intrandom(listMin,listMax);
+		var randDropList = intrandom(0,11);
+dm("dropNo="+randDropList+"/"+randDropRate);
+		if(randDropList == 11){
+			switch(randDropRate){
+				case  1:randDropRate=1;break;
+				case  2:randDropRate=2;break;
+				case  3:randDropRate=3;break;
+				case  4:randDropRate=3;break;
+				case  5:randDropRate=4;break;
+				case  6:randDropRate=4;break;
+				case  7:randDropRate=5;break;
+				case  8:randDropRate=5;break;
+				case  9:randDropRate=6;break;
+				case 10:randDropRate=6;break;
+				case 11:randDropRate=7;break;
+				case 12:randDropRate=7;break;
+				case 13:randDropRate=8;break;
+				case 14:randDropRate=8;break;
+				case 15:randDropRate=8;break;
+				case 16:randDropRate=9;break;
+				case 17:randDropRate=9;break;
+				case 18:randDropRate=9;break;
+			}
+		}
+		var itemID = "t"+"%02d".sprintf(randDropList)+"%02d".sprintf(randDropRate);
+		var itemNo;
+		if(randDropList== 0){
+			itemNo = "%d".sprintf(randDropRate);
+		}else{
+			itemNo = "%d".sprintf(randDropList)+"%02d".sprintf(randDropRate);
+		}
+		//var getItem = calc.item_getdata(itemNo);
+		var getItem = %[];
+		getItem.n = gf.get2(itemNo,gf.list.item);
+dm("itemNo:"+itemNo);
+dm("ｱｲﾃﾑ:"+tf.itemList[itemID]+"/index:"+getItem.n+"/id:"+itemID+"/rarity:"+gf.list.item[getItem.n].rarity);
+dm("ｱｲﾃﾑ:"+gf.list.item[getItem.n].name);
+dm("limit:"+gf.list.item[getItem.n].limit+"/count:"+f.used.itemcount[getItem.n]);
+		//リミットアイテムの差し替え
+		if(gf.list.item[getItem.n].limit == 1 && f.used.itemcount[getItem.n] > 0){
+			randDropList = 11;
+			randDropRate = gf.list.item[getItem.n].rarity;
+			itemID = "t"+"%02d".sprintf(randDropList)+"%02d".sprintf(randDropRate);
+			itemNo = "%d".sprintf(randDropList)+"%02d".sprintf(randDropRate);
+			getItem = calc.item_getdata(itemNo);
+		}
+		f.used.itemcount[getItem.n-1] += 1;
+		//自動売却
+		if(randDropList == 11 && f.used.itemMatAutoSales == 1){
+			dm("itemNo="+itemNo);
+			var dd = calc.item_getdata(itemNo);
+			calc.item_sales_get_gold(itemNo,1);
+			calc.item_set_addstock(itemNo,1);
+			dm(dd.d.type+"売却:"+1+"[\\"+f.used.stat.gold.now+"]="+f.used.itemstockMat[dd.d.rarity-3]);
+		}
+dm("itemID="+itemID+" /itemNo="+itemNo);
+dm("ｱｲﾃﾑ:"+tf.itemList[itemID]);
+		return tf.itemList[itemID];
+	}
+
+	function getGold(){
+		var maximumHP=[];
+		var maximumCS=[];
+		for(var i=0;i<6;i++){
+			maximumHP[i]=tf.leftParty[i].HP.max - tf.leftParty[i].HP.now;
+			maximumCS[i]=tf.leftParty[i].cost;
+		}
+
+		for(var i=0;i<maximumHP.count;i++){
+			if(maximumHP[0] <= maximumHP[1] ){maximumHP[0] <-> maximumHP[1]; maximumCS[0] <-> maximumCS[1]; }
+			if(maximumHP[2] <= maximumHP[3] ){maximumHP[2] <-> maximumHP[3]; maximumCS[2] <-> maximumCS[3]; }
+			if(maximumHP[4] <= maximumHP[5] ){maximumHP[4] <-> maximumHP[5]; maximumCS[4] <-> maximumCS[5]; }
+
+			if(maximumHP[1] <= maximumHP[2] ){maximumHP[1] <-> maximumHP[2]; maximumCS[1] <-> maximumCS[2]; }
+			if(maximumHP[3] <= maximumHP[4] ){maximumHP[3] <-> maximumHP[4]; maximumCS[3] <-> maximumCS[4]; }
+		}
+		
+		//Gold = MaxHP * cost / 10
+//dm("MAX[0]="+maximumHP[0]+"/CS[0]="+maximumCS[0]);
+		return (int)((maximumHP[0] * maximumCS[0] / 10));
+	}
+
+	//Level算出&HP算出（補正計算）
+	function baseUnitInitialize(n,side='both'){
+		if(side == 'right' || side == 'both'){
+			for(var i=0;i<6;i++){
+				//right
+				tf.rightParty[i].level  = calc.ExpToLevel(tf.rightParty[i].experience);
+				tf.rightParty[i].HP.max = calc.HPcalc(tf.rightParty[i].HP.base,tf.rightParty[i].level);
+				if(tf.rightParty[i].HP.max > tf.rightParty[i].HP.now){
+					tf.rightParty[i].HP.max = tf.rightParty[i].HP.now;
+				}else{
+					tf.rightParty[i].HP.now = tf.rightParty[i].HP.max;
+				}
+//tf.rightParty[i].HP.max= ca.HPcalc( tf.rightParty[i].HP.base, tf.rightParty[i].level );
+//tf.rightParty[i].HP.now = tf.rightParty[i].HP.max;
+				if(tf.rightParty[i].id == 0){tf.rightParty[i].HP.max = 0;tf.rightParty[i].HP.now =0;}
+
+				tf.rightParty[i].pow    = calc.StatusCalc(tf.rightParty[i].pow,tf.rightParty[i].experience);
+				tf.rightParty[i].def    = calc.StatusCalc(tf.rightParty[i].def,tf.rightParty[i].experience);
+				tf.rightParty[i].spd    = calc.StatusCalc(tf.rightParty[i].spd,tf.rightParty[i].experience);
+				tf.rightParty[i].mor    = calc.StatusCalc(tf.rightParty[i].mor,tf.rightParty[i].experience,'mor');
+				tf.rightParty[i].effTMP = tf.rightParty[i].effect;
+				//装備加算
+				tf.rightParty[i].pow    += tf.rightParty[i].equipedADD.pow;
+				tf.rightParty[i].def    += tf.rightParty[i].equipedADD.def;
+				tf.rightParty[i].spd    += tf.rightParty[i].equipedADD.spd;
+				tf.rightParty[i].mor    += tf.rightParty[i].equipedADD.mor;
+
+				if(tf.rightParty[i].pow < 1){tf.rightParty[i].pow = 1;}
+				if(tf.rightParty[i].def < 1){tf.rightParty[i].def = 1;}
+				if(tf.rightParty[i].spd < 1){tf.rightParty[i].spd = 1;}
+				if(tf.rightParty[i].mor < 1){tf.rightParty[i].mor = 1;}
+
+				if(tf.rightParty[i].id !=0 && tf.rightParty[i].HP.now > 0){
+					var SkillValue = battleFuncSkillSet.searchSkill(i,'リカバリ','right');
+					if(SkillValue[0] == 1){
+						if(SkillValue[1] > 100){SkillValue[1] = 100;}
+						tf.rightParty[i].HP.recovery = SkillValue[1];
+					}
+					tf.participation[i] = 1;tf.plyerCount++;
+				}else{tf.participation[i] = 0;}
+			}
+		}
+
+		//left 敵データオーバーライト
+		if(side == 'left' || side == 'both'){
+			for(var i=0;i<6;i++){
+				tf.leftParty[i].HP.max = gf.enemy[n].dev[i].mhp;
+				tf.leftParty[i].HP.now = gf.enemy[n].dev[i].hp;
+				tf.leftParty[i].level  = gf.enemy[n].dev[i].level;
+				//tf.leftParty[i].experience  = gf.enemy[n].dev[i].exp;
+				tf.leftParty[i].experience  = calc.LevelToExp(tf.leftParty[i].level);
+				if(tf.leftParty[i].id == 0){
+					tf.leftParty[i].HP.max = 0;
+					tf.leftParty[i].HP.now = 0;
+					tf.leftParty[i].level  = 0;
+				}
+				tf.leftParty[i].uniqueName = tf.leftParty[i].unitName;
+				if(tf.leftParty[i].id == 0){tf.leftParty[i].HP.max = 0;tf.leftParty[i].HP.now =0;}
+
+				//バックアップより復帰
+				if(tf.leftParty[i].troopsNo != -2){
+					tf.leftParty[i].pow    = tf.leftParty[i].parbackup.pow;
+					tf.leftParty[i].def    = tf.leftParty[i].parbackup.def;
+					tf.leftParty[i].spd    = tf.leftParty[i].parbackup.spd;
+					tf.leftParty[i].mor    = tf.leftParty[i].parbackup.mor;
+					tf.leftParty[i].divine = tf.leftParty[i].parbackup.divine;
+					tf.leftParty[i].special= tf.leftParty[i].parbackup.special;
+				}
+
+				tf.leftParty[i].HP.recovery     = 0;
+				tf.leftParty[i].equipedADD.pow  = 0;
+				tf.leftParty[i].equipedADD.def  = 0;
+				tf.leftParty[i].equipedADD.spd  = 0;
+				tf.leftParty[i].equipedADD.mor  = 0;
+
+				tf.leftParty[i].skill[6].name    = "";
+				tf.leftParty[i].skill[6].value   = 0;
+				tf.leftParty[i].skill[7].name    = "";
+				tf.leftParty[i].skill[7].value   = 0;
+
+				tf.leftParty[i].skill[8].name    = "";
+				tf.leftParty[i].skill[8].value   = 0;
+				tf.leftParty[i].skill[9].name    = "";
+				tf.leftParty[i].skill[9].value   = 0;
+				tf.leftParty[i].skill[10].name   = "";
+				tf.leftParty[i].skill[10].value  = 0;
+				tf.leftParty[i].skill[11].name   = "";
+				tf.leftParty[i].skill[11].value  = 0;
+
+				tf.leftParty[i].prefixID = 0;
+				tf.leftParty[i].suffixID = 0;
+				tf.leftParty[i].prefix   = "";
+				tf.leftParty[i].suffix   = "";
+				tf.leftParty[i].equipedID.weapon = gf.enemy[n].dev[i].item0;
+				tf.leftParty[i].equipedID.armor  = gf.enemy[n].dev[i].item1;
+				tf.leftParty[i].equiped.weapon   = "";
+				tf.leftParty[i].equiped.armor    = "";
+
+dm("--- 敵データオーバーライト情報 ---");
+dm("["+tf.leftParty[i].uniqueName+"]Max.HP:"+tf.leftParty[i].HP.max+"/"+gf.enemy[n].dev[i].mhp);
+dm("["+tf.leftParty[i].uniqueName+"]Now.HP:"+tf.leftParty[i].HP.now+"/"+gf.enemy[n].dev[i].hp);
+dm("["+tf.leftParty[i].uniqueName+"]Level :"+tf.leftParty[i].level+"/"+gf.enemy[n].dev[i].level);
+dm("["+tf.leftParty[i].uniqueName+"]EXP   :"+tf.leftParty[i].experience);
+dm("["+tf.leftParty[i].uniqueName+"]prefix:"+tf.leftParty[i].prefix);
+dm("["+tf.leftParty[i].uniqueName+"]suffix:"+tf.leftParty[i].suffix);
+dm("["+tf.leftParty[i].uniqueName+"]:"+tf.leftParty[i].experience);
+dm("["+tf.leftParty[i].uniqueName+"]:"+tf.leftParty[i].experience);
+
+				for(var k=0;k<gf.list.item.count;k++){
+					//武器
+					if(gf.list.item[k].index == gf.enemy[n].dev[i].item0){
+						tf.leftParty[i].equiped.weapon = gf.list.item[k].name;
+
+						tf.leftParty[i].equipedADD.pow  += gf.list.item[k].pow;
+						tf.leftParty[i].equipedADD.def  += gf.list.item[k].pow;
+						tf.leftParty[i].equipedADD.spd  += gf.list.item[k].pow;
+						tf.leftParty[i].equipedADD.mor  += gf.list.item[k].pow;
+
+						tf.leftParty[i].skill[8].name    = gf.list.item[k].attach[0].name;
+						tf.leftParty[i].skill[8].value   = gf.list.item[k].attach[0].value;
+						tf.leftParty[i].skill[9].name    = gf.list.item[k].attach[1].name;
+						tf.leftParty[i].skill[9].value   = gf.list.item[k].attach[1].value;
+					}
+
+					//防具
+					if(gf.list.item[k].index == gf.enemy[n].dev[i].item1){
+						tf.leftParty[i].equiped.armor = gf.list.item[k].name;
+
+						tf.leftParty[i].equipedADD.pow  += gf.list.item[k].pow;
+						tf.leftParty[i].equipedADD.def  += gf.list.item[k].pow;
+						tf.leftParty[i].equipedADD.spd  += gf.list.item[k].pow;
+						tf.leftParty[i].equipedADD.mor  += gf.list.item[k].pow;
+
+						tf.leftParty[i].skill[10].name   = gf.list.item[k].attach[0].name;
+						tf.leftParty[i].skill[10].value  = gf.list.item[k].attach[0].value;
+						tf.leftParty[i].skill[11].name   = gf.list.item[k].attach[1].name;
+						tf.leftParty[i].skill[11].value  = gf.list.item[k].attach[1].value;
+					}
+				}
+
+//tf.leftParty[i].HP.now = tf.leftParty[i].HP.max;
+				if(tf.leftParty[i].HP.max > tf.leftParty[i].HP.now){
+					tf.leftParty[i].HP.max = tf.leftParty[i].HP.now;
+				}
+//				tf.leftParty[i].experience= calc.LevelToExp(tf.leftParty[i].level);
+				tf.leftParty[i].pow       = calc.StatusCalc(tf.leftParty[i].pow,tf.leftParty[i].experience);
+				tf.leftParty[i].def       = calc.StatusCalc(tf.leftParty[i].def,tf.leftParty[i].experience);
+				tf.leftParty[i].spd       = calc.StatusCalc(tf.leftParty[i].spd,tf.leftParty[i].experience);
+				tf.leftParty[i].mor       = calc.StatusCalc(tf.leftParty[i].mor,tf.leftParty[i].experience,'mor');
+				tf.leftParty[i].effTMP    = tf.leftParty[i].effect;
+
+				//装備加算
+				tf.leftParty[i].pow    += tf.leftParty[i].equipedADD.pow;
+				tf.leftParty[i].def    += tf.leftParty[i].equipedADD.def;
+				tf.leftParty[i].spd    += tf.leftParty[i].equipedADD.spd;
+				tf.leftParty[i].mor    += tf.leftParty[i].equipedADD.mor;
+				if(tf.leftParty[i].pow < 1){tf.leftParty[i].pow = 1;}
+				if(tf.leftParty[i].def < 1){tf.leftParty[i].def = 1;}
+				if(tf.leftParty[i].spd < 1){tf.leftParty[i].spd = 1;}
+				if(tf.leftParty[i].mor < 1){tf.leftParty[i].mor = 1;}
+
+				//能力加算補正
+				tf.leftParty[i].pow    += f.used.enemyadd;
+				tf.leftParty[i].def    += f.used.enemyadd;
+				tf.leftParty[i].spd    += f.used.enemyadd;
+				tf.leftParty[i].mor    += f.used.enemyadd \ 4;
+
+				//能力倍加補正
+				tf.leftParty[i].pow    = (int)(tf.leftParty[i].pow * f.used.enemypar);
+				tf.leftParty[i].def    = (int)(tf.leftParty[i].def * f.used.enemypar);
+				tf.leftParty[i].spd    = (int)(tf.leftParty[i].spd * f.used.enemypar);
+				tf.leftParty[i].mor    = (int)(tf.leftParty[i].mor * f.used.enemypar);
+
+				if(tf.leftParty[i].id !=0 && tf.leftParty[i].HP.now > 0){
+					var SkillValue = battleFuncSkillSet.searchSkill(i,'リカバリ','left');
+					if(SkillValue[0] == 1){
+						if(SkillValue[1] > 100){SkillValue[1] = 100;}
+						tf.leftParty[i].HP.recovery = SkillValue[1];
+					}
+				}
+			}
+		}
+	}
+
+	function viewEncounterGauge(layer){
+		//フォース
+		var rightForNum = tf.rightFor\100;
+		var leftForNum  = tf.leftFor\100;
+		var rightForGag = tf.rightFor%100;
+		var leftForGag  = tf.leftFor%100;
+		numDraw(rightForNum, 'btl_Number0-9For'         , layer, 651,602, 1);	//For値R
+		numDraw(leftForNum , 'btl_Number0-9For'         , layer, 293,602, 1);	//For値L
+		gaugeDraw(rightForGag, 99, 152, 'btl_GaugeFor'  , layer, 498,602, 'left');// ForバーR
+		gaugeDraw(leftForGag , 99, 152, 'btl_GaugeFor'  , layer, 310,602, 'right');// ForバーL
+
+		//旗
+		var flag = new Layer(kag, kag.fore.base);
+		flag.loadImages("btl_mini_flag01");
+		flag.setSizeToImageSize();
+		layer.operateRect( 644,585, flag, 0, 0, flag.imageWidth, flag.imageHeight);
+
+		flag.loadImages("btl_mini_flag01");
+		switch(gf.enemy[tf.enemySelectNumber].troopsNo){
+			case  2:flag.loadImages("btl_mini_flag02");break;	// 1エッダ軍(ティルカ)
+			case  3:flag.loadImages("btl_mini_flag03");;break;	// 2フォルク軍(フレイヤ)
+			case  4:flag.loadImages("btl_mini_flag04");;break;	// 3トルドハイム軍(トール)
+			case  5:flag.loadImages("btl_mini_flag05");;break;	// 4グラーズ軍(リグレット)
+			case  6:flag.loadImages("btl_mini_flag06");;break;	// 5ヴァルハラ軍(おでん)
+			case  7:flag.loadImages("btl_mini_flag07");;break;	// 6ヨルム軍
+			case  8:flag.loadImages("btl_mini_flag08");;break;	// 7フェンリル軍
+			case  9:flag.loadImages("btl_mini_flag09");;break;	// 8ヘル軍
+			case 10:flag.loadImages("btl_mini_flag10");;break;	// 9イミル軍
+			case 11:flag.loadImages("btl_mini_flag11");;break;	//10ウトガルド軍
+			case 12:flag.loadImages("btl_mini_flag12");;break;	//11魔族反乱軍
+			case 13:flag.loadImages("btl_mini_flag13");;break;	//12人間反乱軍
+			case 14:flag.loadImages("btl_mini_flag14");;break;	//13新生ウトガルド軍
+			case 15:flag.loadImages("btl_mini_flag15");;break;	//14新生ヴァルハラ軍
+		}
+		flag.setSizeToImageSize();
+		layer.operateRect( 293,585, flag, 0, 0, flag.imageWidth, flag.imageHeight);
+
+		//勢力ゲージ
+		//PartyHPSum('both');
+		var hpmaxR = new Array();
+		var hpmaxL = new Array();
+		var hpnowR = new Array();
+		var hpnowL = new Array();
+		var allCostL,allCostR;
+
+		for(var i=0;i<6;i++){
+			hpmaxR[i] = tf.rightParty[i].HP.max;
+			hpmaxL[i] =  tf.leftParty[i].HP.max;
+			hpnowR[i] = tf.rightParty[i].HP.now;
+			hpnowL[i] =  tf.leftParty[i].HP.now;
+			allCostR += tf.rightParty[i].cost;
+			allCostL +=  tf.leftParty[i].cost;
+		}
+		tf.RightPartyHPSumMax = calc.DivisonHPSumAll(hpmaxR) * allCostR;
+		tf.LeftPartyHPSumMax  = calc.DivisonHPSumAll(hpmaxL) * allCostL;
+		tf.RightPartyHPSumNow = calc.DivisonHPSumAll(hpnowR) * allCostR;
+		tf.LeftPartyHPSumNow  = calc.DivisonHPSumAll(hpnowL) * allCostL;
+
+		tf.MaxHPSum   = tf.RightPartyHPSumMax + tf.LeftPartyHPSumMax;
+		//tf.AdvantageRight = tf.LeftPartyHPSumMax  - tf.LeftPartyHPSumNow  + tf.RightPartyHPSumNow;
+		//tf.AdvantageLeft  = tf.RightPartyHPSumMax - tf.RightPartyHPSumNow + tf.LeftPartyHPSumNow;
+
+		tf.HPNowSum = tf.RightPartyHPSumNow + tf.LeftPartyHPSumNow; 
+dm("tf.MaxHPSum:"+tf.MaxHPSum+"/tf.HPNowSum:"+tf.HPNowSum);
+dm("tf.LeftPartyHPSumNow:"+tf.LeftPartyHPSumNow+"/tf.RightPartyHPSumNow:"+tf.RightPartyHPSumNow);
+		gaugeDraw(tf.RightPartyHPSumNow, tf.HPNowSum, 322, 'btl_GaugepowRatioBlue', layer, 319,584, 'right');// powRatioバーR
+		gaugeDraw(tf.LeftPartyHPSumNow , tf.HPNowSum, 322, 'btl_GaugepowRatioRed' , layer, 319,584, 'left' );// powRatioバーL
+	}
+
+}

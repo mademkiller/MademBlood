@@ -1,0 +1,276 @@
+/////////////////////////////////////////////////////////////////////////
+Scripts.execStorage("SpriteBase3D.tjs");
+Scripts.execStorage("Unit3D.tjs");
+/////////////////////////////////////////////////////////////////////////
+// 3次元座標計算用
+class SpriteWorld3D
+{
+	
+	// 描画ターゲットレイヤ
+	//var targetLayer;
+	//var bgImageLayer;	// 画面クリア用
+	
+	
+	var width= 0, height= 0; //描写画像サイズ
+	
+	
+	var camera; // カメラ
+	
+	// 描画リスト
+	//var drawList;
+	
+	
+	var drawAccuracy; // 描画の精度（オーダリングテーブルの分割数）
+	
+	//
+	var objList= []; //頂点オブジェクト
+	
+	//var bimg= void;
+
+	// コンストラクタ
+	function SpriteWorld3D( w_, h_, drawAccuracy_= 20 ){
+	
+		width= w_;
+		height= h_;
+		
+	//function SpriteWorld3D( targetLayer_, drawAccuracy_ = 20 ){
+	//function SpriteWorld3D( drawAccuracy_ = 20 ){
+		//bimg= bimg_;
+		
+		//targetLayer= targetLayer_;
+
+		//camera= new world_camera(targetLayer);
+		camera= new world_camera(width,height);
+
+		//drawList= [];
+		
+		//objList= [];
+		
+		setDrawAccuracy( drawAccuracy_ );
+	}
+	
+	// デストラクタ
+	function finalize(){
+		//for( var i=0; i<drawList.count; i++ ){ invalidate drawList[i]; }
+		for( var i=0; i<objList.count; i++ ){ invalidate objList[i]; }
+		//invalidate drawList;
+		invalidate objList;
+		invalidate camera;
+	}
+
+	// 描画の精度設定
+	function setDrawAccuracy( drawAccuracy_ ){
+		drawAccuracy= drawAccuracy_;
+//		for( var i=0; i<drawAccuracy; i++ ){
+//			drawList.add( [] );
+//			//drawList[i]= [];
+//		}
+	}
+
+	function addSprite( obj_ ){
+		objList.add( obj_ );
+		dm("SpriteWorld3D.addSprite= %s".sprintf(obj_));
+	}
+	
+	function addSprite2( n_=2 ){
+		objList.add( new SpriteBase3D2( n_, this ) );
+		//dm("SpriteWorld3D.addSprite.count= %d".sprintf(objList.count));
+		return objList[-1];
+	}
+	
+	function updateSprite( obj_ ){
+		//clearDrawList();
+		for( var i=0; i<objList.count; i++ ){
+			//addDrawList(objList[i]);
+			exeDrawList(objList[i]);
+			//dm("SpriteWorld3D.updateSprite= %s".sprintf(objList[i]));
+		}
+	}
+	
+	// 描画リストのクリア
+//	function clearDrawList(){
+//		for( var i = 0; i < drawList.count; i++ ){
+//			drawList[ i ].clear();
+//		}
+//		drawList.clear();
+//	}
+	
+	// 描画オブジェクト追加2
+	function exeDrawList( obj_ ){
+		with( obj_ ){
+			// カメラ座標に変換
+			for( var i=0; i<.trans.count; i++){
+				.drawTrans[i]= camera.get3Dto2DPos( .trans[i] );
+			}
+		}
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////
+// class camera
+class world_camera{
+
+	// 成分
+	var trans;	// カメラの座標
+	var lookAt;	// 注視点
+	var topVec;	// カメラの天井の向き
+	var zNear;	// 最近面
+	var zFar;	// 最遠面
+	var screenW;	// スクリーン幅
+	var screenH;	// スクリーン高さ
+	
+	// 変換行列
+	var matView;		// ビュー変換行列
+	var flgMatChange;	// 更新フラグ
+	
+	// コンストラクタ
+	//function world_camera(l_){
+	function world_camera(w_,h_){
+		//drawLayer= l_;
+//		trans = new Vector3D();
+		trans = %[ x:0, y:0, z:0 ];
+		trans.x = 0;
+		trans.y = 0;
+		trans.z = 0;
+//		lookAt = new Vector3D();
+		lookAt =  %[ x:0, y:0, z:0 ];
+		lookAt.x = 0;
+		lookAt.y = 0;
+		lookAt.z = 0;
+//		topVec = new Vector3D();
+		topVec =  %[ x:0, y:0, z:0 ];
+		topVec.x = 0;
+		topVec.y = 1;
+		topVec.z = 0;
+		zNear = 1;
+		zFar = 100;
+		screenW = w_;
+		screenH = h_;
+		
+		//matView = new HH_matrix4();
+		matView= [ 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0 ];
+		flgMatChange = 0;
+		
+	}
+	// デストラクタ
+	function finalize(){
+		invalidate trans;
+		invalidate lookAt;
+		invalidate topVec;
+	}
+
+	// 座標設定
+	function setPos( x_, y_, z_ ){
+		trans.x = x_;
+		trans.y = y_;
+		trans.z = z_;
+		// 変更フラグ設定
+		flgMatChange = 1;
+	}
+	// 座標設定
+	function addPos( x_, y_, z_ ){
+		trans.x += x_;
+		trans.y += y_;
+		trans.z += z_;
+		// 変更フラグ設定
+		flgMatChange = 1;
+	}
+	
+	// 注視点設定
+	function setLookAt( x_, y_, z_ ){
+		lookAt.x = x_;
+		lookAt.y = y_;
+		lookAt.z = z_;
+		// 変更フラグ設定
+		flgMatChange = 1;
+	}
+	// 注視点設定
+	function addLookAt( x_, y_, z_ ){
+		lookAt.x += x_;
+		lookAt.y += y_;
+		lookAt.z += z_;
+		// 変更フラグ設定
+		flgMatChange = 1;
+	}
+
+	// 天井の向き設定
+	function setTopvec( x_, y_, z_ ){
+		topVec.x = x_;
+		topVec.y = y_;
+		topVec.z = z_;
+		// 変更フラグ設定
+		flgMatChange = 1;
+	}
+	// 天井の向き設定
+	function addTopvec( x_, y_, z_ ){
+		topVec.x += x_;
+		topVec.y += y_;
+		topVec.z += z_;
+		// 変更フラグ設定
+		flgMatChange = 1;
+	}
+	
+	// 視野角設定
+	function setProjection( zNear_, zFar_ ){
+		zNear = zNear_;
+		zFar = zFar_;
+//		screenW = drawLayer.width;
+//		screenH = drawLayer.height;
+		// 変更フラグ設定
+		flgMatChange = 1;
+	}
+
+	// 合成変換行列
+	function get3Dto2DPos( baseTrans_ ){
+		
+		// 戻り値
+		var resultVec;
+
+		// 変更があったならば行列再計算
+		if( flgMatChange == 1 ){
+
+			// ビュー行列
+			var e = HH_math_subVec3( trans, lookAt );	// カメラ座標から注視点へのベクトル
+			var eLen = HH_math_lengthVec3( e )*4;
+			if( eLen != 0 ){
+				e.x /= eLen;
+				e.y /= eLen;
+				e.z /= eLen;
+			}
+			var s = HH_math_normalLineVec3( topVec, e  );	// カメラ横方向のベクトル
+			var t = topVec;									// カメラ上方向のベクトル
+			
+			
+			matView[ 0]= s.x; matView[ 1]= s.y; matView[ 2]= s.z; matView[ 3]= -1* HH_math_innerVec3( trans, s );
+			matView[ 4]= t.x; matView[ 5]= t.y; matView[ 6]= t.z; matView[ 7]= -1* HH_math_innerVec3( trans, t );
+			matView[ 8]= e.x; matView[ 9]= e.y; matView[10]= e.z; matView[11]= -1* HH_math_innerVec3( trans, e );
+			matView[12]= 0.0; matView[13]= 0.0; matView[14]= 0.0; matView[15]= 1.0;
+			
+			/*
+			with( matView ){
+				.m11 = s.x; .m12 = s.y; .m13 = s.z; .m14 = ( -1 ) * HH_math_innerVec3( trans, s );
+				.m21 = t.x; .m22 = t.y; .m23 = t.z; .m24 = ( -1 ) * HH_math_innerVec3( trans, t );
+				.m31 = e.x; .m32 = e.y; .m33 = e.z; .m34 = ( -1 ) * HH_math_innerVec3( trans, e );
+				.m41 =   0; .m42 =   0; .m43 =   0; .m44 = 1;
+			}
+			*/
+			
+			// 変更フラグクリア
+			flgMatChange = 0;
+		}
+
+		// 表示座標計算
+		resultVec = HH_math_multipulVecMat( baseTrans_, matView );
+		//dm("HH_math_multipulVecMat %d,%d,%d".sprintf( resultVec.x, resultVec.y, resultVec.z ));
+		//dm("HH_math_multipulVecMat.zNear %d,%d,%d".sprintf( zNear, screenW, screenH ));
+		if( resultVec.z != 0 ){
+			resultVec.x = ( resultVec.x* zNear/ resultVec.z )+ screenW/ 2;
+			resultVec.y = ( resultVec.y* zNear/ resultVec.z )+ screenH/ 2;
+			//resultVec.x = ( resultVec.x * zNear / resultVec.z ) + screenW * 0.5;
+			//resultVec.y = ( resultVec.y * zNear / resultVec.z ) + screenH * 0.5;
+		}
+
+		return resultVec;
+	}
+
+}

@@ -1,0 +1,1516 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenGameMainOrg
+//
+/////////////////////////////////////////////////////////////////////////
+//
+class ScreenGameMainDra extends TFrame2
+{
+
+	var midIcons= [];
+	var uiChar= [];
+	//var drugScreen;
+	
+	var tempChar= void;
+	
+	function ScreenGameMainDra( g_, s_ ){
+		super.TFrame2(...);
+		backGround.callbackREvent2= rightClickCallBack;
+	}
+	
+	function finalize() {
+		PostReleaseScreen();
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	// init
+	//
+	function onPreLoad()
+	{
+		with( panel )
+		{
+			backGround.loadImages("slg_Org_bg");
+			
+			//ui
+			.uiBase= new LayerTrueBase( kag, backGround );
+			.uiBase.setLayer( 0, 540 );
+			.uiBase.loadImages("slg_top_chip01");
+			.uiBase.drawImageFile( 312,10, "btl_topicDraft" );
+			.uiBase.drawText4( 335,100, "雇用ユニットを選択し、メダリオンを",0xff0000,14 );
+			.uiBase.drawText4( 335,115, "選んでください。",0xff0000,14 );
+			.uiBase.drawText4( 335,130, "メダリオン固有の称号スキルを選んで",0xff0000,14 );
+			.uiBase.drawText4( 335,145, "付与する事ができます。",0xff0000,14 );
+			
+			.uiTopInfo= new charTopStatus( kag, backGround );
+			.uiTopInfo.setLayer( 0, 0 );
+			.uiTopInfo.setCharNo(0);
+			//.uiTopInfo.loadImages("slg_Org_plate_unit");
+			
+			.uiLList= new medalionIconSelector( kag, backGround, panel );
+			.uiLList.setLayer( 0, 127 );
+			
+			.uiMList= new MidSelector( kag, backGround, this );
+			.uiMList.setLayer( 326, 139 );
+			.uiMList.selectChar.checked_Execute= onCharCheck_update;
+			.uiMList.selectBtexec.callbackEvent= onCharCheck_work_update;
+			.uiMList.selectBtDrop.callbackEvent= onCharCheck_workout_update;
+			
+			.drugScreen= new TDrugMoveBase2( kag, backGround );
+			.drugScreen.setLayer( 0, 0, 32, 32 );
+			
+			.uiLList.Icons.setDrugs( .drugScreen );
+			
+			.uiMList.dMedalion1.Drop_Exec.setDrugs( .drugScreen );
+			.uiMList.dMedalion1.Drop_Exec.Execute= medalion1_drop_callback;
+			.uiMList.dMedalion1.Drop_Exec.Enabled= true;
+			.uiMList.dMedalion2.Drop_Exec.setDrugs( .drugScreen );
+			.uiMList.dMedalion2.Drop_Exec.Execute= medalion2_drop_callback;
+			.uiMList.dMedalion2.Drop_Exec.Enabled= true;
+			
+			//.uiLList.selectBtreset.Drop_Exec.setDrugs( .drugScreen );
+			//.uiLList.selectBtreset.Drop_Exec.Execute= medalion_buy_drop_callback;
+			
+			.uiLList.selectBtreset.setCallBack(medalion_buy_drop_callback);
+		
+		}
+		
+		//tempChar= games.base.setCharBase();
+		
+		//購入モードへ
+		buttom_locks(0);
+		
+		drawStatus();
+		
+		return true;
+	}
+	
+	function onPostRelease()
+	{
+		invalidateLayer(midIcons);
+		invalidateLayer(uiChar);
+		invalidatePanel();
+		//invalidate drugScreen;
+	}
+	
+	///////////////////////////////////////////////////////
+	// show
+	//
+	function onInit()
+	{
+		backGround.setLayer( 0, 0, 960, 720, 0x00000000 );
+		backGround.visible= false;
+		backGround.opacity= 0;
+	}
+	
+	function onShow( time_, en_ )
+	{
+		//parrentSrn.enabledButton([ 1,0,0, 2,0,0, 0,0,0 ]);
+		
+		tempChar= void;
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 0;
+		
+		//onCharTemp_update();
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,255)" ] );
+		
+		panel.uiBase.setPos( 0, 720 );
+		panel.uiBase.beginMove( %[ time:time_, path:"(0,540,255)", accel:-2 ] );
+		
+		panel.uiTopInfo.setPos( 0, -140 );
+		panel.uiTopInfo.beginMove( %[ time:time_, path:"(0,0,255)", accel:-2 ] );
+		
+		panel.uiLList.setPos( -302, 125 );
+		panel.uiLList.beginMove( %[ time:time_, path:"(0,125,255)", accel:-2 ] );
+		
+		panel.uiMList.setPos( 960, 125 );
+		panel.uiMList.beginMove( %[ time:time_, path:"(302,125,255)", accel:-2 ] );
+		
+		dm("onShow");
+	}
+	
+	function onShowEnd()
+	{
+	
+		//panel.uiComm.enabledEvent= true;
+//		for(var i= 0; i<10; i++ ) miniLineIcons[i].enabledEvent= true;
+//		for(var i= 0; i<72; i++ ) midIcons[i].enabledEvent= true;
+
+// 		panel.uiLList.setEnableEvent(true);
+// 		panel.uiMList.setEnableEvent(true);
+		
+		//parrentSrn.lockButton(false);
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 255;
+		
+		//frameWork.rckicEvent= rightClickCallBack;
+		
+		dm("onShowEnd");
+	}
+	
+	function onHide( time_, en_ )
+	{
+		//parrentSrn.lockButton(true);
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,0)", accel:2 ] );
+		
+		panel.uiBase.beginMove( %[ time:time_, path:"(0,720,255)", accel:2 ] );
+		panel.uiTopInfo.beginMove( %[ time:time_, path:"(0,-140,255)", accel:2 ] );
+		panel.uiLList.beginMove( %[ time:time_, path:"(-302,125,255)", accel:2 ] );
+		panel.uiMList.beginMove( %[ time:time_, path:"(960,125,255)", accel:2 ] );
+		
+	}
+	
+	function onHideEnd()
+	{
+		backGround.visible= false;
+		backGround.opacity= 0;
+		
+		kag.KeyDown_CallBack= void;
+		
+		onPostRelease();
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		panel.uiLList.setEnableEvent(f_);
+		panel.uiMList.setEnableEvent(f_);
+		
+		backGround.setEnableEvent(f_);
+		
+		parrentSrn.lockButton(!f_);
+		
+	}
+	///////////////////////////////////////////////////////
+	// method
+	//
+	function drawStatus()
+	{
+		//if(tempChar!==void) onCharTemp_update();
+		panel.uiLList.drawStatus();
+		panel.uiMList.drawStatus();
+		panel.uiTopInfo.drawStatus();
+		
+		//parrentSrn.updateStatus();
+	}
+	
+	function buttom_locks(m)
+	{
+		switch(m){
+			case 0:
+				//全てロック
+ 				panel.uiLList.selectBtreset.button_Enabled(true);
+ 				//var slmed= [ 1,1,1,1,1,1, 1,1,1,1,1,1, 1,1,1,1,1,1, 1,1,1,1,1,1, 1,1,1,1,1,1 ];
+ 				panel.uiLList.Icons.setEnableAll(1);
+				
+				panel.uiMList.selectBtcancel.button_Enabled(false);
+				panel.uiMList.selectBtDrop.button_Enabled(false);
+				panel.uiMList.selectBtexec.button_Enabled(false);
+				
+				panel.uiMList.selectBtn1.button_Enabled(false);
+				panel.uiMList.selectBtn2.button_Enabled(false);
+				
+ 				var slcat= [ 2,1,1, 1,1,1, 1,1,1, 1,1,1 ];
+// 				var slchr= [ 1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,1 ];
+// 				
+ 				panel.uiMList.selectBt.setEnable(slcat);
+// 				//panel.uiMList.selectChar.setEnable(slchr);
+ 				panel.uiMList.selectChar.setEnableAll(1);
+				
+				panel.uiMList.dMedalion1.button_Enabled(false);
+				panel.uiMList.dMedalion2.button_Enabled(false);
+				
+				break;
+				
+			////////////////////
+			case 10:
+				//購入
+				panel.uiMList.selectBtcancel.button_Enabled(false);
+				panel.uiMList.selectBtDrop.button_Enabled(false);
+				panel.uiMList.selectBtexec.button_Enabled(false);
+				
+				panel.uiMList.selectBtn1.button_Enabled(false);
+				panel.uiMList.selectBtn2.button_Enabled(false);
+				
+				panel.uiMList.dMedalion1.button_Enabled(false);
+				panel.uiMList.dMedalion2.button_Enabled(false);
+				break;
+				
+			case 11:
+				//雇用
+				panel.uiMList.selectBtcancel.button_Enabled(true);
+				panel.uiMList.selectBtDrop.button_Enabled(false);
+				panel.uiMList.selectBtexec.button_Enabled(false);
+				
+				panel.uiMList.selectBtn1.button_Enabled(true);
+				panel.uiMList.selectBtn2.button_Enabled(true);
+				
+				panel.uiMList.dMedalion1.button_Enabled(true);
+				panel.uiMList.dMedalion2.button_Enabled(true);
+				break;
+				
+			case 12:
+				//解雇
+				panel.uiMList.selectBtcancel.button_Enabled(false);
+				panel.uiMList.selectBtDrop.button_Enabled(true);
+				panel.uiMList.selectBtexec.button_Enabled(false);
+				
+				panel.uiMList.selectBtn1.button_Enabled(false);
+				panel.uiMList.selectBtn2.button_Enabled(false);
+				
+				panel.uiMList.dMedalion1.button_Enabled(false);
+				panel.uiMList.dMedalion2.button_Enabled(false);
+				break;
+		}
+	}
+	
+	///////////////////////////////////////////////////////
+	// callback
+	//
+	//上段のインフォを更新
+	function onTopInfo_update(n_)
+	{
+		var sc= panel.uiMList.selectCat;
+		var cn= _CHAR_OPEN[n_+2+(25*sc)];
+		var ch= gf.get(cn,gf.char);
+		panel.uiTopInfo.setChar2(ch);
+		panel.uiTopInfo.drawStatus();
+	}
+	
+	//セレクト時のイベント
+	function onCharCheck_update(n_=void)
+	{
+		var sc= panel.uiMList.selectCat;
+		var cn= _CHAR_OPEN[n_+2+(25*sc)];
+		var ch= gf.get(cn,gf.char);
+		
+		onCharTemp_init(ch);
+		drawStatus();
+		
+	}
+	
+	//キャラをテンポラリへ
+	function onCharTemp_init(n_=void)
+	{
+		var ch= gf.get(n_.index,gf.char);
+		
+		tempChar= %[];
+		(Dictionary.assignStruct incontextof tempChar)(ch);
+		
+		dm("char_works_stat= "+tempChar.divine+" "+ch.troopsNo);
+		
+		if(ch.troopsNo==-2){
+		
+			tempChar.HP.max= tempChar.HP.base;
+			tempChar.HP.now= 1;
+			
+			//tempChar.loyalty= 25;
+		
+			//必要メダリオンを更新
+			panel.uiMList.namesetReset_callback();
+			onMedalion_update(ch);
+			
+			onCharTemp_update();
+			panel.uiTopInfo.setChar2(tempChar);
+			panel.uiTopInfo.drawStatus();
+			
+			//雇用モードへ
+			buttom_locks(11);
+			
+	 		var ff= ca.char_works_stat_condition(panel.uiMList.viewcost,tempChar);
+	 		if(ff) panel.uiMList.selectBtexec.button_Enabled(true);
+	 		//else panel.uiMList.selectBtexec.button_Enabled(false);
+ 		
+		
+		}else{
+			
+// 			panel.uiTopInfo.setChar2(ch);
+// 			panel.uiLList.setViewReset();
+			
+			panel.uiMList.namesetReset_callback();
+			onMedalion_update(ch);
+			
+			//panel.uiTopInfo.setChar2(ch);
+			//onCharTemp_update();
+			
+			panel.uiMList.viewname= "";
+			panel.uiMList.viewcost= 0;
+			panel.uiMList.viewcost_type= 0;
+			panel.uiMList.viewev= 0;
+			
+			panel.uiTopInfo.setChar2(ch);
+			panel.uiTopInfo.drawStatus();
+			
+			panel.uiMList.drawStatus();
+			
+			//解雇モードへ
+			buttom_locks(12);
+			
+		}
+	}
+	
+	//キャラテンポラリのアップデート
+	function onCharTemp_update()
+	{
+		//数値を初期化
+		var ch= gf.get(tempChar.index,gf.char);
+		
+		tempChar.troopsNo= ch.troopsNo;
+		
+		tempChar.pow= ch.pow;
+		tempChar.def= ch.def;
+		tempChar.spd= ch.spd;
+		tempChar.mor= ch.mor;
+		
+		tempChar.revise.pow= 0;
+		tempChar.revise.def= 0;
+		tempChar.revise.spd= 0;
+		tempChar.revise.mor= 0;
+		
+		tempChar.skill[6].name= "";
+		tempChar.skill[6].value= 0;
+		tempChar.skill[7].name= "";
+		tempChar.skill[7].value= 0;
+		
+		tempChar.divineEx= "";
+		tempChar.specialEx= "";
+		
+		//称号
+		if(panel.uiMList.medalion1nameset.count>0){
+			tempChar.prefixID= panel.uiMList.medalion1nameset[panel.uiMList.selectNameset1].id;
+			tempChar.prefix= panel.uiMList.medalion1nameset[panel.uiMList.selectNameset1].text;
+		}
+		
+		if(panel.uiMList.medalion2nameset.count>0){
+			tempChar.suffixID= panel.uiMList.medalion2nameset[panel.uiMList.selectNameset2].id;
+			tempChar.suffix= panel.uiMList.medalion2nameset[panel.uiMList.selectNameset2].text;
+		}
+		
+		dm("tempChar.prefixID="+panel.uiMList.medalion1nameset[panel.uiMList.selectNameset1].id);
+		
+		//称号による追加
+		var rt= gf.list.nameset[tempChar.prefixID];
+		tempChar.revise.pow+= rt.pow;
+		tempChar.revise.def+= rt.def;
+		tempChar.revise.spd+= rt.spd;
+		tempChar.revise.mor+= rt.mor;
+		
+		tempChar.skill[6].name= rt.skill.name;
+		tempChar.skill[6].value= rt.skill.value;
+		
+		tempChar.divineEx= rt.divine;
+		tempChar.specialEx= rt.special;
+		
+		var rt= gf.list.nameset[tempChar.suffixID];
+		tempChar.revise.pow+= rt.pow;
+		tempChar.revise.def+= rt.def;
+		tempChar.revise.spd+= rt.spd;
+		tempChar.revise.mor+= rt.mor;
+		
+		tempChar.skill[7].name= rt.skill.name;
+		tempChar.skill[7].value= rt.skill.value;
+		
+		//コスト計算等
+		rt= ca.char_works_cost_setp(tempChar);
+		tempChar.revise.pow+= rt.pow;
+		tempChar.revise.def+= rt.def;
+		tempChar.revise.spd+= rt.spd;
+		tempChar.revise.mor+= rt.mor;
+		
+		tempChar.statickcost= ca.char_statick_cost(rt.sts,tempChar.loyalty);
+		tempChar.evaluation= rt.evl;
+		
+		panel.uiMList.viewname= tempChar.uniqueName;
+		panel.uiMList.viewcost= rt.cost;
+		panel.uiMList.viewcost_type= rt.vt;
+		panel.uiMList.viewev= tempChar.evaluation;
+		
+		//ボーナス
+		rt= ca.char_bonus_cost(tempChar.cost,tempChar.loyalty);
+		tempChar.revise.pow+= rt.pow;
+		tempChar.revise.def+= rt.def;
+		
+		//補正
+ 		if(tempChar.pow+tempChar.revise.pow<1) tempChar.revise.pow= -tempChar.pow+1;
+ 		if(tempChar.def+tempChar.revise.def<1) tempChar.revise.def= -tempChar.def+1;
+ 		if(tempChar.spd+tempChar.revise.spd<1) tempChar.revise.spd= -tempChar.spd+1;
+ 		if(tempChar.mor+tempChar.revise.mor<1) tempChar.revise.mor= -tempChar.mor+1;
+
+		
+		//tempChar.HP.max= tempChar.HP.base;
+		tempChar.HP.max= ca.HPcalc( tempChar.HP.base, tempChar.level );
+		tempChar.HP.now= 1;
+		
+		tempChar.valor= tempChar.loyalty;
+		
+		//if(panel.uiMList.medalion1!==void) panel.uiLList.medalionCt[panel.uiMList.medalion1.lay._id]= 1;
+		//if(panel.uiMList.medalion2!==void) panel.uiLList.medalionCt[panel.uiMList.medalion2.lay._id]= 1;
+		
+		
+		
+ 		//panel.uiMList.drawStatus();
+ 		//panel.uiLList.drawStatus();
+ 		
+ 		//panel.uiTopInfo.setChar2(tempChar);
+ 		
+ 		var ff= ca.char_works_stat_condition(panel.uiMList.viewcost,tempChar);
+ 		if(ff) panel.uiMList.selectBtexec.button_Enabled(true);
+ 		else panel.uiMList.selectBtexec.button_Enabled(false);
+ 		
+ 		//drawStatus();
+	}
+	
+	//必要メダリオンを更新
+	function onMedalion_update(ch)
+	{
+		/*
+		var tt= ch.recipe;
+		if(tt!==void && tt!="") tt= tt.substring(2,tt.length);
+		
+		var mt= [];
+		for(var i= 0; i<tt.length; i++ ){
+			
+			//表示データ
+			mt[i]= str2num(tt.substring(i,1));
+			
+			//コスト
+			//gt.medalioncost[i]= mt[i];
+			if(mt[i]>0) gt.medalioncost[i]= 1;
+			else gt.medalioncost[i]= 0;
+		}
+		*/
+		
+		panel.uiLList.medalionC= ca.char_works_stat_condition_medalion(ch);
+		panel.uiLList.medalionS= ca.medalion_drug_set(ch.growth);
+		//panel.uiLList.drawStatus();
+	}
+	
+	
+	//雇用
+	function onCharCheck_work_update()
+	{
+		var c= panel.uiMList.viewcost;
+		var t= panel.uiMList.viewcost_type;
+		
+		//コスト支払
+		if(t==0) f.used.stat.food.now-= c;
+		else f.used.stat.energy.now-= c;
+		
+		//メダリオン支払
+		for(var i= 0; i<f.used.medalion.count; i++ ){
+			var ii= _MEDALION_POS[i];
+			f.used.medalion[ii]-= gt.medalioncost[ii];
+			f.used.medalion[ii]-= panel.uiLList.medalionCt[ii];
+			//f.used.medalion[i]-= 1;
+		}
+		//setViewReset();
+		
+		//キャラを生成
+		ca.char_setup_index(tempChar);
+		
+		//軍データに追加
+		var fn= _getLiteralf( _CHAR_DATA_TYPE, tempChar.type, 1 )[0];
+		ca.setArray_zoneA(f.used.view.chview,fn,tempChar.index);
+		
+// 		var ch= gf.get(tempChar.index,gf.char);
+// 		panel.uiTopInfo.setChar2(ch);
+		
+		/*
+		tempChar= %[];
+		(Dictionary.assignStruct incontextof tempChar)(ch);
+		
+		tempChar.revise.pow= 0;
+		tempChar.revise.def= 0;
+		tempChar.revise.spd= 0;
+		tempChar.revise.mor= 0;
+		
+		tempChar.skill[6].name= "";
+		tempChar.skill[6].value= 0;
+		tempChar.skill[7].name= "";
+		tempChar.skill[7].value= 0;
+		
+		tempChar.divineEx= "";
+		tempChar.specialEx= "";
+		*/
+		
+		panel.uiLList.setViewReset();
+		panel.uiMList.namesetReset0_callback();
+		
+// 		//解雇モードへ
+// 		buttom_locks(12);
+		
+// 		panel.uiMList.selectBtn1.setEnableEvent( ,true );
+// 		panel.uiMList.selectBtn2.setEnableEvent( ,true );
+		
+		//drawStatus();
+		
+ 		//onCharTemp_update();
+ 		
+ 		//frameWork.gameLoop.nullCommand();
+ 		
+ 		onCharTemp_init(tempChar);
+ 		
+ 		drawStatus();
+ 		
+		if(t==0) parrentSrn.updateStatusAM2(c,0);
+		else parrentSrn.updateStatusAM2(c,2);
+		
+		var ch= gf.get(tempChar.index,gf.char);
+		
+		core2.screen.dialog2.execute( "%sを;雇用しました".sprintf(ch.uniqueName),
+				3, 2000, ch.image[5].file, frameWork.gameLoop.nullCommand );
+ 	
+ 		
+// 		parrentSrn.updateStatus();
+	}
+	//雇用
+	function onCharCheck_work_update_post()
+	{
+ 		
+		if(t==0) parrentSrn.updateStatusAM2(c,0);
+		else parrentSrn.updateStatusAM2(c,2);
+		
+		var ch= gf.get(tempChar.index,gf.char);
+		
+		core2.screen.dialog2.execute( "%sを;雇用しました".sprintf(ch.uniqueName),
+				3, 2000, ch.image[5].file, frameWork.gameLoop.nullCommand );
+ 	
+ 		
+// 		parrentSrn.updateStatus();
+	}
+	
+	//解雇
+	function onCharCheck_workout_update()
+	{
+		var ch= panel.uiTopInfo.ch;
+
+		ca.char_setout_index(ch);
+
+// 		//雇用モードへ
+// 		buttom_locks(10);
+		//▲全部のモブユニットの列を整形しなおし
+		ca.setArray_zoneA(f.used.view.chview,0,0);
+		ca.setArray_zoneA(f.used.view.chview,1,0);
+		ca.setArray_zoneA(f.used.view.chview,2,0);
+		ca.setArray_zoneA(f.used.view.chview,3,0);
+		ca.setArray_zoneA(f.used.view.chview,4,0);
+		ca.setArray_zoneA(f.used.view.chview,5,0);
+
+		//↓これだとなぜかガーダーのとこしかやってくれてない
+		//ca.setArray_zoneA(f.used.view.chview,ch.troopsNo,0);
+		
+ 		onCharTemp_init(panel.uiTopInfo.ch);
+ 		
+ 		drawStatus();
+ 		
+	}
+	
+// 	//前方の空白をつめつつ一番後ろにセット
+// 	function setArray_zoneA(va_,i_,n_)
+// 	{
+// 		var st= i_*12;
+// 		
+// 		//切り出し
+// 		var aa= [];
+// 		for(var i= 0; i<12; i++ ){
+// 			if(va_[st+i]!=0) aa.add(va_[st+i]);
+// 		}
+// 		
+// 		aa.add(n_);
+// 		
+// 		for(var i= 0; i<12; i++ ){
+// 			if(aa[i]!==void) va_[st+i]= aa[i];
+// 			else va_[st+i]= 0;
+// 		}
+// 		
+// 	}
+// 	
+// 	//空きがあるかチェック
+// 	function setArray_zoneSrc(va_,i_)
+// 	{
+// 		var st= i_*12;
+// 		var oi=-1;
+// 		
+// 		for(var i= 0; i<12; i++ ){
+// 			if(va_[st+i]==0){ oi= i; break; }
+// 		}
+// 		return oi;
+// 	}
+	
+	//ドロップ関係
+	function medalion1_drop_callback( lay_, src )
+	{
+		panel.uiMList.namesetReset1_callback();
+		
+		panel.uiMList.medalion1= src;
+		lay_.copyRect( 0, 0, src.lay, 0, 0, src.lay.width, src.lay.height );
+		
+		panel.uiMList.selectNameset1= 0;
+		panel.uiMList.medalion1nameset= ca.medalion_select_name(src.lay._id+1,1);
+		if(panel.uiMList.medalion1nameset.count>0) panel.uiMList.selectBtn1.setEnableEvent( ,false );
+		
+		panel.uiLList.medalionCt[src.lay._id]++;
+		
+		onCharTemp_update();
+		panel.uiTopInfo.setChar2(tempChar);
+		
+		drawStatus();
+// 		onCharTemp_update();
+// 		
+// 		panel.uiMList.drawStatus();
+	}
+	
+	function medalion2_drop_callback( lay_, src )
+	{
+		panel.uiMList.namesetReset2_callback();
+		
+		panel.uiMList.medalion2= src;
+		lay_.copyRect( 0, 0, src.lay, 0, 0, src.lay.width, src.lay.height );
+		
+		panel.uiMList.selectNameset2= 0;
+		panel.uiMList.medalion2nameset= ca.medalion_select_name(src.lay._id+1,2);
+		if(panel.uiMList.medalion2nameset.count>0) panel.uiMList.selectBtn2.setEnableEvent( ,false );
+		
+		panel.uiLList.medalionCt[src.lay._id]++;
+		
+// 		onCharTemp_update();
+// 		
+// 		panel.uiMList.drawStatus();
+		onCharTemp_update();
+		drawStatus();
+	}
+	
+	//メダリオンの購入
+// 	function medalion_buy_drop_callback( lay_, src )
+// 	{
+// 		if(){
+// 		var ii= src.lay._id;
+// 		var iu= _getLiteral(_ITEM_MEDALION,ii);
+// 		
+// 		//購入個数
+// 		var cn=[ 1,4,10 ];
+// 		var cnn= cn[panel.uiLList.selectBtreset.isSelected];
+// 		
+// 		//コストが足りない
+// 		if((iu[4]*cnn)>f.used.stat.resource.now) return false;
+// 		
+// 		//素材メダリオンが足りない
+// 		if(f.used.medalion[29]<cnn) return false;
+// 		
+// 		//購入
+// 		f.used.medalion[ii]+= cnn;
+// 		f.used.medalion[29]-= cnn;
+// 		f.used.stat.resource.now-= (iu[4]*cnn);
+// 		
+// // 		onCharTemp_update();
+// // 		panel.uiMList.drawStatus();
+// // 		parrentSrn.updateStatus();
+// 		drawStatus();
+// 		
+// 		parrentSrn.updateStatusAM2((iu[4]*cnn),1);
+// 		}
+// 	}
+	
+	function medalion_buy_drop_callback( lay_, src )
+	{
+		if(panel.uiLList.Icons.buttomChecked!=-1){
+			//var i= panel.uiLList.Icons.buttomChecked;
+			//var ii= _MEDALION_POS[panel.uiLList.Icons.buttomChecked];
+			var ii= panel.uiLList.Icons.buttomChecked;
+			
+			var iu= _getLiteral(_ITEM_MEDALION,ii);
+		
+			//購入個数
+			var cn=[ 1,4,10 ];
+			var cnn= cn[panel.uiLList.selectBtreset2.isSelected];
+		
+			//コストが足りない
+			if((iu[4]*cnn)>f.used.stat.resource.now) return false;
+		
+			//素材メダリオンが足りない
+			if(f.used.medalion[29]<cnn) return false;
+		
+			//購入
+			f.used.medalion[ii]+= cnn;
+			f.used.medalionopen[ii]= 1;
+			f.used.medalion[29]-= cnn;
+			f.used.stat.resource.now-= (iu[4]*cnn);
+		
+	// 		onCharTemp_update();
+	// 		panel.uiMList.drawStatus();
+	// 		parrentSrn.updateStatus();
+			drawStatus();
+		
+			parrentSrn.updateStatusAM2((iu[4]*cnn),1);
+			
+			if(panel.uiMList.viewcost!=0){
+		 		var ff= ca.char_works_stat_condition(panel.uiMList.viewcost,tempChar);
+		 		if(ff) panel.uiMList.selectBtexec.button_Enabled(true);
+	 		}
+	 		
+		}
+	}
+	
+	//セットしたメダリオンのコスト
+	function medalion_drop_pay_callback()
+	{
+		panel.uiLList.setViewCountReset();
+		if(panel.uiMList.medalion1!==void) panel.uiLList.medalionCt[panel.uiMList.medalion1.lay._id]= 1;
+		if(panel.uiMList.medalion2!==void) panel.uiLList.medalionCt[panel.uiMList.medalion2.lay._id]= 1;
+		
+		drawStatus();
+		//panel.uiLList.drawStatus();
+	}
+	
+// 	//称号をセット
+// 	function setNameset_update()
+// 	{
+// 		tempChar.prefixID= panel.uiMList.medalion1nameset[panel.uiMList.selectNameset1].id;
+// 		tempChar.suffixID= panel.uiMList.medalion2nameset[panel.uiMList.selectNameset2].id;
+// 		
+// 		tempChar.prefix= panel.uiMList.medalion1nameset[panel.uiMList.selectNameset1].text;
+// 		tempChar.suffix= panel.uiMList.medalion2nameset[panel.uiMList.selectNameset2].text;
+// 		
+// 		panel.uiTopInfo.setChar(tempChar);
+// 	}
+	
+	/*
+	//クリックで称号が変わる
+	function nameset1_callback()
+	{
+		medalion1nameset= [
+			%[text:"ddd", id:0],
+			%[text:"dd1", id:0],
+			%[text:"dd2", id:0],
+			%[text:"dd3", id:0],
+			%[text:"dd4", id:0],
+			%[text:"dd5", id:0],
+			%[text:"dd6", id:0],
+		];
+		
+		selectNameset1++;
+		
+		if(medalion1nameset.count>=selectNameset1) selectNameset1=0;
+		
+		drawStatus();
+	}
+	*/
+	/*
+	function getArray_zone(va_,i_)
+	{
+		var at= [];
+		var st= i_*12;
+		
+		for(var i= 0; i<12; i++ ){
+			if(va_[st+i]!=0) at.add(va_[st+i]);
+			else at.add(0);
+		}
+		return at;
+	}
+	
+	function setArray_zone(va_,i_,at_)
+	{
+		var st= i_*12;
+		for(var i= 0; i<12; i++ ) va_[st+i]== at_[i];
+	}
+	*/
+	
+	function rightClickCallBack(){
+		parrentSrn.opt_buttom_top(0);
+	}
+}
+
+///////////////////////////////////////////////////////
+//キャラセレクト
+class MidSelector extends LayerTrueBase
+{
+	var selectBt;
+	var selectBtcancel;
+	var selectBtDrop;
+	var selectBtexec;
+	var selectBtn1;
+	var selectBtn2;
+	var nameText;
+	var costText;
+	var selectChar;
+	var selectCharFc;
+	
+	var dMedalion1;
+	var dMedalion2;
+	
+	var selectCat= 0;
+	
+	//登録メダリオン情報
+	var medalion1= void;
+	var medalion2= void;
+	var medalion1nameset= [];
+	var medalion2nameset= [];
+	var namesetText1;
+	var namesetText2;
+	var selectNameset1= 0;
+	var selectNameset2= 0;
+	
+	var viewname= "";
+	var viewcost= 0;
+	var viewcost_type= 0;
+	var viewev= 0;
+	
+	function MidSelector( win, par, pal ) {
+		super.LayerTrueBase(...);
+		name= "MidSelector";
+	}
+	
+	function finalize() {
+		invalidate selectBt;
+		invalidate selectBtcancel;
+		invalidate selectBtDrop;
+		invalidate selectBtexec;
+		invalidate selectBtn1;
+		invalidate selectBtn2;
+		invalidate nameText;
+		invalidate costText;
+		invalidate selectChar;
+		invalidate selectCharFc;
+		
+		invalidate dMedalion1;
+		invalidate dMedalion2;
+		invalidate namesetText1;
+		invalidate namesetText2;
+		
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 640,410, 0x00000000 );
+		drawImageFile(0,0,"btl_plate_draft02");
+		
+		selectBt= new TButtonSelect4( window, this );
+		selectBt.setLayer( 25, 38 );
+		selectBt.setButton( 60, 26, 12 );
+		selectBt.setButtonPos([
+				  0,0,   0,30,   0,60,   0,90,
+				 63,0,  63,30,  63,60,  63,90,
+				128,0, 128,30, 128,60, 128,90
+				]);
+			
+		selectBt.setButtonLoad([
+			"btl_btDraft_u01","btl_btDraft_u04","btl_btDraft_u07","btl_btDraft_u10",
+			"btl_btDraft_u02","btl_btDraft_u05","btl_btDraft_u08","btl_btDraft_u11",
+			"btl_btDraft_u03","btl_btDraft_u06","btl_btDraft_u09","btl_btDraft_u12"]);
+			
+		selectBt.checked_Execute= checked_Execute_callback;
+		selectBt.setChecked(selectCat);
+	// 	selectBt.AllLockOut= true; //ロックをリリースするか
+		
+		selectBtcancel= new TButtonBase1k( window, this );
+		selectBtcancel.setLayer( 20, 355, 48, 48 );
+		selectBtcancel.loadImages("btl_btDraft_resetC");
+		selectBtcancel.callbackEvent= namesetReset_callback;
+		selectBtcancel.setDropDraw();
+	// 	selectBtcancel.AllLockOut= true; //ロックをリリースするか
+		
+		selectBtDrop= new TButtonBase1k( window, this );
+		selectBtDrop.setLayer( 70, 355, 48, 48 );
+		selectBtDrop.loadImages("btl_btDraft_reset");
+		selectBtDrop.callbackEvent= namesetReset0_callback;
+		selectBtDrop.setDropDraw();
+		//selectBtDrop.setEnableEvent( ,true );
+	// 	selectBtDrop.AllLockOut= true; //ロックをリリースするか
+		
+		selectBtexec= new TButtonBase1k( window, this );
+		selectBtexec.setLayer( 130, 355, 94, 48 );
+		selectBtexec.loadImages("btl_btDraft_enter");
+		//selectBtexec.setEnableEvent( ,true );
+		selectBtexec.setDropDraw();
+	// 	selectBtexec.AllLockOut= true; //ロックをリリースするか
+		
+		///////////
+		selectBtn1= new TButtonBase1k_bym( window, this );
+		selectBtn1.setLayer( 130, 300, 94, 26 );
+		selectBtn1.loadImages("btl_btDraft_title");
+		selectBtn1.callbackEvent= nameset1_callback;
+		selectBtn1.setDropDraw();
+		//selectBtn1.setEnableEvent( ,true );
+// 		selectBtn1.AllLockOut= true; //ロックをリリースするか
+		
+		selectBtn2= new TButtonBase1k_bym( window, this );
+		selectBtn2.setLayer( 130, 326, 94, 26 );
+		selectBtn2.loadImages("btl_btDraft_title");
+		selectBtn2.callbackEvent= nameset2_callback;
+		selectBtn2.setDropDraw();
+		//selectBtn2.setEnableEvent( ,true );
+	// 	selectBtn2.AllLockOut= true; //ロックをリリースするか
+		
+		namesetText1= new LayerTextBase( window, this );
+		namesetText1.setLayer( 135, 307, 94, 26 );
+		
+		namesetText2= new LayerTextBase( window, this );
+		namesetText2.setLayer( 135, 333, 94, 26 );
+		
+		///////////
+		/*
+		layers.nameText= new EditLayer( window, this );
+		layers.nameText.setPos( 50, 185 );
+		layers.nameText.type= ltOpaque;
+		layers.nameText.text= "999999999999";
+		*/
+		
+// 		nameText= new LayerTextBase( window, this );
+// 		nameText.setLayer( 50, 185, 200, 60 );
+// 		nameText.drawTextEdit( viewname, 0xffffff, 18 );
+// 		//nameText.setInputText(true);
+		
+		nameText= new LayerEventBase2( window, this );
+		nameText.setLayer( 30, 185, 180, 25, 0xff000000 );
+		nameText.action_Execute= namesinput_callback;
+		
+		
+		costText= new LayerTextBase( window, this );
+		costText.setLayer( 50, 245, 200, 60 );
+		//costText.drawText2(0,0,viewcost,0xffffff,218);
+		
+		
+		selectChar= new TButtonSelect4p( window, this );
+		selectChar.setLayer( 280, 0 );
+		selectChar.setButton( 86, 66, 24, TButtonBase1s, 2 );
+		selectChar.setIcons( "btl_draft_chip01","btl_draft_chip01g" );
+		selectChar.setButtonPos([
+			0,  0, 88,  0, 176,  0, 264,  0,
+			0, 68, 88, 68, 176, 68, 264, 68,
+			0,136, 88,136, 176,136, 264,136,
+			0,204, 88,204, 176,204, 264,204,
+			0,272, 88,272, 176,272, 264,272,
+			0,340, 88,340, 176,340, 264,340
+			]);
+		selectChar.setButtonLoad([
+			"df_9999","df_9999","df_9999","df_9999",
+			"df_9999","df_9999","df_9999","df_9999",
+			"df_9999","df_9999","df_9999","df_9999",
+			"df_9999","df_9999","df_9999","df_9999",
+			"df_9999","df_9999","df_9999","df_9999",
+			"df_9999","df_9999","df_9999","df_9999"
+			]);
+	// 	selectChar.AllLockOut= true; //ロックをリリースするか
+		
+		//dMedalion1= new TButtonBase1s( window, this );
+		dMedalion1= new TDrugEventBase2( window, this );
+		dMedalion1.setLayer( 17, 300, 48, 48, 1 );
+		dMedalion1.loadImages("btl_draft_m00");
+		dMedalion1.visible= false;
+		dMedalion1.Drug_Enter= ui_Cor1_callbak;
+		//dMedalion1.setDropDraw();
+		
+		//dMedalion2= new TButtonBase1s( window, this );
+		dMedalion2= new TDrugEventBase2( window, this );
+		dMedalion2.setLayer( 65, 300, 48, 48, 1 );
+		dMedalion2.loadImages("btl_draft_m00");
+		dMedalion2.visible= false;
+		dMedalion2.Drug_Enter= ui_Cor2_callbak;
+		//dMedalion2.setDropDraw();
+		
+		drawStatus();
+		
+		//setEnableEvent( true );
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		selectBtcancel.setEnableEvent( f_, f2_ );
+		selectBtDrop.setEnableEvent( f_, f2_ );
+		selectBtexec.setEnableEvent( f_, f2_ );
+		selectBtn1.setEnableEvent( f_, f2_ );
+		selectBtn2.setEnableEvent( f_, f2_ );
+		selectBt.setEnableEvent( f_, f2_ );
+		selectChar.setEnableEvent( f_, f2_ );
+		dMedalion1.setEnableEvent( f_, f2_ );
+		dMedalion2.setEnableEvent( f_, f2_ );
+		nameText.setEnableEvent( f_, f2_ );
+	}
+	
+	////////////////////
+	//
+	function checked_Execute_callback( n_ )
+	{
+		selectCat= n_;
+		selectChar.buttom_Reset();
+		drawStatus();
+	}
+	
+	//装備キャンセル
+	function ui_Cor1_callbak(lay,ev)
+	{
+		if( ev.type=="onMouseDown" && ev.button==mbRight && medalion1!=void ) {
+			//core2.setEvent_aLock_true();
+			namesetReset1_callback();
+			framePanel.drawStatus();
+			//core2.setEvent_aLock_false();
+		}
+	}
+	
+	function ui_Cor2_callbak(lay,ev)
+	{
+		if( ev.type=="onMouseDown" && ev.button==mbRight && medalion2!=void ) {
+			//core2.setEvent_aLock_true();
+			namesetReset2_callback();
+			framePanel.drawStatus();
+			//core2.setEvent_aLock_false();
+		}
+	}
+	
+	//メダリオンを解除
+	function namesetReset_callback()
+	{
+		namesetReset1_callback();
+		namesetReset2_callback();
+		
+ 		framePanel.panel.uiLList.setViewCountReset();
+ 		//framePanel.onCharTemp_update();
+		framePanel.drawStatus();
+	}
+	
+	function namesetReset0_callback()
+	{
+		namesetReset1_callback();
+		namesetReset2_callback();
+	}
+	
+	function namesetReset1_callback()
+	{
+		if(medalion1!==void) framePanel.panel.uiLList.medalionCt[medalion1.lay._id]--;
+		
+		dMedalion1.loadImages("btl_draft_m00");
+		//selectBtn1.button_Enabled(true);
+ 		medalion1= void;
+		medalion1nameset= [];
+		selectNameset1= 0;
+		
+		medalion1nameset= ca.medalion_select_name(0,1);
+		//if(medalion1nameset.count>0) selectBtn1.button_Enabled(false);
+		
+		
+		framePanel.onCharTemp_update();
+		//framePanel.panel.uiTopInfo.setChar2(framePanel.tempChar);
+		framePanel.panel.uiTopInfo.drawStatus();
+	}
+	
+	function namesetReset2_callback()
+	{
+		if(medalion2!==void) framePanel.panel.uiLList.medalionCt[medalion2.lay._id]--;
+		
+		dMedalion2.loadImages("btl_draft_m00");
+		//selectBtn2.button_Enabled(true);
+ 		medalion2= void;
+		medalion2nameset= [];
+		selectNameset2= 0;
+		
+		medalion2nameset= ca.medalion_select_name(0,2);
+		//if(medalion2nameset.count>0) selectBtn2.button_Enabled(false);
+		
+		framePanel.onCharTemp_update();
+	}
+	
+	
+	//クリックで称号が変わる
+	function nameset1_callback(la,cl)
+	{
+		if(cl.button==0){
+			selectNameset1++;
+			if(medalion1nameset.count<=selectNameset1) selectNameset1= 0;
+		}else{
+			selectNameset1--;
+			if(0>selectNameset1) selectNameset1=medalion1nameset.count-1;
+		}
+		
+		framePanel.onCharTemp_update();
+		//framePanel.panel.uiTopInfo.setChar2(framePanel.tempChar);
+		
+		framePanel.drawStatus();
+	}
+	
+	function nameset2_callback(la,cl)
+	{
+		if(cl.button==0){
+			selectNameset2++;
+			if(medalion2nameset.count<=selectNameset2) selectNameset2= 0;
+		}else{
+			selectNameset2--;
+			if(0>selectNameset2) selectNameset2=medalion2nameset.count-1;
+		}
+		
+		framePanel.onCharTemp_update();
+		//framePanel.panel.uiTopInfo.setChar2(framePanel.tempChar);
+		//panel.uiTopInfo.drawStatus();
+		
+		framePanel.drawStatus();
+	}
+	
+	function namesinput_callback(ev)
+	{
+		if( ev.type=="onMouseDown" && ev.button==0 &&
+				framePanel.tempChar!==void && framePanel.tempChar.troopsNo==-2 ) {
+				
+			var i; 
+			i = System.inputString("名前の入力", "名前を入力してください", viewname); 
+			if(i!==void) {
+				
+				//文字数断ち切り
+				framePanel.tempChar.uniqueName= i.substring(0,12);
+				
+				framePanel.onCharTemp_update();
+				framePanel.drawStatus();
+			}
+		}
+	}
+	
+	
+	////////////////////
+	//
+	function drawStatus()
+	{
+		
+		var fn= [];
+		var vbb= ca.medalion_get_charopen(selectCat);
+		
+		dm("drawStatus= %d.%d".sprintf(selectCat,vbb[selectCat].tn));
+		
+		for(var i= 0; i<vbb.count; i++ ) {
+			fn[i]= vbb[i].file;
+			selectChar.buttomSelectArray[i].button_Enabled(vbb[i].bt);
+			selectChar.buttomSelectArray[i].enabledEventLock= vbb[i].ev;
+			if(vbb[i].tn==-2) selectChar.buttomSelectArray[i].button_Selected(0);
+			else selectChar.buttomSelectArray[i].button_Selected(1);
+		}
+		
+		selectChar.setButtonLoad(fn);
+		
+		if(viewcost!==0) {
+		
+			//nameText.clearText();
+			nameText.fillRect( 0,0, 180,25, 0xff000000 );
+			nameText.drawText3( 0,6, viewname, 0xffffff, 18 );
+		
+			costText.clearText();
+			costText.drawText3(0,5,viewcost,0xffffff,218);
+		
+			var vctype= ["cost_food","cost_enegy"];
+			drawImageFile(25,243,vctype[viewcost_type]);
+		
+			var evtype= ["slg_rank00","slg_rank01","slg_rank02","slg_rank03","slg_rank04"];
+			drawImageFile(160,243,evtype[viewev]);
+		
+			namesetText1.clearText();
+			if(medalion1nameset.count>0) namesetText1.drawText2s(0,0,medalion1nameset[selectNameset1].text,0x000000,14);
+		
+			namesetText2.clearText();
+			if(medalion2nameset.count>0) namesetText2.drawText2s(0,0,medalion2nameset[selectNameset2].text,0x000000,14);
+		
+		}
+		
+	}
+}
+
+
+///////////////////////////////////////////////////////
+//メダリオン
+class medalionIconSelector extends LayerTrueBase
+{
+	var selectBtreset;
+	var selectBtreset2;
+	var Icons;
+	var medalionC= [ 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0 ];
+	var medalionS= [ 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0 ];
+	var medalionCt= [ 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0 ];
+	
+	var selectCat= 0;
+	
+	var textIcons;
+	
+	function medalionIconSelector( win, par, pal ) {
+		super.LayerTrueBase(...);
+		name= "medalionIconSelector";
+	}
+	
+	function finalize() {
+		invalidate selectBtreset;
+		invalidate Icons;
+		invalidate textIcons;
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_ );
+		loadImages("btl_plate_draft01");
+		
+		selectBtreset2= new TButtonBase1s( window, this );
+		selectBtreset2.setLayer( 135, 29, 60, 26, 3 );
+		selectBtreset2.loadImages("btl_btDraft_mcraft3");
+	// 	selectBtreset2.AllLockOut= true; //ロックをリリースするか
+		
+		selectBtreset= new TButtonBase1k( window, this );
+		selectBtreset.setLayer( 196, 29, 90, 26, 3 );
+		selectBtreset.loadImages("btl_btDraft_mcraft2");
+	// 	selectBtreset.AllLockOut= true; //ロックをリリースするか
+		
+		Icons= new TButtonSelect4p( window, this );
+		//layers.Icons.executeActions= 
+		Icons.setLayer( 0, 75 );
+		Icons.setButton( 48, 48, 30, TButtonBase1s, 3 );
+		Icons.setIcons( "btl_draft_chip02","btl_draft_chip02g" );
+		Icons.checked_Execute= checked_Execute_callback;
+		
+		//for(var i= 0; i<30; i++ ) { layers.Icons.buttomSelectArray[i].setData(i); }
+		
+		Icons.setButtonPos([
+			0,  0, 50,  0, 100,  0, 150,  0, 200,  0, 250,  0,
+			0, 65, 50, 65, 100, 65, 150, 65, 200, 65, 250, 65,
+			0,130, 50,130, 100,130, 150,130, 200,130, 250,130,
+			0,195, 50,195, 100,195, 150,195, 200,195, 250,195,
+			0,260, 50,260, 100,260, 150,260, 200,260, 250,260
+			]);
+	// 	Icons.AllLockOut= true; //ロックをリリースするか
+		
+		textIcons= new LayerTextBase( window, this );
+		textIcons.setLayer( 10, 410, 290, 200 );
+		
+		/*
+		var ma= [];
+		for(var i= 0; i<30; i++ ) {
+			
+			//位置入れ替え
+			var ii=_MEDALION_POS[i];
+			
+			//iconに実データを入れる
+			Icons.buttomSelectArray[i]._id= _MEDALION_POS[i];
+			
+			//copyRect( 0, 0, medalion1, 0, 0, medalion1.width, medalion1.height );
+			
+			fillRect( ((i%6)*50)+10,((i\6)*65)+124, 50, 15, 0xff000000 );
+			if(f.used.medalionopen[ii]==1){
+				
+// 				if(medalionS[i]>0){
+// 					//選択されている
+// 					//drawText4( ((i%6)*50)+10, ((i\6)*65)+124, "%03d".sprintf(f.used.medalion[ii]-gt.medalioncost[ii]),0xff0000, 214 );
+// 					//ma[i]= _getLiteral(_ITEM_MEDALION,ii)[5];
+// 				}else{
+// 					//選択されていない
+// 					drawText4( ((i%6)*50)+10, ((i\6)*65)+124, "%03d".sprintf(f.used.medalion[ii]),0xffffff, 214 );
+// 					ma[i]= _getLiteral(_ITEM_MEDALION,ii)[5];
+// 				}
+				
+				drawText4( ((i%6)*50)+10, ((i\6)*65)+124, "%3d".sprintf(f.used.medalion[ii]),0xffffff, 214 );
+				ma[i]= _getLiteral(_ITEM_MEDALION,ii)[5];
+				Icons.buttomSelectArray[i].button_Selected(1);
+				
+				Icons.buttomSelectArray[i].button_Enabled(true);
+			} else {
+				ma[i]= "btl_draft_m01";
+				Icons.buttomSelectArray[i].button_Enabled(false);
+			}
+		}
+		Icons.setButtonLoad(ma);
+		*/
+		
+		var ma= [];
+		for(var i= 0; i<30; i++ ) {
+			
+			//位置入れ替え
+			var ii=_MEDALION_POS[i];
+			
+			//iconに実データを入れる
+			Icons.buttomSelectArray[i]._id= _MEDALION_POS[i];
+			ma[i]= _getLiteral(_ITEM_MEDALION,ii)[5];
+		}
+		Icons.setButtonLoad(ma);
+		
+		drawStatus();
+		
+		//setEnableEvent( true );
+		
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		selectBtreset.setEnableEvent( f_, f2_ );
+		selectBtreset2.setEnableEvent( f_, f2_ );
+		Icons.setEnableEvent( f_, f2_ );
+	}
+	
+	//
+	function setViewReset()
+	{
+		medalionC= [ 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0 ];
+		medalionS= [ 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0 ];
+		medalionCt= [ 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0 ];
+		
+		//drawStatus();
+	}
+	
+	function setViewCountReset()
+	{
+		medalionCt= [ 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0 ];
+	}
+	
+	
+	function checked_Execute_callback( n_ )
+	{
+		selectCat= n_;
+		drawStatus();
+	}
+	
+	function drawStatus()
+	{
+		for(var i= 0; i<30; i++ ){
+			
+			Icons.buttomSelectArray[i].setEnableEvent(,false);
+			
+			//位置入れ替え
+			var ii=_MEDALION_POS[i];
+			
+			fillRect( ((i%6)*50)+10,((i\6)*65)+124, 50, 15, 0xff000000 );
+			//if(f.used.medalionopen[ii]==1 || f.used.medalion[ii]>0 ){
+			if(_MEDALION_BUYS[i]==1 || f.used.medalion[ii]>0 || f.used.medalionopen[ii]>0 ) {
+				
+				var costmedal=0;
+				var tcolor= 0xffffff;
+				
+				//選択されているか？
+				if(medalionC[ii]>0) costmedal= 1;
+				
+				//追加したか
+				if(medalionCt[ii]>0) costmedal+= medalionCt[ii];
+				
+				if(costmedal>0) tcolor=0xff0000;
+				
+				drawText2s( ((i%6)*50)+10, ((i\6)*65)+124, "%3d".sprintf(f.used.medalion[ii]-costmedal),tcolor, 214 );
+				
+				/*
+				//選択されているか？
+				if(medalionC[ii]>0){
+					//drawText4( ((i%6)*50)+10, ((i\6)*65)+124, "%3d".sprintf(f.used.medalion[ii]-gt.medalioncost[ii]),0xff0000, 214 );
+					drawText4( ((i%6)*50)+10, ((i\6)*65)+124, "%3d".sprintf(f.used.medalion[ii]-1),0xff0000, 214 );
+				}else{
+					drawText4( ((i%6)*50)+10, ((i\6)*65)+124, "%3d".sprintf(f.used.medalion[ii]),0xffffff, 214 );
+				}
+				*/
+				
+				//付けられるか？
+				if(medalionS[ii]>0 && f.used.medalionopen[ii]==1 && f.used.medalion[ii]-costmedal>0 ){
+					Icons.buttomSelectArray[i].button_Selected(1);
+					Icons.buttomSelectArray[i].Drug_Exec.Enabled= true;
+				}else{
+					Icons.buttomSelectArray[i].button_Selected(2);
+					Icons.buttomSelectArray[i].Drug_Exec.Enabled= false;
+				}
+				
+				Icons.buttomSelectArray[i].button_Enabled(true);
+			} else {
+				Icons.buttomSelectArray[i].setEnableEvent(,true);
+				if(medalionC[ii]>0) {
+					Icons.buttomSelectArray[i].button_Selected(2);
+					Icons.buttomSelectArray[i].Drug_Exec.Enabled= false;
+					Icons.buttomSelectArray[i].button_Enabled(true);
+					drawText2s( ((i%6)*50)+10, ((i\6)*65)+124, "%3d".sprintf(f.used.medalion[ii]-1),0xff0000, 214 );
+				}else{
+					Icons.buttomSelectArray[i].button_Enabled(false);
+				}
+			}
+		}
+		
+		//var iu= _getLiteral(_ITEM_MEDALION,_MEDALION_POS[selectCat]);
+		var iu= _getLiteral(_ITEM_MEDALION,selectCat);
+		//var tx= ca.medalion_select_name(Icons.buttomSelectArray[selectCat]._id,3);
+		var tx= ca.medalion_select_name(selectCat+1,0);
+		
+		textIcons.clearText();
+		textIcons.drawText4( 0, 5, iu[1], 0xffffff,18 );
+		textIcons.drawText2s( 0, 28, "レアリティー %d".sprintf(iu[2]+1),0x000000,16 );
+		
+		if(f.used.medalionopen[selectCat]==0) textIcons.drawText2s( 200, 5, "未開放",0xff0000,16 );
+		
+		if(iu[4]==0) textIcons.drawText2s( 140, 28, "錬成不可",0xff0000,16 );
+		else textIcons.drawText2s( 140, 28, "錬成資源:%d".sprintf(iu[4]),0x000000,16 );
+		
+		var catgText= [ "両方", "接頭", "接尾" ];
+		
+		for(var i= 0; i<tx.count; i++ ){
+			var ixx=5+((i\7)*135);
+			var iyy=60+((i%7)*16);
+			textIcons.drawText2s( ixx, iyy, "【%s】%s".sprintf(catgText[tx[i].cat],tx[i].text), 0x000000,14 );
+		}
+		
+		dm("medalionIconSelector.drawStatus()");
+	}
+	
+}
+
+///////////////////////////////////////////////////////
+//スライドボタン
+class TButtonBase1k_bym extends TButtonBase1k
+{
+	
+	function TButtonBase1k_bym( win, par, pal ) {
+		super.TButtonBase1k(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	////////////////////
+	//入力イベント
+	function onAction( ev )
+	{
+		switch(ev.type) {
+		
+			case "onMouseDown":
+				if( ev.button==0 && isMouseEnter && !isChecked ) {
+					core2.playse( soundfile.click );
+					button_Checked( true );
+					if( callbackEvent!==void ) {
+						//core2.setEvent_aLock_true();
+						callbackEvent(this,ev);
+						//core2.setEvent_aLock_false();
+					}
+					if( !CheckedLock ) button_Checked( false );
+				} else {
+					if( ev.button==1 && isMouseEnter && !isChecked ) {
+						core2.playse( soundfile.click );
+						button_Checked( true );
+						if( callbackEvent!==void ) {
+							//core2.setEvent_aLock_true();
+							callbackEvent(this,ev);
+							//core2.setEvent_aLock_false();
+						}
+						button_Checked( false );
+					}
+				}
+				break;
+				
+			case "onMouseMove":
+				core2.playse( soundfile.enter );
+				button_Selected( true );
+				cursor= crHandPoint;
+				break;
+			
+			case "onMouseEnter":
+				core2.playse( soundfile.enter );
+				button_Selected( true );
+				cursor= crHandPoint;
+				break;
+			
+			case "onMouseLeave":
+				button_Selected( false );
+				cursor= crArrow;
+				break;
+		}
+		
+	}
+}

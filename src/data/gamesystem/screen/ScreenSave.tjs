@@ -1,0 +1,1389 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenSave
+//
+/////////////////////////////////////////////////////////////////////////
+class ScreenSave extends TFrame2
+{
+	var dataTemp;
+	var dataTempIndex;
+	
+	var iconDataQuick;
+	var dataQTemp;
+	
+	var exchengeSaveMode= false;
+	var exchengeSaveModeNum= 0;
+	
+	var saveModeSet= true;
+	
+	var select_init_backup= 0;
+	
+	var load_select_num= -1;
+	
+	
+	//最新データ検索
+	var new_load_select_num= 0;
+	
+	function ScreenSave( g_ ) {
+		super.TFrame2(...);
+		backGround.callbackREvent2= rightClickCallBack;
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	// init
+	//
+	function init_panel()
+	{
+	
+		backGround.loadImages( "sys_data_bt" );
+		if( saveModeSet ) backGround.drawImageFile( 11,8,"sys_data_chip02" );
+		else backGround.drawImageFile( 11,8,"sys_data_chip03" );
+		
+		
+		with( panel )
+		{
+			//セーブリスト
+			.iconList= new TButtonSelectList2( kag, backGround );
+			.iconList.setLayer( 380, 115, 515, 680, 0x00000000 );
+			.iconList.setListData( games.saveDataTemp, dataTempIndex );
+			.iconList.checked_Execute= SaveLoad_execute_01;
+			.iconList.checked_Execute2= SaveLoad_execute_02;
+			.iconList.rclick_callback= rightClickCallBack;
+			
+			.iconList.setButton( 500, 95, 8, TIconMiddleSL );
+			.iconList.setButtonLoad( ["sys_data_box2"], true );
+			.iconList.scroll_Offset= 70;
+			.iconList.sortType= sortMode;
+			.iconList.AllLockOut= false;
+			
+			//クイックセーブ背景
+			.saveBack_top= new LayerTrueBase( kag, backGround );
+			.saveBack_top.setLayer( 365, 0 );
+			.saveBack_top.loadImages( "sys_data_chip01" );
+			
+			//クイックセーブ
+// 			.iconDataQuick= new TButtonSelect4( kag, backGround );
+// 			.iconDataQuick.setLayer( 395, 10, 500, 90 );
+// 			.iconDataQuick.setButton( 500, 90, 1, TIconMiddleSLL );
+// 			.iconDataQuick.setButtonLoad( ["sys_data_box2"], true );
+// 			.iconDataQuick.checked_Execute= callback_quickLoad;
+// 			.iconDataQuick.buttomSelectArray[0].setDataDraw( games.saveDataTemp[0], 0 );
+// 			.iconDataQuick.resetButtomChecked= true;
+// 			.iconDataQuick.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			
+			.iconDataQuick= new TIconMiddleSLLk( kag, backGround );
+			.iconDataQuick.setLayer( 395, 10, 500, 90, 2 );
+			//.iconDataQuick.loadImages( "sys_data_box2" );
+			.iconDataQuick.callbackEvent= callback_quickLoad;
+			.iconDataQuick.setData( 0, games.saveDataTemp[0] );
+			.iconDataQuick.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			.iconDataQuick.drawStatus();
+			
+			//セーブリストインフォメーション
+			.iconListSliderIndex= new TScrollImage( kag, backGround );
+			.iconListSliderIndex.setScrollImage( 900, 130, 10, 558, void, 10, 700 );
+			.iconListSliderIndex.visible= false;
+			
+			
+			//詳細情報
+			.thumbnailImage= new TDrugEventBase( kag, backGround );
+			.thumbnailImage.setLayer( 35, 90, 300, 225, 0xffffffff );
+			.thumbnailImage.Drug_Execute= this;
+			
+			.thumbnailText= new LayerTrueBase( kag, backGround );
+			.thumbnailText.setLayer( 35, 340, 300, 350, 0x00000000 );
+			
+			
+			//消去
+			.delBoutton= new TButtonBase1k( kag, backGround );
+			.delBoutton.setLayer( 80, 68, 120, 40 );
+			.delBoutton.loadImages( "sys_data_bt_delete2" );
+			.delBoutton.callbackEvent= callback_delSave;
+			.delBoutton.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			
+			//戻る
+			.retBoutton= new TButtonBase1k( kag, backGround );
+			.retBoutton.setLayer( 250, 64, 48, 48 );
+			.retBoutton.loadImages("sys_cfg_bt_return");
+			.retBoutton.callbackEvent= rightClickCallBack;
+			.retBoutton.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			.retBoutton.AllLockOut= false;
+			
+			//消去
+			.iconListShortCut0= new TButtonBase1k( kag, backGround );
+			.iconListShortCut0.setLayer( 923, 160, 32, 84 );
+			.iconListShortCut0.loadImages( "sys_data_bt_p00" );
+			.iconListShortCut0.callbackEvent= iconListShortCut_callback0;
+			.iconListShortCut0.soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+			
+			//ショートカット
+			.iconListShortCut= new TButtonSelect4( kag, backGround );
+			.iconListShortCut.setLayer( 923, 244 );
+			.iconListShortCut.setButton( 32, 84, 5 );
+			.iconListShortCut.checked_Execute= iconListShortCut_callback;
+			.iconListShortCut.setButtomSelectMode= [ 0,0,0,0,0 ];
+			.iconListShortCut.setButtonLoad([ "sys_data_bt_p01a","sys_data_bt_p02a","sys_data_bt_p03a","sys_data_bt_p04a","sys_data_bt_p05a" ]);
+			.iconListShortCut.setButtonPos([ 0,0, 0,84, 0,168, 0,248, 0,332 ]);
+			.iconListShortCut.AllLockOut= false;
+			.iconListShortCut.soundfile= %[ enter:"", leave:"", select:"", click:"" ];
+			
+			//セーブリストスライダー
+			.iconListSlider= new SliderBar2( kag, backGround );
+			.iconListSlider.setLayer( 899, 115, 23, 605, true, 93 );
+			.iconListSlider.loadImages( "sys_data_seekbar2", "sys_data_seekbar2a" );
+			.iconListSlider.step= 100-6;
+			
+			
+			//ドラッグ画面
+			.drugScreen= new TDrugMoveBase( kag, backGround );
+			.drugScreen.setLayer( 0, 0, 970, 720 );
+			.drugScreen.tocallbackEvent= .iconList;
+			
+			.thumbnailImage.Drug_Executes= .drugScreen;
+			
+			//お互いを接続
+			.iconList.callbackEvent= seticonListCallBack;
+			.iconListSlider.callbackEvent= setSliderCallBack;
+			
+		}
+	}
+	
+	///////////////////////////////////////////////////////
+	// method
+	//
+	function SaveLoad_execute_01()
+	{
+		UpdatethumbnailImage();
+		if( saveModeSet ) {
+			if( !games.saveDataTemp[panel.iconList.selectIndexNum].exist ) saveExecuteEvent_new();
+		}
+	}
+	
+	function SaveLoad_execute_02()
+	{
+		if( saveModeSet ) {
+			if( !games.saveDataTemp[panel.iconList.selectIndexNum].exist ) saveExecuteEvent_new();
+			else saveExecuteEvent_over();
+		} else loadExecuteEvent_new();
+	}
+	
+	
+	//セーブデータを消去
+	function method_SaveDelete( n )
+	{
+		kag.eraseBookMark(n);
+		games.saveDataTemp[n]= games.setSaveDataTempBase( n, true );
+		
+		core2.resetPlayTime(n);
+		
+		newSaveInfomation_del(n);
+		
+		panel.iconList.statsUpdate( true, true );
+		sideInfomationUpdate();
+		UpdatethumbnailImage( games.saveDataTemp[n] );
+	}
+	
+	//ソートタイプ
+	function sortMode( n_, i_ )
+	{
+		var r;
+		var rv= games.saveDataTemp[dataTempIndex[i_]];
+		switch( n_ ) {
+			case 0: r= rv.index; break;
+			case 1: r= rv.date; break;
+			case 2: r= rv.playtime; break;
+		}
+		return r;
+	}
+	
+	//サムネイルを更新
+	function UpdatethumbnailImage()
+	{
+		with( games.saveDataTemp[panel.iconList.selectIndexNum] )
+		{
+			var vi= dataTempIndex.find( .index );
+			
+			panel.thumbnailImage.stopMove();
+			
+			backGround.copyRect( 30, 124, panel.thumbnailImage, 0, 0, 300, 225 );
+			panel.thumbnailImage.opacity= 0;
+			//panel.thumbnailImage.fillRect( 0, 0, 300, 570, 0x99000000 );
+			
+			panel.thumbnailImage.fillRect( 0, 0, 300, 225, 0xff000000 );
+			
+			//panel.thumbnailText.fillRect( 0, 0, 300, 570, 0x00000000 );
+			panel.thumbnailText.fillRect( 0, 0, 300, 350, 0x00000000 );
+			
+			//if( .file!==void ) panel.thumbnailImage.drawImageFileStretch( 0, 0, 300, 225, .file );
+			if( .file!==void ) panel.thumbnailImage.loadImages( .file );
+			
+			//
+			if( vi==0 ) panel.thumbnailText.drawText3( 5, 0, "QuickSave".sprintf( vi ), 0xffffff, 14 );
+			else panel.thumbnailText.drawText3( 5, 0, "No. %03d".sprintf( vi ), 0xffffff, 14 );
+			
+			panel.thumbnailText.drawText3( 5, 22, .names, 0xffffff, 18 );
+			panel.thumbnailText.fillRect( 5, 40, 280, 1, 0xffffffff );
+			panel.thumbnailText.drawText3( 5, 50, "Date: %s".sprintf(.date), 0xffffff, 16 );
+			panel.thumbnailText.drawText3( 5, 70, "PlayTime: %s".sprintf(.playtime), 0xffffff, 16 );
+			
+			panel.thumbnailText.drawText3( 5, 100, "%2d章".sprintf(.story), 0xffffff, 16 );
+			
+			var daytx= ["昼","夜"];
+			panel.thumbnailText.drawText3( 100, 100, "%3dターン(%s)".sprintf(.trun,daytx[.day]), 0xffffff, 16 );
+			
+			panel.thumbnailText.drawText3( 5, 120, "支配地: %d".sprintf(.terr), 0xffffff, 16 );
+			
+			panel.thumbnailText.drawText3( 5, 140, "%s".sprintf(.diff), 0xffffff, 16 );
+			panel.thumbnailText.drawText3( 100, 140, "周回: %d".sprintf(.clear), 0xffffff, 16 );
+			
+			panel.thumbnailText.drawText3( 5, 160, "食料: %d".sprintf(.cost1), 0xffffff, 16 );
+			panel.thumbnailText.drawText3( 5, 180, "資源: %d".sprintf(.cost2), 0xffffff, 16 );
+			panel.thumbnailText.drawText3( 5, 200, "魔力: %d".sprintf(.cost3), 0xffffff, 16 );
+			panel.thumbnailText.drawText3( 5, 220, "資金: %d".sprintf(.cost4), 0xffffff, 16 );
+			
+			panel.thumbnailImage.setPos( 30, 124 );
+			panel.thumbnailText.setPos( 30, 374 );
+			//panel.thumbnailImage.opacity= 255;
+			
+			panel.thumbnailImage.beginMove( %[ time:300, path:"(30,124,255)" ] );
+			
+			kag.sflags.systemcore.save.index= .index;
+			kag.sflags.systemcore.save.viewindex= dataTempIndex.find(.index);
+			dm("UpdatethumbnailImage.viewindex= %d, index= %d".sprintf(kag.sflags.systemcore.save.viewindex,.index));
+		}
+	}
+	
+	//サイドインフォメーションを更新
+	function sideInfomationUpdate()
+	{
+		//panel.iconListSliderIndex.loadImages( "sys_data_minilists.png" );
+		panel.iconListSliderIndex.fillRect( 0, 0, 10, panel.iconListSliderIndex.imageHeight, 0xff000000 );
+		//panel.iconListSliderIndex.setSize( 15, 558 );
+		for(var i= 0; i<100; i++ ) {
+			if( games.saveDataTemp[dataTempIndex[i]].file!==void ) {
+				panel.iconListSliderIndex.fillRect( 3, (7*i)+1, 5, 5, 0xffcccccc );
+			}
+		}
+		panel.iconListSliderIndex.statsUpdate();
+	}
+	
+	//サイドインフォメーションを更新
+	function newSaveInfomation(n)
+	{
+			kag.sflags.systemcore.save.newsave.insert(0,n);
+			kag.sflags.systemcore.save.newsave.erase(-1);
+//			kag.sflags.systemcore.save.newsave.add(n);
+//			kag.sflags.systemcore.save.newsave.erase(0);
+			dm( "ScreenSave.newSaveInfomation.add= %d".sprintf(n) );
+	}
+	
+	function newSaveInfomation_del(n)
+	{
+			//n= Math.abs(n);
+			var m= kag.sflags.systemcore.save.newsave.find(n);
+			if( m>-1 ){
+				kag.sflags.systemcore.save.newsave.erase(m);
+				kag.sflags.systemcore.save.newsave.add(-1);
+			}
+			dm( "ScreenSave.newSaveInfomation.del(%d)= %d".sprintf(m,n) );
+	}
+	///////////////////////////////////////////////////////
+	// callback
+	//
+	//クイックセーブロード
+	function callback_quickLoad( f_=true )
+	{
+		if( games.saveDataTemp[0].exist ) {
+			//panel.iconDataQuick.buttom_enable= f_;
+			
+			var prompt = "クイックロードしますか？";
+			//var result = askYesNoD( prompt,callback_quickSave );
+			var result = askYesNoD2( prompt,"",callback_quickLoad,core2.loadExecuteEventQuick_new );
+			if( result ) {
+				if( games.saveDataTemp[0].exist ) {
+					//frameWork.all_close_event= load_callback_event;
+					askYesNoD_reset();
+// 					load_select_num= 0;
+// 					HideScreen( 200 );
+					//core2.loadExecuteEventQuick_new();
+				}
+			}
+		}
+	}
+	
+	//セーブデータを消去
+	function callback_delSave()
+	{
+		if( games.saveDataTemp[panel.iconList.selectIndexNum].exist ){
+			var prompt = "No. "+panel.iconList.selectIndexNum
+				+" を削除しますか？";
+			var result = askYesNoD(prompt, callback_delSave );
+			if(result) {
+				askYesNoD_reset();
+				method_SaveDelete( panel.iconList.selectIndexNum );
+			}
+		} //else core2.setEvent_aLock_false();
+		return false;
+		//**return true;
+	}
+	
+	//セーブデータを移動
+	function onDrug_Mode( ev )
+	{
+		backGround.copyRect( 30, 124, panel.thumbnailImage, 0, 0, 300, 225 );
+	}
+	
+	
+	function loadExecuteEvent_new()
+	{
+		//	if( saveModeSet ) {
+		if( games.saveDataTemp[panel.iconList.selectIndexNum].exist ) {
+			load_select_num= panel.iconList.selectIndexNum;
+			var prompt = "No.%02dをロードしますか？".sprintf((panel.iconList.buttomChecked+panel.iconList.viewIndex));
+				dm("buttomChecked= %d +viewIndex= %d".sprintf(panel.iconList.buttomChecked,panel.iconList.viewIndex));
+			var result = askYesNoD2( prompt,"",loadExecuteEvent_new,load_callback_event );
+			//var result = askYesNoD( prompt,loadExecuteEvent_new, );
+			if( result ) {
+				askYesNoD_reset();
+// 				if( games.saveDataTemp[panel.iconList.selectIndexNum].exist ) {
+// //					load_select_num= panel.iconList.selectIndexNum;
+// //					frameWork.loadBackStart(load_select_num);
+// //					frameWork.startPlayTime(load_select_num);
+// 					//load_select_num= panel.iconList.selectIndexNum;
+// 					//HideScreen( 200 );
+// 					//frameWork.screenControls.exec_close_all();
+// 					//load_callback_event();
+// 				}
+				core2.setEvent_aLock_true();
+			}
+		}
+	}
+	
+	function saveExecuteEvent_new()
+	{
+		var prompt = "No.%002dにセーブしますか？".sprintf((panel.iconList.buttomChecked+panel.iconList.viewIndex));
+//		var prompt = "No. "+panel.iconList.selectIndexNum
+//			+" にセーブしますか？";
+		var result = askYesNoD2( prompt, "セーブ中です.....", saveExecuteEvent_new );
+		if( result ) {
+			saveExecuteEvent_exe();
+		}
+	}
+	
+	function saveExecuteEvent_over()
+	{
+		var prompt = "No.%002dに上書きしますか？".sprintf((panel.iconList.buttomChecked+panel.iconList.viewIndex));
+//		var prompt = "No. "+panel.iconList.selectIndexNum
+//			+" に上書きしますか？";
+		var result = askYesNoD2( prompt, "セーブ中です.....", saveExecuteEvent_over );
+		if( result ) {
+			saveExecuteEvent_exe();
+		}
+	}
+	
+	function saveExecuteEvent_exe()
+	{
+		askYesNoD_reset();
+		
+		games.setSaveDataTempAdd(panel.iconList.selectIndexNum);
+		
+		frameWork.setPlayTime(panel.iconList.selectIndexNum);
+		kag.saveBookMark( panel.iconList.selectIndexNum, false );
+		
+		games.saveDataTemp[panel.iconList.selectIndexNum]= games.setSaveDataTempBase(panel.iconList.selectIndexNum);
+		newSaveInfomation(panel.iconList.selectIndexNum);
+		//newSaveInfomation(panel.iconList.viewIndex);
+		
+		panel.iconList.statsUpdate( true, true );
+		UpdatethumbnailImage( games.saveDataTemp[panel.iconList.selectIndexNum] );
+	}
+	
+	function load_callback_event()
+	{
+		frameWork.loadBackStart(load_select_num);
+		frameWork.startPlayTime(load_select_num);
+	}
+	
+	//入れ替えを実行
+	function saveExchangeEvent()
+	{
+		exchangeModeSet= true;
+		if( panel.excBoutton.lockButton ) {
+			method_Exchange( panel.iconList.getSelectView(), exchangeSaveModeNum );
+			kag.saveSystemVariables();
+			panel.excBoutton.lockFree();
+			panel.iconList.statsUpdate( true, true );
+			sideInfomationUpdate();
+			UpdatethumbnailImage( games.saveDataTemp[panel.iconList.selectIndexNum] );
+		} else {
+			UpdatethumbnailImage( games.saveDataTemp[panel.iconList.selectIndexNum] );
+		}
+		
+	}
+	
+	//リスト
+	function seticonListCallBack( v, i ) {
+		panel.iconListSlider.setIndex( i );
+	}
+	
+	//スライダー
+	function setSliderCallBack( v, i ) {
+		
+		panel.iconList.setViewIndex( i );
+		dm("setSliderCallBack= "+i);
+	}
+	
+	function iconListShortCut_callback0()
+	{
+		var nn= kag.sflags.systemcore.save.viewposition;
+		
+		if( kag.sflags.systemcore.save.newsave[0]!=-1 )
+		{
+			var ii= panel.iconList.getSelectedIndex( kag.sflags.systemcore.save.newsave[new_load_select_num] )-1;
+			if(ii>94) ii= 94;
+			
+			if( ii==panel.iconList.viewIndex ) {
+				new_load_select_num++;
+				if(new_load_select_num>4) new_load_select_num=0;
+			} else new_load_select_num=0;
+			
+			ii= panel.iconList.getSelectedIndex( kag.sflags.systemcore.save.newsave[new_load_select_num] )-1;
+			if(ii>94) ii= 94;
+			
+			if( panel.iconList.viewIndex<ii-5 && 0<ii-5 ) panel.iconList.setViewIndex( ii-5, false );
+			if( panel.iconList.viewIndex>ii+5 && 95>ii+5 ) panel.iconList.setViewIndex( ii+5, false );
+			
+			panel.iconList.setViewIndex(  ii, true );
+			panel.iconListSlider.setIndex( ii );
+			
+			dm("iconListShortCut_callback.ii= %d,%d,%d".sprintf(ii,panel.iconList.viewIndex,new_load_select_num));
+			
+			panel.iconListShortCut.setEnable([ 1,1,1,1,1 ]);
+			
+		} //else core2.setEvent_aLock_false();
+		
+		//kag.sflags.systemcore.save.viewposition= n;
+	}
+	
+	function iconListShortCut_callback( n )
+	{
+		var nn= kag.sflags.systemcore.save.viewposition;
+		
+		switch( n )
+		{
+			//ショートカット
+			case 0:
+				if(panel.iconList.viewIndex!=0){
+					if( panel.iconList.viewIndex>5 ) panel.iconList.setViewIndex(  5, false );
+					panel.iconList.setViewIndex(  0, true );
+					panel.iconListSlider.setIndex( 0 );
+				} //else core2.setEvent_aLock_false();
+				break;
+			case 1:
+				if(panel.iconList.viewIndex!=20){
+					if( panel.iconList.viewIndex<15 ) panel.iconList.setViewIndex( 15, false );
+					if( panel.iconList.viewIndex>25 ) panel.iconList.setViewIndex( 25, false );
+					panel.iconList.setViewIndex( 20, true );
+					panel.iconListSlider.setIndex( 20 );
+				} //else core2.setEvent_aLock_false();
+				break;
+			case 2:
+				if(panel.iconList.viewIndex!=40){
+					if( panel.iconList.viewIndex<35 ) panel.iconList.setViewIndex( 35, false );
+					if( panel.iconList.viewIndex>45 ) panel.iconList.setViewIndex( 45, false );
+					panel.iconList.setViewIndex( 40, true );
+					panel.iconListSlider.setIndex( 40 );
+				} //else core2.setEvent_aLock_false();
+				break;
+			case 3:
+				if(panel.iconList.viewIndex!=60){
+					if( panel.iconList.viewIndex<55 ) panel.iconList.setViewIndex( 55, false );
+					if( panel.iconList.viewIndex>65 ) panel.iconList.setViewIndex( 65, false );
+					panel.iconList.setViewIndex( 60, true );
+					panel.iconListSlider.setIndex( 60 );
+				} else core2.setEvent_aLock_false();
+				break;
+			case 4:
+				if(panel.iconList.viewIndex!=80){
+					if( panel.iconList.viewIndex<75 ) panel.iconList.setViewIndex( 75, false );
+					panel.iconList.setViewIndex( 80, true );
+					panel.iconListSlider.setIndex( 80 );
+				} //else core2.setEvent_aLock_false();
+				break;
+		}
+		
+		kag.sflags.systemcore.save.viewposition= n;
+	}
+	
+	function rightClickCallBack()
+	{
+		if(!panel.drugScreen.drugEnabled) HideScreen( 200 );
+	}
+	
+	
+	///////////////////////////////////////////////////////
+	// show
+	//
+	function onInit()
+	{
+		
+		backGround.setLayer( 0, 0, 960, 720, 0xff000000 );
+		backGround.visible= false;
+		
+		//games.saveDataTemp[0].enable= false;
+		//for(var i= 1; i<101; i++ ) {
+		//	games.saveDataTemp[i].enable= false;
+		//}
+		
+		dataTempIndex= kag.sflags.systemcore.save.list;
+		//panel.iconList.index= kag.sflags.systemcore.savelistindex;
+		
+
+		
+	}
+	
+	function ShowScreen( time_=0, en_ )
+	{
+		//スナップショットロック
+		if( saveModeSet ) kag.lockSnapshot();
+		super.ShowScreen(...);
+	}
+	
+	function HideScreen( time_=0, en_ )
+	{
+		//スナップショットアンロック
+		if( saveModeSet && kag.snapshotLockCount>0 ) kag.unlockSnapshot();
+		super.HideScreen(...);
+	}
+	
+	function onShow( time_, en_ )
+	{
+		//dataTempIndex= kag.sflags.systemcore.savelist;
+		//dataTempIndex= kag.sflags.systemcore.save.list;
+		
+		frameWork.backGroundBack.visible= false;
+		
+		//dm( "%s.onShow.snapshotLockCount= %d".sprintf(name,kag.snapshotLockCount) );
+		//if( kag.snapshotLockCount>0 ) kag.unlockSnapshot();
+		//kag.lockSnapshot();
+		
+		//kag.snapshotLayer.piledCopy(0, 0, kag.fore.base, 0, 0, kag.scWidth, kag.scHeight);
+		
+		if( saveModeSet ) {
+			
+			//スナップショットロック
+			//kag.lockSnapshot();
+			
+			games.saveDataTemp[0].enable= false;
+			for(var i= 1; i<101; i++ ) {
+				games.saveDataTemp[i].enable= true;
+			}
+		} else {
+			for(var i= 0; i<101; i++ ) {
+				games.saveDataTemp[i].enable= true;
+			}
+		}
+		
+		init_panel();
+		
+		//init_panel_load();
+		
+		//panel.iconList.statsUpdate( true, true );
+		
+		//snapScreen( 64, 0x000000, 5 );
+		//backGround.drawImageFile( 0, 0, "sys_data_bt" );
+		//backGround.loadImages( "sys_data_bt" );
+		
+
+		
+		//backGround.fillRect( 35, 90, 300, 570, 0x99000000 );
+		
+		//backGround.visible= true;
+		//backGround.opacity= 0;
+		
+		//panel.iconListSlider.setPos( 900, 140 );
+		//panel.iconList.setPos( 380, 115 );
+		//panel.iconList.setPos( 373, 115 );
+		//panel.thumbnailImage.setPos( -445, 90 );
+		
+		
+		sideInfomationUpdate();
+		//quickSaveUpdate();
+		
+		//リストの更新
+		
+		//panel.iconList.selectIndexNum= kag.sflags.systemcore.save.index;
+		panel.iconList.buttomSelected= 1;
+		panel.iconList.buttomChecked= 1;
+		panel.iconList.selectIndexNum= dataTempIndex[kag.sflags.systemcore.save.viewindex];
+		
+		
+		
+		//var sk= dataTempIndex.find( kag.sflags.systemcore.save.viewindex );
+		//var sk= panel.iconList.selectIndexNum-1;
+		//if(sk>90) sk=90; else sk+=5;
+		//panel.iconList.setViewIndex2( sk );
+		panel.iconList.statsUpdate( true, true );
+		
+		//サムネイルの更新
+		UpdatethumbnailImage( games.saveDataTemp[panel.iconList.selectIndexNum] );
+		
+		//frameWork.playse( "sfx02.wav" );
+		
+		//クイックセーブ初期設定
+		//quickSaveUpdate( games.saveDataTemp[0].exist );
+		
+		//var ii= panel.iconList.getSelectedIndex( kag.sflags.systemcore.save.newsave[0] )-1;
+		
+		//panel.iconList.setViewIndex2(  panel.iconList.selectIndexNum-1, true );
+		//panel.iconListSlider.setIndex( panel.iconList.selectIndexNum-1 );
+		
+		panel.iconList.setViewIndex2( kag.sflags.systemcore.save.viewindex-1, true );
+		panel.iconListSlider.setIndex( kag.sflags.systemcore.save.viewindex-1 );
+		
+		//panel.iconDataQuick.buttom_enable= games.saveDataTemp[0].exist;
+		
+		backGround.visible= true;
+		backGround.opacity= 0;
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,255)" ] );
+		
+		//panel.iconList.beginMove( %[ time:time_, path:"(383,115,255)", accel:-2 ] );
+		
+		//panel.iconList.setViewIndex(  kag.sflags.systemcore.savelistindexv, false );
+		//panel.iconList.setViewIndex(  kag.sflags.systemcore.savelistindexv, true, 500 );
+		
+	}
+	
+	function onShowEnd()
+	{
+// 		panel.iconListSlider.enabledEvent= true;
+// 		panel.iconList.enabledEvent= true;
+// 		panel.delBoutton.enabledEvent= true;
+// 		panel.retBoutton.enabledEvent= true;
+// 		
+// 		panel.thumbnailImage.enabledEvent= true;
+// 		
+// 		panel.iconListShortCut.enabledEvent= true;
+// 		
+ 		//if( !saveModeSet ) panel.iconDataQuick.enabledEvent= true;
+		
+		//panel.iconList.focus();
+		
+		//frameWork.rckicEvent= rightClickCallBack;
+		
+		//setEnableEvent(true);
+	}
+	
+	function onHide( time_, en_ )
+	{
+		//setEnableEvent(false);
+		
+		//スナップショットアンロック
+		//if( saveModeSet ) kag.unlockSnapshot();
+		
+		//kag.unlockSnapshot();
+		//dm( "%s.onShow.snapshotLockCount= %d".sprintf(name,kag.snapshotLockCount) );
+		
+		//kag.sflags.systemcore.savelistindex= panel.iconList.selectIndexNum;
+		
+		kag.saveSystemVariables();
+		
+// 		panel.iconListSlider.enabledEvent= false;
+// 		panel.iconList.enabledEvent= false;
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,0)" ] );
+		
+		//panel.iconList.beginMove( %[ time:time_, path:"(840,130,255)", accel:2 ] );
+		//panel.thumbnailImage.beginMove( %[ time:time_, path:"(-445,90,255)", accel:2 ] );
+	}
+	
+	function onHideEnd()
+	{
+		
+		invalidatePanel();
+		
+		backGround.visible= false;
+		backGround.opacity= 0;
+		
+		//if( load_select_num>-1 ) kag.restoreBookMark( load_select_num, false );
+		//if( load_select_num>-1 && saveModeSet ) loadBookMark( load_select_num, false );
+		//core2.setEvent_aLock_false();
+		
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		panel.iconListSlider.setEnableEvent(f_);
+		panel.iconList.setEnableEvent(f_);
+		panel.delBoutton.setEnableEvent(f_);
+		panel.retBoutton.setEnableEvent(f_);
+		panel.thumbnailImage.setEnableEvent(f_);
+		panel.iconListShortCut0.setEnableEvent(f_);
+		panel.iconListShortCut.setEnableEvent(f_);
+		if( !saveModeSet ) panel.iconDataQuick.setEnableEvent(f_);
+		backGround.setEnableEvent(f_);
+	}
+	
+}
+
+///////////////////////////////////////////////////////
+//
+class TIconMiddleSLL extends TButtonBase2
+{
+	var _imageText;
+	
+	var data= void;
+	
+	function TIconMiddleSLL( win, par, pal, ev=false ){
+		widthCount= 2;
+		super.TButtonBase2(...);
+	}
+	
+	function finalize() {
+		invalidate _imageText;
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_, w_, h_, color_=0xff000000, text_=void, textcolor_=0xffffff, size_ ){
+		super.setLayer(...);
+		_imageText= new global.LayerTrueBase( window, this );
+		_imageText.setLayer( 0, 0, swidth, h_, 0x00000000 );
+		_imageText.visible= true;
+		_imageText.opacity= 255;
+	}
+	
+	//初期設定
+	//表示オーバーライド
+	function setDataDraw( d=void, vi_=0 )
+	{
+		data= d;
+		if( data!==void )
+		{
+			buttom_enable= data.enable;
+			
+			//セーブ状態を設定
+			if( data.exist ) _imageText.opacity= 255;
+			else _imageText.opacity= 100;
+			
+			//カラーチップを設定
+			var ncl= [ 0xffff0000, 0xffef5600, 0xffdf7900, 0xffbf8c00, 0xffcfcf00 ];
+			var nc= 0x00000000;
+			
+			for(var ix= 0; ix<5; ix++ ){
+				if( kag.sflags.systemcore.save.newsave[ix]==data.index ){
+					nc= ncl[ix];
+					break;
+				}
+			}
+			
+			//テキストをクリア
+			_imageText.fillRect( 0, 0, swidth, height, 0x00000000 );
+			
+			//カラーチップを描写
+			if( nc!=0x00000000 ) _imageText.fillRect( 2, 3, 4, 84, nc );
+			
+			//テキスト情報を描写
+			_imageText.drawText3( 140, 25, data.names, 0x000000, 16 );
+			_imageText.fillRect( 140, 40, 360, 1, 0xff000000 );
+			_imageText.drawText3( 140, 50, "%2d章".sprintf(data.story), 0x000000, 14 );
+			
+			var daytx= ["昼","夜"];
+			_imageText.drawText3( 220, 50, "%3dターン(%s)".sprintf(data.trun,daytx[data.day]), 0x000000, 14 );
+			
+//			var daytx= ["昼","夜"];
+//			panel.thumbnailText.drawText3( 100, 100, "%3dターン(%s)".sprintf(.trun,daytx[.trun]), 0xffffff, 16 );
+			
+			_imageText.drawText3( 310, 50, "Date: %s".sprintf(data.date), 0x000000, 14 );
+			if( data.file!="" ) _imageText.drawImageFileStretch( 8, 0, 120, 90, data.file );
+			//_imageText.drawText3( 430, 25, "No. %03d".sprintf( vi_ ), 0x000000, 14 );
+			if( vi_==0 ) _imageText.drawText3( 430, 25, "QuickSave".sprintf( vi_ ), 0x000000, 14 );
+			else _imageText.drawText3( 430, 25, "No. %03d".sprintf( vi_ ), 0x000000, 14 );
+			
+			_imageText.drawText3( 140, 70, "支配地: %d".sprintf(data.terr), 0x000000, 14 );
+			_imageText.drawText3( 310, 70, "%s".sprintf(data.diff), 0x000000, 14 );
+			_imageText.drawText3( 400, 70, "周回: %d".sprintf(data.clear), 0x000000, 14 );
+			
+		} else {
+			buttom_enable= false;
+			_imageText.fillRect( 0, 0, swidth, height, 0x00000000 );
+		}
+	}
+	
+	///////////////////////////////////////////////////////
+	//マウスイベント
+	function click_action( f=true )
+	{
+	}
+	
+	function button_Update() {
+	
+		if( isSelected ) {
+			_imageSelect.visible= true;
+			_imageSelect.opacity= selectMax;
+			var p= "( 0, 0, "+selectMin+"),( 0, 0, "+selectMax+")";
+			_imageSelect.beginMove( %[ time:selectTime, path:p, loop:true ] );
+		} else {
+			_imageSelect.stopMove();
+			_imageSelect.visible= false;
+		}
+		
+		//if( isChecked ) left=0;
+		//else left=15;
+	}
+	
+}
+
+///////////////////////////////////////////////////////
+//
+class TIconMiddleSLLk extends TButtonBase1k
+{
+	var _imageText;
+	
+	// var data= void;
+	
+	function TIconMiddleSLLk( win, par, pal, ev=false ){
+		super.TButtonBase1k(...);
+	}
+	
+	function finalize() {
+		invalidate _imageText;
+		super.finalize(...);
+	}
+	
+	//function setLayer( x_, y_, w_, h_, color_=0xff000000, text_=void, textcolor_=0xffffff, size_ ){
+	function setLayer( x_, y_, w_=96, h_=32, c_=3 )
+	{
+		super.setLayer(...);
+		
+		loadImages( "sys_data_box3" );
+		
+		_imageText= new global.LayerTextBase( window, this );
+		_imageText.setLayer( 0, 0, swidth, h_ );
+	}
+	
+	//初期設定
+	//表示更新
+	function drawStatus() {
+	
+		// data= _data;
+		if( _data!==void )
+		{
+			//buttom_enable= _data.enable;
+			
+			//セーブ状態を設定
+			if( _data.exist ) _imageText.opacity= 255;
+			else _imageText.opacity= 100;
+			
+			//テキストをクリア
+			_imageText.clearText();
+			
+			//テキスト情報を描写
+			_imageText.drawText3( 140, 25, _data.names, 0x000000, 16 );
+			_imageText.fillRect( 140, 40, 360, 1, 0xff000000 );
+			_imageText.drawText3( 140, 50, "%2d章".sprintf(_data.story), 0x000000, 14 );
+			
+			var daytx= ["昼","夜"];
+			_imageText.drawText3( 220, 50, "%3dターン(%s)".sprintf(_data.trun,daytx[_data.day]), 0x000000, 14 );
+			
+			_imageText.drawText3( 310, 50, "Date: %s".sprintf(_data.date), 0x000000, 14 );
+			if( _data.file!="" ) _imageText.drawImageFileStretch( 8, 0, 120, 90, _data.file );
+			_imageText.drawText3( 430, 25, "QuickSave", 0x000000, 14 );
+			
+			_imageText.drawText3( 140, 70, "支配地: %d".sprintf(_data.terr), 0x000000, 14 );
+			_imageText.drawText3( 310, 70, "%s".sprintf(_data.diff), 0x000000, 14 );
+			_imageText.drawText3( 400, 70, "周回: %d".sprintf(_data.clear), 0x000000, 14 );
+			
+		} else {
+			buttom_enable= false;
+			_imageText.clearText();
+		}
+	}
+	
+	///////////////////////////////////////////////////////
+	//マウスイベント
+	
+// 	function button_Update() {
+// 	
+// 		if( isSelected ) {
+// 			_imageSelect.visible= true;
+// 			_imageSelect.opacity= selectMax;
+// 			var p= "( 0, 0, "+selectMin+"),( 0, 0, "+selectMax+")";
+// 			_imageSelect.beginMove( %[ time:selectTime, path:p, loop:true ] );
+// 		} else {
+// 			_imageSelect.stopMove();
+// 			_imageSelect.visible= false;
+// 		}
+// 		
+// 		//if( isChecked ) left=0;
+// 		//else left=15;
+// 	}
+	
+}
+
+///////////////////////////////////////////////////////
+//
+class TIconMiddleSL extends TIconMiddleSLL
+{
+	
+	function TIconMiddleSL( win, par, pal, ev=false ){
+		super.TIconMiddleSLL(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	//マウスイベント
+	function click_action( f=true )
+	{
+	}
+	
+	function button_Update() {
+	
+		if( isSelected ) {
+			_imageSelect.visible= true;
+			_imageSelect.opacity= selectMax;
+			var p= "( 0, 0, "+selectMin+"),( 0, 0, "+selectMax+")";
+			_imageSelect.beginMove( %[ time:selectTime, path:p, loop:true ] );
+		} else {
+			_imageSelect.stopMove();
+			_imageSelect.visible= false;
+		}
+		
+		if( isChecked ) left=0;
+		else left=15;
+	}
+	
+}
+
+///////////////////////////////////////////////////////
+//
+class TButtonSelectList2 extends TButtonSelect2
+{
+	var viewIndexCount= 0; //表示用インデックス最大値
+	//var viewIndexTarget= 0; //表示用インデックス
+	var viewIndex= 0; //表示用インデックス
+	var viewPosTemp_y= 0; //表示用座標
+	
+	var viewArray= []; //表示用データ
+	var dataArray= []; //実データ
+	
+	var value= 0.0; //表示データ正規化
+	
+	var view_Range= 0;
+	var scroll_Offset= 0; //表示オフセット
+	
+	//var callbackEvent= void; //操作イベント
+	
+	var selectIndexNum= 0; //実データインデックス
+	var selectIndexNumInit= 0; //実データインデックス
+	
+	var sortType= void; //ソートモード
+	
+	var soundoff= false;
+	
+	var checked_ChangeExecute= void; //
+//	var checked_Execute2= void; //
+	var rclick_callback= void;
+	
+	function TButtonSelectList2( win, par, pal, ev=true ) {
+		super.TButtonSelect2(...);
+		//KeyCallBack= templateKeyUD;
+		buttomSelected= 0;
+		buttomDoubleChecked= true;
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_, w_, h_, color_=0xff000000 )
+	{
+		super.setLayer(...);
+		hitType= htMask;
+		hitThreshold= 0;
+		focusable= true;
+		
+		setImageSize ( width, height );
+		fillRect( width, 0, width, height, 0xffffff00 );
+	}
+	
+	////////////////////
+	//表示データをセット
+	//表示クラス,実データ,表示データ,マージン
+	function setListData( dataArray_, viewArray_ )
+	{
+		dataArray= dataArray_;
+		viewArray= viewArray_;
+	}
+	
+	function setButton( w_, h_, ix_=1, class_=TButtonBase2 )
+	{
+		super.setButton(...);
+		viewIndexCount= viewArray.count-buttom_count;
+	}
+	
+	////////////////////
+	//数値設定
+	function setValue( v=void )
+	{
+		var dupdate= false, vupdate= false;
+		
+		if( v!==void )
+		{
+			if( v<0.0 ) v= 0.0;
+			if( v>1.0 ) v= 1.0;
+			value= v;
+		}
+		
+		var vv= 0.0;
+		var ix= 0;
+		
+		var m= viewIndexCount*value;
+		ix= Math.round(m);
+		vv= m-ix;
+		
+		//座標データを更新
+		if( viewPosTemp_y!= vv ) {
+			viewPosTemp_y= vv;
+			vupdate= true;
+		}
+		
+		//表示データを更新
+		if( viewIndex!==ix || v===void ) {
+			viewIndex= ix;
+			dupdate= true;
+		}
+		
+		statsUpdate( dupdate, vupdate );
+	}
+	
+	function setViewIndex( i=void, move_=true, time_=300 )
+	{
+		if( i>=0 )
+		//if( i>=0 )
+		{
+			if( i>viewIndexCount ) i=viewIndexCount;
+			
+			var sc= Index2Value( i );
+			if( move_ ) {
+				beginMoveValue( %[ time:time_, path:sc, accel:-2 ] );
+				//movevalueend_callbak= core2.setEvent_aLock_false;
+			} else {
+				setValue( sc );
+			}
+		}
+	}
+	
+	function setViewIndex2( i=void )
+	{
+		if( i>=0 )
+		{
+			if( i>viewIndexCount ) i=viewIndexCount;
+			
+			if(i==0) value= 0.0; else value= i/viewIndexCount;
+			
+			//座標データを更新
+			viewPosTemp_y= 0;
+			
+			//表示データを更新
+			viewIndex= i;
+			
+			soundoff= true;
+			
+			statsUpdate( true, true );
+		}
+	}
+	
+	function move_callbak( v ) {
+		setValue( v );
+		//dm("move_callbak.value="+v);
+	}
+	
+	function move_end() {
+		viewPosTemp_y= 0.0;
+		//core2.setEvent_aLock_false();
+		//kag.core2_lock_all_event= 0;
+		dm("move_end "+kag.core2_lock_all_event);
+	}
+	
+	//インデックスからValueに変換
+	function Index2Value( index_ )
+	{
+		var mx= viewIndexCount;
+		if( mx<=index_ ) mx= index_;
+		
+		var v= 0.0;
+		if( index_>0 ) v= index_/mx;
+		
+		return v;
+	}
+	
+	//セーブデータを入れ替え
+	function exchangeSave( f_, t_ )
+	{
+		if(f_!=t_){
+			var from= viewArray.find(f_);
+			var to= viewArray.find(t_);
+			
+			var va= viewArray[from];
+			viewArray[from]=viewArray[to];
+			viewArray[to]= va;
+		}
+	}
+	
+	//インデックスからValueに変換
+	function getSelectedIndex( index_=selectIndexNum )
+	{
+		return viewArray.find( index_ );
+	}
+	
+	function setSelected( n_=void, c_=false, v_=true )
+	{
+		if( v_ )
+		{
+			if( n_!==void ) {
+				if( n_<1 ) n_= 1;
+				if( n_>buttomSelectArray.count-2 ) n_= buttomSelectArray.count-2;
+				
+				if( buttomSelected!=n_ ) buttomSelected= n_;
+			}
+			
+			dm( "TButtonSelectList2.setSelected= "+buttomSelected );
+			
+			if( buttomSelectArray.count>0 ) {
+				
+				//buttomSelectArray[0].button_Selected(false);
+				//buttomSelectArray[-1].button_Selected(false);
+				
+				for( var i=1; i<buttomSelectArray.count-1; i++) {
+					buttomSelectArray[i].button_Selected( buttomSelected==i, c_ );
+	//				if( buttomSelected==i ) buttomSelectArray[buttomSelected].button_Selected(true, c_);
+	//				else buttomSelectArray[i].button_Selected(false);
+				}
+				if( selected_Execute!==void ) selected_Execute( buttomSelected );
+				
+			}
+		} else {
+			for( var i=0; i<buttomSelectArray.count; i++) {
+				buttomSelectArray[i].button_Selected(false);
+			}
+		}
+		//return buttomSelected;
+	}
+	
+	//表示を更新
+	function statsUpdate( dataupdate_, viewupdate_ )
+	{
+		
+		//表示データを更新
+		if( dataupdate_ )
+		{
+			for( var i=0; i<buttom_count; i++) {
+				var d= void;
+				if( viewArray[viewIndex+i]==-1 ) {
+					//リストの-1はブランクチェックもされない
+					buttomSelectArray[i].setDataDraw();
+					buttomSelectArray[i].button_Checked( false );
+				} else {
+					d= dataArray[viewArray[viewIndex+i]];
+					
+					buttomSelectArray[i].setDataDraw( d, viewIndex+i );
+					buttomSelectArray[i].button_Checked( selectIndexNum==d.index );
+				}
+			}
+			if(!soundoff) kag.se[0].play(%[ storage:"A1_12219s"]);
+			else soundoff=false; 
+		}
+		
+		//表示座標を更新
+		if( viewupdate_ )
+		{
+			for( var i=0; i<buttom_count; i++) {
+				var t= buttomSelectArray[i].height;
+				buttomSelectArray[i].top= ((t*i)- (t*viewPosTemp_y) )-scroll_Offset;
+			}
+		}
+	}
+	
+	
+	function onAction( ev )
+	{
+	
+		if( ev.type=="onMouseDown" && isMouseEnter && cursor==crHandPoint ){
+		//if( ev.type=="onClick" && isMouseEnter && cursor==crHandPoint ) {
+				
+			if( ev.button==0 ) {
+			
+				if( selectIndexNum==buttomSelectArray[buttomSelected].data.index ) {
+					//if( buttomChecked==buttomSelected ) {
+					//if( checked_Execute2!==void ) checked_Execute2();
+					setChecked2( void, true );
+				
+				} else {
+					selectIndexNum= buttomSelectArray[buttomSelected].data.index;
+					setChecked( void, true );
+				
+	//				setChecked_click();
+					//selectIndexNum= buttomSelectArray[buttomChecked].data.index;
+				
+	//				for( var i=0; i<buttomSelectArray.count; i++) {
+	//					buttomSelectArray[i].click_action( buttomChecked==i );
+	//				}
+				
+	//				if( checked_Execute!==void ) checked_Execute();
+
+				}
+				kag.se[0].play(%[ storage:"A1_12218s"]);
+			}
+		}
+		
+		if( ev.type=="onMouseDown" && ev.button==1 ){
+			if( rclick_callback!==void ) rclick_callback();
+		}
+		
+		if( ev.type=="onMouseMove" ){
+			var r= -1;
+			cursor= crArrow;
+			for( var i=1; i<buttomSelectArray.count; i++) {
+				if( buttomSelectArray[i].isEnter( ev.x, ev.y ) ){
+					r= i;
+					cursor= crHandPoint;
+				}
+			}
+			if( r!=buttomSelected && r!=-1 ) setSelected( r );
+			
+			//if( !focused ) focus();
+		}
+		
+		//if( ev.type=="onMouseUp" && cursor==crHandPoint ){
+		if( ev.type=="onMouseUp" && cursor==crHandPoint && dropEnabled ){
+			dropEnabled= false;
+			
+			var from= selectIndexNum;
+			var to= buttomSelectArray[buttomSelected].data.index;
+			//selectIndexNum= buttomSelectArray[buttomSelected].data.index;
+			
+			dm("excheng= %d->%d %s->%s".sprintf(
+				from,
+				to,
+				kag.getBookMarkFileNameAtNum(from),
+				kag.getBookMarkFileNameAtNum(to)
+				));
+				
+			exchangeSave( from, to );
+			
+			//selectIndexNum= buttomSelectArray[buttomSelected].data.index;
+			
+			//kag.copyBookMark( selectIndexNum, to );
+			
+			//core2.games.updateSaveDatas();
+			
+			statsUpdate( true, false );
+			setChecked( void, true );
+			kag.se[0].play(%[ storage:"A1_12218s"]);
+			
+		}
+		
+		if( ev.type=="onMouseWheel" ) {
+			var t= viewIndex;
+			if( ev.delta>0 ) { t--; setViewIndex( t, true ); }
+			if( ev.delta<0 ) { t++; setViewIndex( t, true ); }
+			if( callbackEvent!==void ) callbackEvent( value, t );
+		}
+		
+		if( ev.type=="onMouseEnter" ) {
+ 			//if( framePanel!==void ) framePanel.active_Focus= this;
+ 			setSelected();
+		}
+		
+		if( ev.type=="onMouseLeave" ) {
+			setSelected( ,,false );
+		}
+		
+// 		if( ev.type=="onFocus" ) {
+// //			if( buttomSelected!=-1 ) setSelected();
+// //			else 
+// 			if( framePanel!==void ) framePanel.active_Focus= this;
+// 			setSelected();
+// 			dm("keycallbak.onFocus ");
+// 		}
+// 		
+// 		if( ev.type=="onBlur" ) {
+// 			setSelected( ,,false );
+// 			dm("keycallbak.onBlur ");
+// 		}
+// 		
+// 		if( ev.type=="onKeyDown" ) {
+// 			//templateKey( ev.key, ev.shift );
+// 			if( callbackEvent!==void ) callbackEvent( value, viewIndex );
+// 			dm("keycallbak.onKeyDown");
+// 		}
+	}
+	
+	function templateKey( key, shift )
+	{
+	
+		if( key==VK_PADUP   || key==VK_UP       ) if( !processKeyset( 0 ) ) {
+			if( buttomSelected==1 ) setViewIndex( viewIndex-1, true );
+			else setSelected( buttomSelected-1 );
+			if( selected_execute ) setChecked_click();
+		}
+		
+		if( key==VK_PADDOWN || key==VK_DOWN     ) if( !processKeyset( 1 ) ) {
+			if( buttomSelected==buttomSelectArray.count-2 ) { setViewIndex( viewIndex+1, true );  }
+			else setSelected( buttomSelected+1 );
+			if( selected_execute ) setChecked_click();
+		}
+		
+		if( key==VK_LEFT    || key==VK_PADLEFT  ) if( !processKeyset( 2 ) ) {
+			if( buttomSelected==1 ) setViewIndex( viewIndex-1, true );
+			else setSelected( buttomSelected-1 );
+			if( selected_execute ) setChecked_click();
+		}
+		
+		if( key==VK_RIGHT   || key==VK_PADRIGHT ) if( !processKeyset( 3 ) ) {
+			if( buttomSelected==buttomSelectArray.count-2 ) { setViewIndex( viewIndex+1, true );  }
+			else setSelected( buttomSelected+1 );
+			if( selected_execute ) setChecked_click();
+		}
+		
+		if( key==VK_PAD2 || key==VK_RETURN ) { onClick( 0, 0 ); }
+		if( key==VK_PAD3 || key==VK_ESCAPE ) { setChecked(1); }
+		
+		dm("keycallbak= "+key+":"+prevFocusable);
+	}
+	
+	function templateKeyUD( key, shift )
+	{
+		if( key==VK_PADUP || key==VK_UP ) {
+			if( buttomSelected==1 ) setViewIndex( viewIndex-1, true );
+			else setSelected( buttomSelected-1 );
+			if( selected_execute ) setChecked_click();
+		}
+		
+		if( key==VK_PADDOWN || key==VK_DOWN ) {
+			if( buttomSelected==buttomSelectArray.count-2 ) { setViewIndex( viewIndex+1, true );  }
+			else setSelected( buttomSelected+1 );
+			if( selected_execute ) setChecked_click();
+		}
+		
+		
+//		if( key==VK_PADLEFT || key==VK_LEFT ) if( prevFocusable!==null ) focusPrev();
+//		if( key==VK_PADRIGHT || key==VK_RIGHT ) if( nextFocusable!==null ) focusNext();
+		if( key==VK_PADLEFT || key==VK_LEFT ) prevKeyset();
+		if( key==VK_PADRIGHT || key==VK_RIGHT ) nextKeyset();
+		
+		if( key==VK_PAD2 || key==VK_RETURN ) onClick( 0, 0 );
+		if( key==VK_PAD3 ) setChecked(1);
+		
+		dm("keycallbak= "+key);
+	}
+}

@@ -1,0 +1,1458 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//
+/////////////////////////////////////////////////////////////////////////
+//
+class TButtonBase1 extends LayerTrueBase
+{
+	
+	var swidth= 0;
+	
+	var isSelected= false;
+	var isChecked= false;
+	
+	var buttom_enable= true;
+	
+	function TButtonBase1( win, par, pal ) {
+		super.LayerTrueBase(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_, w_, h_ )
+	{
+		swidth= w_;
+		
+		super.setLayer( x_, y_, w_, h_, 0xff000000 );
+		setImageSize( swidth*3, height );
+        hitType= htMask;
+		hitThreshold= 256;
+		focusable= false;
+		
+		fillRect( swidth, 0, swidth, height, 0xff333333 );
+		fillRect( swidth*2, 0, swidth, height, 0xff3333ff );
+		
+		//dm( "TButtonBase1.setButton()" );
+	}
+	
+	
+	///////////////////////////////////////////////////////
+	//ボタンアクション
+	function button_Reset() {
+		button_Selected(false);
+		button_Checked(false);
+		button_Update();
+	}
+	
+	function button_Selected( f=true ) {
+		isSelected= f;
+		button_Update();
+	}
+	
+	function button_Checked( f=true ) {
+		isChecked=f;
+		button_Update();
+	}
+	
+	///////////////////////////////////////////////////////
+	//マウスイベント
+	function button_Update() {
+	
+		if( isSelected ) setImagePos(-swidth,0);
+		else setImagePos(0,0);
+		
+		if( isChecked ) setImagePos(-swidth*2,0);
+		//else setImagePos(0,0);
+	}
+	
+	function isEnter( x, y ) {
+		var r= false;
+		if( buttom_enable ) {
+			r= left<=x && left+width>x && top<=y && top+height>y;
+		}
+		return r;
+	}
+}
+
+///////////////////////////////////////////////////////
+//シングルボタン
+class TButtonBase1a extends LayerEventBase2
+{
+	
+	var swidth= 0;	//ボタンの横幅
+	var swidthcount= 1; //画像の数
+	
+	var isSelected= false;
+	var isChecked= false;
+	
+	var buttom_enable= 1; //ボタン有効
+	
+	var callbackEventEnter= void; //クリック時のイベント
+	var callbackEvent= void; //クリック時のイベント
+	
+	var CheckedLock= false; //クリック後すぐにリリースするか
+	
+	var AllLockOut= true; //ロックをリリースするか
+	
+	var buttomSelectEvent= void; //イベントのバイパス
+	
+	var Drop_Draw= false; //バックに半透明を描写するか
+	var Drop_Draw_update= true; //バックに半透明を描写するか、更新用
+	
+	//var soundfile= %[ enter:"", leave:"", select:"", click:"" ];
+	//var soundfile= %[ enter:"A1_12219s", leave:"", select:"", click:"A1_12217s" ];
+	var soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+	
+	function TButtonBase1a( win, par, pal ) {
+		super.LayerEventBase2(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	//初期設定
+	function setLayer( x_, y_, w_=96, h_=32, c_=1 )
+	{
+		swidth= w_;
+		swidthcount= c_;
+		
+		super.setLayer( x_, y_, w_, h_, 0x00000000 );
+		setImageSize( swidth*swidthcount, height );
+		hitType= htMask;
+		hitThreshold= 256;
+		focusable= false;
+		
+		var ct= [ 0xffff0000, 0xff0000ff, 0xff555555 ];
+		for(var i=1; i<swidthcount; i++) fillRect( swidth*i, 0, swidth, height, ct[i] );
+		
+		//dm( "TButtonBase1k.setButton()" );
+	}
+	
+	function setDropDraw(f_=true)
+	{
+		Drop_Draw= f_;
+	}
+	
+	function setCallBack(e_=void)
+	{
+		callbackEvent= e_;
+	}
+	
+    function loadImagesHelper() {
+		hitType= htMask;
+		hitThreshold= 0;
+		focusable= true;
+    }
+    
+	///////////////////////////////////////////////////////
+	//ボタンアクション
+	function button_Reset() {
+		isSelected= false;
+		isChecked= false;
+		button_Update();
+	}
+	
+	function button_Selected( f=true ) {
+		isSelected= f;
+		button_Update();
+	}
+	
+	function button_Checked( f=true ) {
+		isChecked=f;
+		button_Update();
+	}
+	
+	function button_Enabled( f=0 ) {
+		buttom_enable= f;
+		isSelected= false;
+		if(buttom_enable==2) isChecked= true;
+		else isChecked= false;
+		button_Update();
+	}
+	
+	///////////////////////////////////////////////////////
+	//画像更新
+	function button_Update() {
+	
+		if(buttom_enable>0)	visible= true;
+		else visible= false;
+		
+		if( Drop_Draw && Drop_Draw_update ) {
+			Drop_Draw_update= false;
+			Drop_parentDraw();
+		}
+	}
+	
+	////////////////////
+	//入力イベント
+	function onAction( ev )
+	{
+		if(buttomSelectEvent!==void){
+			buttomSelectEvent(ev);
+		} else {
+
+			switch(ev.type) {
+		
+				case "onMouseDown":
+					if( ev.button==0 && isMouseEnter && !isChecked ) {
+						core2.playse( soundfile.click );
+						button_Checked( true );
+						if( callbackEvent!==void ) {
+							//core2.setEvent_aLock_true();
+							//core2.setEvent_aLock_ret(callbackEvent(this,ev));
+							callbackEvent(this,ev);
+							//if(AllLockOut) core2.setEvent_aLock_false();
+							cursor= crArrow;
+						}
+						if( !CheckedLock ) button_Checked( false );
+					}
+					break;
+				
+				case "onMouseMove":
+				case "onMouseEnter":
+					if( cursor==crArrow ) {
+						core2.playse( soundfile.enter );
+						button_Selected( true );
+						cursor= crHandPoint;
+// 						if( callbackEvent!==void ) {
+// 							core2.setEvent_aLock_true();
+// 							callbackEvent(this,ev);
+// 							if(AllLockOut) core2.setEvent_aLock_false();
+// 						}
+					}
+					break;
+			
+				case "onMouseLeave":
+					button_Selected( false );
+					cursor= crArrow;
+					break;
+			}
+		
+		}
+		
+		
+
+		
+	}
+}
+
+///////////////////////////////////////////////////////
+//シングルボタン
+class TButtonBase1k extends TButtonBase1a
+{
+
+	function TButtonBase1k( win, par, pal ) {
+		super.TButtonBase1a(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	//初期設定
+	function setLayer( x_, y_, w_=96, h_=32, c_=3 )
+	{
+		swidth= w_;
+		swidthcount= c_;
+		
+		global.LayerEventBase2.setLayer( x_, y_, w_, h_, 0xff00ff00 );
+		setImageSize( swidth*swidthcount, height );
+		hitType= htMask;
+		hitThreshold= 256;
+		focusable= false;
+		
+		var ct= [ 0xffff0000, 0xff0000ff, 0xff555555 ];
+		for(var i=1; i<swidthcount; i++) fillRect( swidth*i, 0, swidth, height, ct[i] );
+		
+		//dm( "TButtonBase1k.setButton()" );
+	}
+	
+	///////////////////////////////////////////////////////
+	//画像更新
+	function button_Update() {
+	
+		if(buttom_enable>0)
+		{
+			visible= true;
+			
+			if( isSelected ) setImagePos(-swidth,0);
+			else setImagePos(0,0);
+			
+			if( isChecked && swidthcount>2 ) setImagePos(-swidth*2,0);
+			
+		} else visible= false;
+		
+		if( Drop_Draw && Drop_Draw_update ) {
+			Drop_Draw_update= false;
+			Drop_parentDraw();
+		}
+	}
+}
+
+///////////////////////////////////////////////////////
+//シングルボタン
+// function TButtonBase1k_core2( mpp )
+// {
+// 	var lay= core2.screen[mmp.screen].panel[mmp.name]= 
+// 	
+// }
+
+///////////////////////////////////////////////////////
+//シングルボタン
+class TButtonBase1kx extends LayerEventBase2
+{
+	
+	var swidth= 0;
+	var swidthcount= 3;
+	
+	var isSelected= false;
+	var isChecked= false;
+	
+	var buttom_enable= 1;
+	
+	var callbackEvent= void;
+	
+	var CheckedLock= false;
+	
+	var buttomSelectEvent= void;
+	
+	var Drop_Draw= false; //バックに半透明を描写するか
+	
+	var AllLockOut= true; //ロックをリリースするか
+	
+	function TButtonBase1kx( win, par, pal ) {
+		super.LayerEventBase2(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	//初期設定
+	function setLayer( x_, y_, w_=96, h_=32, c_=3 )
+	{
+		swidth= w_;
+		swidthcount= c_;
+		
+		super.setLayer( x_, y_, w_, h_, 0xff00ff00 );
+		setImageSize( swidth*swidthcount, height );
+		hitType= htMask;
+		hitThreshold= 256;
+		focusable= false;
+		
+		var ct= [ 0xffff0000, 0xff0000ff, 0xff555555 ];
+		for(var i=1; i<swidthcount; i++) fillRect( swidth*i, 0, swidth, height, ct[i] );
+		
+		//dm( "TButtonBase1k.setButton()" );
+	}
+	
+	function setDropDraw(f_=true)
+	{
+		Drop_Draw= f_;
+	}
+	
+    function loadImagesHelper() {
+		hitType= htMask;
+		hitThreshold= 0;
+		focusable= true;
+    }
+    
+	///////////////////////////////////////////////////////
+	//ボタンアクション
+	function button_Reset() {
+		isSelected= false;
+		isChecked= false;
+		button_Update();
+	}
+	
+	function button_Selected( f=true ) {
+		isSelected= f;
+		button_Update();
+	}
+	
+	function button_Checked( f=true ) {
+		isChecked=f;
+		button_Update();
+	}
+	
+	function button_Enabled( f=0 ) {
+		buttom_enable= f;
+		isSelected= false;
+		if(buttom_enable==2) isChecked= true;
+		else isChecked= false;
+		button_Update();
+	}
+	
+	///////////////////////////////////////////////////////
+	//画像更新
+	function button_Update() {
+	
+		if(buttom_enable>0)
+		{
+			visible= true;
+			
+			if( isSelected ) setImagePos(-swidth,0);
+			else setImagePos(0,0);
+			
+			if( isChecked ) setImagePos(-swidth*2,0);
+			
+		} else visible= false;
+		
+		if(Drop_Draw) {
+			Drop_Draw_update= false;
+			Drop_parentDraw();
+		}
+	}
+	
+	////////////////////
+	//入力イベント
+	function onAction( ev )
+	{
+		if(buttomSelectEvent!==void){
+			buttomSelectEvent(ev);
+		} else {
+// 			if( ev.type=="onMouseDown" && ev.button==0 && isMouseEnter && buttom_enable>0 && !isChecked ) {
+// 				button_Checked( true );
+// 				core2.playse( soundfile.click );
+// 				if( callbackEvent!==void ) {
+// 					core2.setEvent_aLock_true();
+// 					core2.setEvent_aLock_ret(callbackEvent(this,ev));
+// 				}
+// 				if( !CheckedLock ) {
+// 					button_Checked( false );
+// 				}
+// 			}
+// 			
+// 			if( ev.type=="onMouseMove" ) {
+// 				//if(!isSelected){
+// 					button_Selected( true );
+// 					cursor= crHandPoint;
+// 				//}
+// 			}
+// 			
+// 			if( ev.type=="onMouseEnter" ) {
+// 				button_Selected( true );
+// 				cursor= crHandPoint;
+// 			}
+// 			
+// 			if( ev.type=="onMouseLeave" ) {
+// 				button_Selected( false );
+// 				cursor= crArrow;
+// 			}
+			
+			switch(ev.type) {
+		
+				case "onMouseDown":
+					if( ev.button==0 && isMouseEnter && !isChecked ) {
+						core2.playse( soundfile.click );
+						button_Checked( true );
+						
+						if( callbackEvent!==void ) {
+							//core2.setEvent_aLock_true();
+							callbackEvent(this,ev);
+							//if(AllLockOut) core2.setEvent_aLock_false();
+							cursor= crArrow;
+						}
+						if( !CheckedLock ) button_Checked( false );
+					}
+					break;
+				
+				case "onMouseMove":
+// 					core2.playse( soundfile.enter );
+// 					button_Selected( true );
+// 					cursor= crHandPoint;
+// 					break;
+// 			
+				case "onMouseEnter":
+					if( cursor==crArrow ) {
+						core2.playse( soundfile.enter );
+						button_Selected( true );
+						cursor= crHandPoint;
+					}
+					break;
+			
+				case "onMouseLeave":
+					button_Selected( false );
+					cursor= crArrow;
+					break;
+			}
+		}
+		
+	}
+}
+
+///////////////////////////////////////////////////////
+//スライドボタン
+class TButtonBase1s extends LayerEventBase2
+{
+	
+	var swidth= 0;
+	var isSelected= 0;
+	
+	var buttom_enable= true;
+	var callbackEvent= void;
+	
+	var swidthcount= 0;
+	var mouseenter_Event= void;
+	
+	var buttomSelectEvent= void;
+	
+	var Drug_Exec= void;
+	var Drop_Exec= void;
+	
+	var Drop_Draw= false; //バックに半透明を描写するか
+	var Drop_Draw_update= true; //バックに半透明を描写するか、更新用
+	
+	var AllLockOut= true; //ロックをリリースするか
+	
+	var soundfile= %[ enter:"", leave:"", select:"", click:"A1_12217s" ];
+	
+	function TButtonBase1s( win, par, pal ) {
+		super.LayerEventBase2(...);
+		Drug_Exec= new TDrugControlBase(this);
+		Drop_Exec= new TDropControlBase(this);
+	}
+	
+	function finalize() {
+		invalidate Drug_Exec;
+		invalidate Drop_Exec;
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_, w_=96, h_=32, c_=3 )
+	{
+		swidth= w_;
+		swidthcount= c_;
+		
+		super.setLayer( x_, y_, w_, h_, 0xff00ff00 );
+		setImageSize( swidth*swidthcount, height );
+		hitType= htMask;
+		hitThreshold= 256;
+		focusable= false;
+		
+		var ct= [ 0xffff0000, 0xff0000ff, 0xff555555 ];
+		for(var i=1; i<swidthcount; i++) fillRect( swidth*i, 0, swidth, height, ct[i] );
+		
+		//dm( "TButtonBase1s.setButton()" );
+	}
+	
+	function setCallBack(e_=void){
+		callbackEvent= e_;
+	}
+	
+	function setDropDraw(f_=true){
+		Drop_Draw= f_;
+	}
+	
+    function loadImagesHelper() {
+		hitType= htMask;
+		hitThreshold= 0;
+		focusable= true;
+    }
+    
+	///////////////////////////////////////////////////////
+	//ボタンアクション
+	function button_Reset() {
+		isSelected= 0;
+		button_Update();
+	}
+	
+	function button_Selected(f) {
+		isSelected= f;
+		button_Update();
+	}
+	
+	function button_Enabled( f=true ) {
+		buttom_enable= f;
+		button_Update();
+	}
+	
+	///////////////////////////////////////////////////////
+	//画像更新
+	function button_Update()
+	{
+		if(buttom_enable){
+			visible= true;
+			if( swidthcount>0 && isSelected<swidthcount ){
+				var w= -swidth*isSelected;
+				setImagePos(w,0);
+			}
+		} else visible= false;
+		
+		if( Drop_Draw && Drop_Draw_update ) {
+			Drop_Draw_update= false;
+			Drop_parentDraw();
+		}
+	}
+	
+	////////////////////
+	//入力イベント
+	function onAction( ev )
+	{
+		if(buttomSelectEvent!==void){
+			buttomSelectEvent(ev);
+		} else {
+// 			if( ev.type=="onMouseDown" && isMouseEnter ) {
+// 				if( buttom_enable ){
+// 				
+// 					core2.setEvent_aLock_true();
+// 					core2.playse( soundfile.click );
+// 				
+// 					if( ev.button==mbLeft ) isSelected++;
+// 					else isSelected--;
+// 				
+// 					if(isSelected>=swidthcount) isSelected= 0;
+// 					if(isSelected<0) isSelected= swidthcount-1;
+// 				
+// 					button_Update();
+// 					//if( callbackEvent!==void ) callbackEvent(this);
+// 					if( callbackEvent!==void ) {
+// 						core2.setEvent_aLock_ret(callbackEvent(this,ev));
+// 					}
+// 				}
+// 			}
+// 			
+// 			if( ev.type=="onMouseEnter" ) {
+// 				cursor= crHandPoint;
+// 				if( mouseenter_Event!==void ) mouseenter_Event(true);
+// 			}
+// 			
+// 			if( ev.type=="onMouseLeave" ) {
+// 				cursor= crArrow;
+// 				if( mouseenter_Event!==void ) mouseenter_Event(false);
+// 			}
+			
+			switch(ev.type) {
+		
+				case "onMouseDown":
+					if( isMouseEnter ) {
+					
+						//core2.setEvent_aLock_true();
+						core2.playse( soundfile.click );
+				
+						if( ev.button==mbLeft ) isSelected++;
+						else isSelected--;
+				
+						if(isSelected>=swidthcount) isSelected= 0;
+						if(isSelected<0) isSelected= swidthcount-1;
+				
+						button_Update();
+						
+						if( callbackEvent!==void ) {
+							callbackEvent(this,ev);
+							cursor= crArrow;
+						}
+						
+						//if(AllLockOut) core2.setEvent_aLock_false();
+					}
+					break;
+				
+				case "onMouseMove":
+				case "onMouseEnter":
+					if( cursor==crArrow ) {
+						core2.playse( soundfile.enter );
+						cursor= crHandPoint;
+						if( mouseenter_Event!==void ) mouseenter_Event(true);
+					}
+					break;
+			
+				case "onMouseLeave":
+					cursor= crArrow;
+					if( mouseenter_Event!==void ) mouseenter_Event(false);
+					break;
+			}
+		}
+		
+		Drug_Exec.onActionCallBack(ev);
+		Drop_Exec.onActionCallBack(ev);
+	}
+}
+
+
+
+///////////////////////////////////////////////////////
+//
+class TButtonBase2 extends TButtonBase1
+{
+	var _imageSelect;
+	
+	var selectMax= 255;
+	var selectMin= 0;
+	
+	var selectTime= 500;
+	
+	var widthCount= 3;
+	
+	var mouse_x= 0,  mouse_y= 0;
+	
+	function TButtonBase2( win, par, pal ) {
+		super.TButtonBase1(...);
+	}
+	
+	function finalize() {
+		invalidate _imageSelect;
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_, w_, h_, color_=0xff000000, text_=void, textcolor_=0xffffff, size_ )
+	{
+		swidth= w_;
+		
+		super.setLayer( x_, y_, w_, h_, 0xff000000 );
+		setImageSize( swidth*widthCount, height );
+        hitType= htMask;
+		hitThreshold= 256;
+		focusable= false;
+		
+		fillRect( 0, 0, swidth, height, 0xff00ff00 );
+		fillRect( swidth, 0, swidth, height, 0xffff0000 );
+		if( widthCount==3 ) fillRect( swidth*2, 0, swidth, height, 0xff0000ff );
+		
+		if( text_!==void ) {
+			drawText2( 5, (height-size_)/2, text_, textcolor_, size_ );
+			drawText2( swidth+5, (height-size_)/2, text_, textcolor_, size_ );
+			if( widthCount==3 ) drawText2( (swidth*2)+5, (height-size_)/2, text_, textcolor_, size_ );
+		}
+		
+		_imageSelect= new global.LayerTrueBase( window, this );
+		_imageSelect.setLayer( 0, 0, swidth, h_, 0xffff0000 );
+		_imageSelect.visible= false;
+		_imageSelect.opacity= 255;
+		
+		mouse_x= int(swidth*0.8);
+		mouse_y= height\2;
+		
+		dm( "TButtonBase2.setButton()" );
+	}
+	
+	function loadImages( f1_ )
+	{
+		super.loadImages( f1_ );
+		setSize( swidth, height );
+		
+		_imageSelect.setSize( swidth, height );
+		_imageSelect.copyRect( 0, 0, this, swidth, 0, swidth, height );
+		_imageSelect.opacity= 0;
+		
+        hitType= htMask;
+		hitThreshold= 256;
+		focusable= false;
+		
+		dm( "TButtonBase2.loadImages(%s)".sprintf(f1_) );
+	}
+	
+	
+	///////////////////////////////////////////////////////
+	//ボタンアクション
+	function button_Update() {
+	
+		if( isSelected ) {
+			_imageSelect.visible= true;
+			_imageSelect.opacity= selectMax;
+			var p= "( 0, 0, "+selectMin+"),( 0, 0, "+selectMax+")";
+			_imageSelect.beginMove( %[ time:selectTime, path:p, loop:true ] );
+		} else {
+			_imageSelect.stopMove();
+			_imageSelect.visible= false;
+		}
+		
+		if( isChecked ) {
+			if( widthCount==3 ) setImagePos( -swidth*2, 0 );
+			else setImagePos( -swidth, 0 );
+		} else {
+			setImagePos( 0, 0 );
+		}
+		
+		//dm( "TButtonBase2.button_Update(%d,%d)".sprintf(isSelected,isChecked) );
+	}
+	
+}
+
+/////////////////////////////////////////////////////////////////////////
+//
+class TButtonBase2a extends LayerTrueBase
+{
+	
+	var swidth= 0;
+	
+	//var _imageSelect;
+	
+	var isSelected= false;
+	var isChecked= false;
+	
+	var selectMax= 255;
+	var selectMin= 0;
+	
+	var selectTime= 500;
+	
+	var widthCount= 3;
+	
+	var buttom_enable= true;
+	
+	var soundfile= %[ enter:"", leave:"", select:"", click:"" ];
+	
+	function TButtonBase2a( win, par, pal ) {
+		super.LayerTrueBase(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_, w_, h_, color_=0xff000000, text_=void, textcolor_=0xffffff, size_ )
+	{
+		swidth= w_;
+		
+		super.setLayer( x_, y_, w_, h_, 0xff000000 );
+		setImageSize( swidth*widthCount, height );
+        //hitType= htMask;
+		//hitThreshold= 256;
+		//focusable= false;
+		
+		fillRect( 0, 0, swidth, height, 0xff00ff00 );
+		fillRect( swidth, 0, swidth, height, 0xffff0000 );
+		if( widthCount==3 ) fillRect( swidth*2, 0, swidth, height, 0xff0000ff );
+		
+		if( text_!==void ) {
+			drawText2( 5, (height-size_)/2, text_, textcolor_, size_ );
+			drawText2( swidth+5, (height-size_)/2, text_, textcolor_, size_ );
+			if( widthCount==3 ) drawText2( (swidth*2)+5, (height-size_)/2, text_, textcolor_, size_ );
+		}
+		
+		//_imageSelect= new global.LayerTrueBase( window, this );
+		//_imageSelect.setLayer( 0, 0, swidth, h_, 0xffff0000 );
+		//_imageSelect.visible= false;
+		//_imageSelect.opacity= 255;
+		
+		//dm( "TButtonBase2a.setButton()" );
+	}
+	
+	function loadImages( f1_ )
+	{
+		super.loadImages( f1_ );
+		setSize( swidth, height );
+		//setImageSize( swidth*widthCount, height );
+		
+		//_imageSelect.setSize( swidth, height );
+		//_imageSelect.copyRect( 0, 0, this, swidth, 0, swidth, height );
+		//_imageSelect.opacity= 0;
+		
+//        hitType= htMask;
+//		hitThreshold= 256;
+//		focusable= false;
+	}
+	
+	
+	function playse( file_ ) {
+		if( file_!="" ) {
+			kag.se[0].play( %[ storage:file_ ] );
+		}
+	}
+	
+	///////////////////////////////////////////////////////
+	//マウスイベント
+	function button_Reset() {
+		button_Selected(false);
+		button_Checked(false);
+		button_Update();
+	}
+	
+	function button_Selected( f=true, c_=false ) {
+		isSelected= f;
+		button_Update(c_);
+	}
+	
+	function button_Checked( f=true, c_=false ) {
+		isChecked=f;
+		button_Update(c_);
+	}
+	
+	/////
+	
+	function button_Update( c_=false ) {
+	
+		if( isChecked ) {
+			playse( soundfile.leave );
+			//if( widthCount==3 ) setImagePos( -swidth*2, 0 );
+			//else setImagePos( -swidth, 0 );
+			if( widthCount==3 ) parent.copyRect( top, left, this, 0, swidth*2, swidth, height );
+			else parent.copyRect( left, top, this, 0, swidth, swidth, height );
+		} else {
+			//setImagePos( 0, 0 );
+			parent.copyRect( left, top, this, 0, 0, swidth, height );
+		}
+		
+		if( isSelected ) {
+			playse( soundfile.enter );
+			//visible= true;
+			opacity= selectMax;
+			setImagePos( -swidth, 0 );
+			//var p= "( 0, 0, "+selectMin+"),( 0, 0, "+selectMax+")";
+			var p= "( %d,%d,%d),(%d,%d,%d)".sprintf( left,top,selectMin,left,top,selectMax );
+			beginMove( %[ time:selectTime, path:p, loop:true ] );
+		} else {
+			stopMove();
+			setImagePos( 0, 0 );
+			//visible= false;
+		}
+		
+	}
+	
+	function button_Drop( l_ ) {
+		//l_.copyRect( left, top, this, 0, 0, swidth, height );
+	}
+	/////
+	
+	function isEnter( x_, y_ ) {
+		var r= false;
+		if( buttom_enable ) r= left<=x_ && left+width>x_ && top<=y_ && top+height>y_;
+		return r;
+	}
+	
+	function click_action( f=true ) {
+		button_Checked(f);
+	}
+	
+}
+
+///////////////////////////////////////////////////////
+//
+class TButton2 extends LayerEventBase2
+{
+	
+	var swidth= 0;
+	
+	var _imageSelect;
+	
+	var isSelected= false;
+	var isChecked= false;
+	
+	var selectMax= 255;
+	var selectMin= 0;
+	var selectTime= 500;
+	
+	var widthCount= 3;
+	
+	var buttom_enable= true;
+	
+	var soundfile= %[ enter:"", leave:"", select:"", click:"" ];
+	
+	var callbackEvent= void;
+	
+	function TButton2( win, par, pal ) {
+		super.LayerEventBase2(...);
+	}
+	
+	function finalize() {
+		invalidate _imageSelect;
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_, w_, h_, color_=0xff000000, text_=void, textcolor_=0xffffff, size_ )
+	{
+		swidth= w_;
+		
+		super.setLayer( x_, y_, w_, h_, 0xff000000 );
+		setImageSize( swidth*widthCount, height );
+        hitType= htMask;
+		hitThreshold= 0;
+		focusable= true;
+		
+		fillRect( 0, 0, swidth, height, 0xff00ff00 );
+		fillRect( swidth, 0, swidth, height, 0xffff0000 );
+		if( widthCount==3 ) fillRect( swidth*2, 0, swidth, height, 0xff0000ff );
+		
+		if( text_!==void ) {
+			drawText2( 5, (height-size_)/2, text_, textcolor_, size_ );
+			drawText2( swidth+5, (height-size_)/2, text_, textcolor_, size_ );
+			if( widthCount==3 ) drawText2( (swidth*2)+5, (height-size_)/2, text_, textcolor_, size_ );
+		}
+		
+		_imageSelect= new global.LayerTrueBase( window, this );
+		_imageSelect.setLayer( 0, 0, swidth, h_, 0xffff0000 );
+		_imageSelect.visible= false;
+		_imageSelect.opacity= 255;
+		
+		Debug.message( "TButtonBase.setButton()" );
+	}
+	
+	function loadImages( f1_ )
+	{
+		super.loadImages( f1_ );
+		setSize( swidth, height );
+		
+		_imageSelect.setSize( swidth, height );
+		_imageSelect.copyRect( 0, 0, this, swidth, 0, swidth, height );
+		_imageSelect.opacity= 0;
+		
+        hitType= htMask;
+		hitThreshold= 0;
+		focusable= true;
+	}
+	
+	
+	function playse( file_ ) {
+		if( file_!="" ) {
+			kag.se[0].play( %[ storage:file_ ] );
+		}
+	}
+	
+	function resetEvent()
+	{
+		//super.resetEvent();
+		//button_Reset();
+	}
+	
+	///////////////////////////////////////////////////////
+	//マウスイベント
+	function button_Reset() {
+		button_Selected( false );
+		button_Checked( false );
+		button_Update();
+	}
+	
+	function button_Selected( f_=true, c_=false ) {
+		isSelected= f_;
+		button_Update(c_);
+	}
+	
+	function button_Checked( f_=true, c_=false ) {
+		isChecked=f_;
+		button_Update(c_);
+	}
+	
+	function button_Update( c_=false ) {
+	
+		if( isSelected ) {
+			playse( soundfile.enter );
+			_imageSelect.visible= true;
+			_imageSelect.opacity= selectMax;
+			var p= "( 0, 0, "+selectMin+"),( 0, 0, "+selectMax+")";
+			_imageSelect.beginMove( %[ time:selectTime, path:p, loop:true ] );
+		} else {
+			_imageSelect.stopMove();
+			_imageSelect.visible= false;
+		}
+		
+		if( isChecked ) {
+			playse( soundfile.leave );
+			if( widthCount==3 ) setImagePos( -swidth*2, 0 );
+			else setImagePos( -swidth, 0 );
+		} else {
+			setImagePos( 0, 0 );
+		}
+	}
+	
+//	function click_action( f=true ) {
+//	}
+	
+	////////////////////
+	//入力イベント
+	function onAction( ev )
+	{
+		if( ev.type=="onClick" && isMouseEnter ) {
+			if( buttom_enable ) {
+				button_Checked( true );
+				if( callbackEvent!==void ) callbackEvent();
+			}
+		}
+		
+		if( ev.type=="onMouseMove" ) {
+			if( !focused ) focus();
+		}
+		
+		if( ev.type=="onFocus" ) {
+			button_Selected( true );
+			dm("keycallbak.onFocus ");
+		}
+		
+		if( ev.type=="onBlur" ) {
+			button_Reset();
+			dm("keycallbak.onBlur ");
+		}
+		
+		if( ev.type=="onKeyDown" ) {
+			templateKey( ev.key, ev.shift );
+			dm("keycallbak.onKeyDown");
+		}
+		
+		if( ev.type=="onMouseEnter" ) {
+			if( !focused ) focus();
+			cursor= crHandPoint;
+		}
+		
+		if( ev.type=="onMouseLeave" ) {
+			cursor= crArrow;
+		}
+	}
+	
+	////////////////////
+	//キー入力イベント
+	function templateKey( key, shift )
+	{
+		if( key==VK_PADUP   || key==VK_UP       ) processKeyset( 0 );
+		if( key==VK_PADDOWN || key==VK_DOWN     ) processKeyset( 1 );
+		if( key==VK_LEFT    || key==VK_PADLEFT  ) processKeyset( 2 );
+		if( key==VK_RIGHT   || key==VK_PADRIGHT ) processKeyset( 3 );
+		
+		if( key==VK_PAD2 || key==VK_RETURN ) { setChecked(); setChecked_click(); }
+		//if( key==VK_PAD3 || key==VK_ESCAPE ) { setChecked(1); setChecked_click(); }
+		dm("keycallbak= "+key);
+	}
+	
+}
+
+
+/////////////////////////////////////////////////////////////////////////
+//// 
+// class TButtonSelect4 extends LayerGroupBase
+// {
+// 	
+// 	var buttomSelected= -1; //ボタンセレクト番号
+// 	var buttomChecked= -1; //ボタンチェック番号
+// 	var buttomSelectArray= [];
+// 	
+// 	var show_slide_lock= false;
+// 	
+// 	var selected_Execute= void; //ボタンセレクト時のイベント
+// 	var checked_Execute= void; //ボタンチェック時のイベント
+// 	var checked_Execute2= void; //ボタンダブルチェック時のイベント
+// 	
+// 	var Drug_Execute= void; //ボタンドロップ時のイベント
+// 	
+// 	var soundfile= %[ enter:"", leave:"", select:"", click:"" ];
+// 	
+// 	var resetButtomChecked= false;
+// 	
+// 	var setIsButtomSelect= []; //ボタン選択
+// 	var setButtomSelectMode= []; //クリックのロック
+// 	
+// 	var dropEnabled= false; //ドロップできるとき
+// 	
+// 	//var executeActions= onAction; //イベント
+// 	
+// 	function TButtonSelect4( win, par, pal ) {
+// 		super.LayerGroupBase(...);
+// 	}
+// 	
+// 	function finalize() {
+// 		for( var i=0; i<buttomSelectArray.count; i++) {
+// 			invalidate buttomSelectArray[i];
+// 		}
+// 		super.finalize(...);
+// 	}
+// 	
+// 	function setLayer( x_, y_ ){
+// 		super.setLayer(...);
+// 		dm( "TButtonSelect4.setLayer()" );
+// 	}
+// 	
+// 	//ボタンの設定
+// 	function setButton( w_, h_, bc_=1, class_=void, bb_=3 )
+// 	{
+// 		var classd= global.TButtonBase1k;
+// 		if( class_!==void ) classd=class_;
+// 		//buttom_count= ix_;
+// 		for( var i=0; i<bc_; i++) {
+// 			buttomSelectArray[i]= new classd( window, this );
+// 			buttomSelectArray[i].setLayer( 0, 0, w_, h_, bb_ );
+// 			buttomSelectArray[i].visible= true;
+// 			buttomSelectArray[i]._id= i;
+// 			buttomSelectArray[i].buttomSelectEvent=onAction;
+// 			buttomSelectArray[i].buttom_enable= true;
+// 			
+// 			setButtomSelectMode.add(0);
+// 			setIsButtomSelect.add(true);
+// 		}
+// 		dm( "TButtonSelect4.setButton(%s)".sprintf(buttomSelectArray.count) );
+// 	}
+// 	
+// 	////////////////////
+// 	//ボタン座標の設定
+// 	function setButtonPos( pa_ )
+// 	{
+// 		var sc= 0;
+// 		for( var i=0; i<pa_.count; i+=2 ) {
+// 			buttomSelectArray[sc].left= pa_[i];
+// 			buttomSelectArray[sc].top= pa_[i+1];
+// 			sc++;
+// 		}
+// 	}
+// 	
+// 	function setButtonLoad( pa_, ov=false )
+// 	{
+// 		if(ov) {
+// 			for( var i=0; i<buttomSelectArray.count; i++ ) {
+// 				buttomSelectArray[i].loadImages(pa_[0]);
+// 			}
+// 		} else {
+// 			for( var i=0; i<buttomSelectArray.count; i++ ) {
+// 				if(pa_[i]===void) break;
+// 				buttomSelectArray[i].loadImages(pa_[i]);
+// 			}
+// 		}
+// 	}
+// 	
+// 	function setEachEvent( pa_, ov=false )
+// 	{
+// 		if(ov) {
+// 			for( var i=0; i<buttomSelectArray.count; i++ ) {
+// 				buttomSelectArray[i].buttom_enable= pa_[i];
+// 			}
+// 		} else {
+// 			for( var i=0; i<buttomSelectArray.count; i++ ) {
+// 				if(pa_[i]===void) break;
+// 				buttomSelectArray[i].buttom_enable= pa_[i];
+// 			}
+// 		}
+// 	}
+// 	
+// 	//ボタン有効化？
+// 	function setEnable( f_=void )
+// 	{
+// 		if(f_!==void) setIsButtomSelect= f_;
+// 		for( var i=0; i<buttomSelectArray.count; i++) {
+// 			buttomSelectArray[i].button_Enabled(setIsButtomSelect[i]);
+// 			if(setIsButtomSelect[i]==2) buttomChecked= i;
+// 		}
+// 	}
+// 	
+// 	//ボタンイベントの開始
+// 	function setEnableEvent( f_=void, f2_=void )
+// 	{
+// 		for( var i=0; i<buttomSelectArray.count; i++) {
+// 			if(f_!==void) buttomSelectArray[i].enabledEvent= f_;
+// 			if(f2_!==void) buttomSelectArray[i].enabledEventLock= f2_;
+// 		}
+// 	}
+// 	
+// 	//ボタンをロック
+// 	function setLock( f_=false )
+// 	{
+// 		show_slide_lock= f_;
+// 		for( var i=0; i<buttomSelectArray.count; i++) {
+// 			buttomSelectArray[i].enabledEventLock= show_slide_lock;
+// 		}
+// 	}
+// 	
+// 	
+// 	//全てのステータスを更新
+// 	function drawStatusUpdate(ar_=buttomSelectArray)
+// 	{
+// 		for( var i=0; i<ar_.count; i++) {
+// 			ar_[i].drawStatus();
+// 		}
+// 	}
+// 	////////////////////
+// 	//ボタンセレクト時に呼ぶ
+// 	
+// 	function Selected_callback( n_=0 ){
+// 		buttomSelected= n_;
+// 		for( var i=0; i<buttomSelectArray.count; i++) {
+// 			if(buttomSelected!=i) buttomSelectArray[i].button_Selected(false);
+// 		}
+// 	}
+// 	
+// 	function setSelected( n_=void ){
+// 		Selected_callback(n_);
+// 		buttomSelectArray[buttomSelected].button_Selected(true);
+// 	}
+// 	
+// 	////////////////////
+// 	//ボタンチェック時に呼ぶ
+// 	
+// 	function Checked_callback(n_=void){
+// 		if(n_===void) buttomChecked= buttomSelected;
+// 		else buttomChecked= n_;
+// 		for( var i=0; i<buttomSelectArray.count; i++) {
+// 			if(buttomChecked!=i) buttomSelectArray[i].button_Checked(false);
+// 		}
+// 	}
+// 	
+// 	function setChecked( n_=void ){
+// 		Checked_callback(n_);
+// 		buttomSelectArray[buttomChecked].button_Checked(true);
+// 	}
+// 	
+// 	////////////////////
+// 	//ボタンリセット
+// 	function buttom_Reset()
+// 	{
+// 		for( var i=0; i<buttomSelectArray.count; i++) {
+// 			buttomSelectArray[i].button_Reset();
+// 		}
+// 		buttomChecked= -1;
+// 	}
+// 	
+// 	function button_Update()
+// 	{
+// 		for( var i=0; i<buttomSelectArray.count; i++) {
+// 			buttomSelectArray[i].button_Update();
+// 		}
+// 	}
+// 	
+// 	////////////////////
+// 	//入力イベント
+// 	function onAction( ev )
+// 	{
+// 		if( ev.type=="onMouseDown" && ev.layer.isSelected ) {
+// 		
+// 			if( ev.layer._id==buttomChecked ){
+// 				if( checked_Execute2!==void ) checked_Execute2( buttomChecked );
+// 				dm("TButtonSelect4.checked_Execute2.buttomChecked=%s".sprintf(buttomChecked));
+// 			} else {
+// 				ev.layer.button_Checked( true );
+// 				Checked_callback( ev.layer._id );
+// 				
+// 				if( checked_Execute!==void ) checked_Execute( buttomChecked );
+// 				if( setButtomSelectMode[ev.layer._id]==1 ) {
+// 					ev.layer.button_Checked( false );
+// 					buttomChecked= -1;
+// 				}
+// 				dm("TButtonSelect4.buttomChecked=%s".sprintf(buttomChecked));
+// 			}
+// 			
+// 		}
+// 		
+// 		if( ev.type=="onMouseMove" ) {
+// 			if(!ev.layer.isSelected){
+// 				if( !ev.layer.isChecked ) ev.layer.cursor= crHandPoint;
+// 				ev.layer.button_Selected( true );
+// 				Selected_callback( ev.layer._id );
+// 				if( selected_Execute!==void ) selected_Execute( buttomSelected );
+// 			}
+// 		}
+// 			
+// 		if( ev.type=="onMouseEnter" ) {
+// 			if( !ev.layer.isChecked ) ev.layer.cursor= crHandPoint;
+// 			ev.layer.button_Selected( true );
+// 			Selected_callback( ev.layer._id );
+// 			if( selected_Execute!==void ) selected_Execute( buttomSelected );
+// 		}
+// 		
+// 		if( ev.type=="onMouseLeave" ) {
+// 			ev.layer.cursor= crArrow;
+// 			ev.layer.button_Selected( false );
+// 			if( selected_Execute!==void ) selected_Execute( buttomSelected );
+// 		}
+// 	}
+// }
+// 
+// 
+// /////////////////////////////////////////////////////////////////////////
+// //
+// class TButtonSelect4p extends TButtonSelect4
+// {
+// 	var targetIcon= void;
+// 	var selectIcon= void;
+// 	
+// 	function TButtonSelect4p( win, par, pal ) {
+// 		super.TButtonSelect4(...);
+// 	}
+// 	
+// 	function finalize() {
+// 		invalidate targetIcon;
+// 		invalidate selectIcon;
+// 		super.finalize(...);
+// 	}
+// 	
+// 	function setIcons( f_=void, f2_=void )
+// 	{
+// 		if(f_!=void){
+// 			selectIcon= new LayerTrueBase( window, this );
+// 			selectIcon.setLayer(0,0);
+// 			selectIcon.loadImages(f_);
+// 			selectIcon.visible= false;
+// 		}
+// 		
+// 		if(f2_!=void){
+// 			targetIcon= new LayerTrueBase( window, this );
+// 			targetIcon.setLayer(0,0);
+// 			targetIcon.loadImages(f2_);
+// 			targetIcon.visible= false;
+// 		}
+// 	}
+// 	
+// 	////////////////////
+// 	//ボタンセレクト時に呼ぶ
+// 	
+// 	function Selected_callback( n_=0 ){
+// 		buttomSelected= n_;
+// 	}
+// 	
+// 	function setSelected( n_=void ){
+// 		Selected_callback(n_);
+// 	}
+// 	
+// 	////////////////////
+// 	//ボタンチェック時に呼ぶ
+// 	
+// 	function Checked_callback(n_=void){
+// 		if(n_===void) buttomChecked= buttomSelected;
+// 		else buttomChecked= n_;
+// 	}
+// 	
+// 	function setChecked( n_=void ){
+// 		Checked_callback(n_);
+// 	}
+// 	
+// 	////////////////////
+// 	//入力イベント
+// 	function onAction( ev )
+// 	{
+// 		if( ev.type=="onMouseDown" && ev.layer._id==buttomSelected ) {
+// 		
+// 			if( ev.layer._id==buttomChecked ){
+// 				if( checked_Execute2!==void ) checked_Execute2( buttomChecked );
+// 				dm("TButtonSelect4.checked_Execute2.buttomChecked=%s".sprintf(buttomChecked));
+// 			} else {
+// 				//ev.layer.button_Checked( true );
+// 				Checked_callback( ev.layer._id );
+// 				targetIcon.setPos(ev.layer.left,ev.layer.top);
+// 				targetIcon.visible= true;
+// 				
+// 				if( checked_Execute!==void ) checked_Execute( buttomChecked );
+// 				if( setButtomSelectMode[ev.layer._id]==1 ) {
+// 					//ev.layer.button_Checked( false );
+// 					buttomChecked= -1;
+// 				}
+// 				targetIcon.visible= false;
+// 				dm("TButtonSelect4.buttomChecked=%s".sprintf(buttomChecked));
+// 			}
+// 			
+// 		}
+// 		
+// 		if( ev.type=="onMouseMove" ) {
+// 			if( ev.layer._id!=buttomSelected && ev.layer.buttom_enable && ev.layer._id!=buttomChecked){
+// 				ev.layer.cursor= crHandPoint;
+// 				Selected_callback( ev.layer._id );
+// 				if( selected_Execute!==void ) selected_Execute( buttomSelected );
+// 				selectIcon.setPos(ev.layer.left,ev.layer.top);
+// 				selectIcon.visible= true;
+// 			}
+// 		}
+// 			
+// 		if( ev.type=="onMouseEnter" ) {
+// 			if( ev.layer.buttom_enable && ev.layer._id!=buttomChecked ){
+// 				 ev.layer.cursor= crHandPoint;
+// 				Selected_callback( ev.layer._id );
+// 				if( selected_Execute!==void ) selected_Execute( buttomSelected );
+// 				selectIcon.setPos(ev.layer.left,ev.layer.top);
+// 				selectIcon.visible= true;
+// 			}
+// 		}
+// 		
+// 		if( ev.type=="onMouseLeave" ) {
+// 			ev.layer.cursor= crArrow;
+// 			//ev.layer.button_Selected( false );
+// 			if( selected_Execute!==void ) selected_Execute( buttomSelected );
+// 			selectIcon.visible= false;
+// 		}
+// 	}
+// }

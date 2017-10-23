@@ -1,0 +1,119 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	HH_math
+//
+/////////////////////////////////////////////////////////////////////////
+// class HH_vec3
+/*
+class HH_vec3{
+	// 成分 XYZ
+	var x;
+	var y;
+	var z;
+	// コンストラクタ
+	function HH_vec3( x_ = 0, y_ = 0, z_ = 0 ){
+		x = x_;
+		y = y_;
+		z = z_;
+	}
+	// デストラクタ
+	function finalize(){}
+}
+*/
+
+/////////////////////////////////////////////////////////////////////////
+// function HH_math_subVec3
+// vec1_ から vec2_ へのベクトルを返す
+function HH_math_subVec3( vec1_, vec2_ ){
+//	var result = new HH_vec3();
+	var result = %[ x:0, y:0, z:0 ];
+	result.x = vec2_.x - vec1_.x;
+	result.y = vec2_.y - vec1_.y;
+	result.z = vec2_.z - vec1_.z;
+	return result;
+}
+/////////////////////////////////////////////////////////////////////////
+// function HH_math_lengthVec3
+// vec_ の大きさを返す
+function HH_math_lengthVec3( vec_ ){
+	return Math.sqrt( ( vec_.x * vec_.x ) + ( vec_.y * vec_.y ) + ( vec_.z * vec_.z ) );
+}
+/////////////////////////////////////////////////////////////////////////
+// function HH_math_innerVec3
+// vec1_ と vec2_ の内積を返す
+function HH_math_innerVec3( vec1_, vec2_ ){
+	return ( vec1_.x * vec2_.x ) + ( vec1_.y * vec2_.y ) + ( vec1_.z * vec2_.z );
+}
+/////////////////////////////////////////////////////////////////////////
+// function HH_math_angleVec3
+// vec1_ から vec2_ への角度を返す（ラジアン）
+function HH_math_angleVec3( vec1_, vec2_ ){
+	return Math.acos( HH_math_innerVec3( vec1_, vec2_ ) / ( HH_math_lengthVec3( vec1_ ) * HH_math_lengthVec3( vec2_ ) ) );
+}
+
+/////////////////////////////////////////////////////////////////////////
+// function HH_math_outerVec3
+// vec1_ と vec2_ の外積を返す
+function HH_math_outerVec3( vec1_, vec2_ ){
+//	var result = new HH_vec3();
+	var result = %[ x:0, y:0, z:0 ];
+	result.x = vec1_.y * vec2_.z - vec1_.z * vec2_.y;
+	result.y = vec1_.z * vec2_.x - vec1_.x * vec2_.z;
+	result.z = vec1_.x * vec2_.y - vec1_.y * vec2_.x;
+	return result;
+}
+
+/////////////////////////////////////////////////////////////////////////
+// function HH_math_normalLineVec3
+// vec1_ と vec2_ からなる法線を返す
+function HH_math_normalLineVec3( vec1_, vec2_ ){
+	var result = HH_math_outerVec3( vec1_, vec2_ );
+	var len = HH_math_lengthVec3( result );
+	if( len != 0 ){
+		result.x /= len;
+		result.y /= len;
+		result.z /= len;
+	}
+	return result;
+}
+
+/////////////////////////////////////////////////////////////////////////
+// function HH_math_matrixBlend
+// mat1_ と mat2_ の合成 matrix を返す
+function HH_math_matrixBlend( m1=[], m2=[] ){
+	var result = [ 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0 ];
+	
+	result[ 0]= m1[ 0]*m2[ 0] + m1[ 1]*m2[ 4] + m1[ 2]*m2[ 8] + m1[ 3]*m2[12];
+	result[ 1]= m1[ 0]*m2[ 1] + m1[ 1]*m2[ 5] + m1[ 2]*m2[ 9] + m1[ 3]*m2[13];
+	result[ 2]= m1[ 0]*m2[ 2] + m1[ 1]*m2[ 6] + m1[ 2]*m2[10] + m1[ 3]*m2[14];
+	result[ 3]= m1[ 0]*m2[ 3] + m1[ 1]*m2[ 7] + m1[ 2]*m2[11] + m1[ 3]*m2[15];
+	
+	result[ 4]= m1[ 4]*m2[ 0] + m1[ 5]*m2[ 4] + m1[ 6]*m2[ 8] + m1[ 7]*m2[12];
+	result[ 5]= m1[ 4]*m2[ 1] + m1[ 5]*m2[ 5] + m1[ 6]*m2[ 9] + m1[ 7]*m2[13];
+	result[ 6]= m1[ 4]*m2[ 2] + m1[ 5]*m2[ 6] + m1[ 6]*m2[10] + m1[ 7]*m2[14];
+	result[ 7]= m1[ 4]*m2[ 3] + m1[ 5]*m2[ 7] + m1[ 6]*m2[11] + m1[ 7]*m2[15];
+	
+	result[ 8]= m1[ 8]*m2[ 0] + m1[ 9]*m2[ 4] + m1[10]*m2[ 8] + m1[11]*m2[12];
+	result[ 9]= m1[ 8]*m2[ 1] + m1[ 9]*m2[ 5] + m1[10]*m2[ 9] + m1[11]*m2[13];
+	result[10]= m1[ 8]*m2[ 2] + m1[ 9]*m2[ 6] + m1[10]*m2[10] + m1[11]*m2[14];
+	result[11]= m1[ 8]*m2[ 3] + m1[ 9]*m2[ 7] + m1[10]*m2[11] + m1[11]*m2[15];
+	
+	result[12]= m1[12]*m2[ 0] + m1[13]*m2[ 4] + m1[14]*m2[ 8] + m1[15]*m2[12];
+	result[13]= m1[12]*m2[ 1] + m1[13]*m2[ 5] + m1[14]*m2[ 9] + m1[15]*m2[13];
+	result[14]= m1[12]*m2[ 2] + m1[13]*m2[ 6] + m1[14]*m2[10] + m1[15]*m2[14];
+	result[15]= m1[12]*m2[ 3] + m1[13]*m2[ 7] + m1[14]*m2[11] + m1[15]*m2[15];
+	
+	return result;
+}
+/////////////////////////////////////////////////////////////////////////
+// function HH_math_multipulVecMat
+// vec_ を mat_ で変換した結果を返す
+function HH_math_multipulVecMat( vec_, m1=[ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0 ] ){
+	//var result = new HH_vec3();
+	var result = %[ x:0, y:0, z:0 ];
+	result.x= vec_.x* m1[0] + vec_.y* m1[1] + vec_.z* m1[ 2] + m1[ 3];
+	result.y= vec_.x* m1[4] + vec_.y* m1[5] + vec_.z* m1[ 6] + m1[ 7];
+	result.z= vec_.x* m1[8] + vec_.y* m1[9] + vec_.z* m1[10] + m1[11];
+	return result;
+}
+

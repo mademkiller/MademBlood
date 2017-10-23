@@ -1,0 +1,258 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenStats
+//
+/////////////////////////////////////////////////////////////////////////
+//Scripts.execStorage("BattleBase.tjs");
+
+/*
+	ダイアログ
+*/
+class ScreenDialog extends TFrame2
+{
+	
+	var viewText= "";
+	var clickViewText= "";
+	
+	var dialogCallback= void;
+	var dialogCallback2= void;
+	
+	var dialogCallbackOpt= void;
+	
+	var Result= false;
+	
+	var closeLock= false; //ロックを維持するか？ 
+	
+	function ScreenDialog( g_ ){
+		super.TFrame2(...);
+		backGround.callbackREvent2= rightClickCallBack;
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	// init
+	//
+	function init_panel()
+	{
+		with( panel )
+		{
+			.backGrpBot= new LayerTrueBase( kag, backGround, this );
+			.backGrpBot.setLayer( 0, -270, 436, 720, 0xff000000 );
+			
+			.textLayer= new global.LayerTextBase( kag, .backGrpBot );
+			.textLayer.setLayer( 0, 500, 436, 300, 0xff000000 );
+			
+			.textLayer2= new global.LayerTextBase( kag, .backGrpBot );
+			.textLayer2.setLayer( 0, 500, 436, 300, 0xff000000 );
+			.textLayer2.visible= false;
+			
+			//メニューボタン
+			.selectBoutton= new global.TButtonSelect4( kag, .backGrpBot, this );
+			.selectBoutton.setLayer( 53, 631 );
+			.selectBoutton.setButton( 160, 40, 2 );
+			.selectBoutton.setButtonPos([ 0,0, 173,0 ]);
+			.selectBoutton.setButtonLoad([ "sys_dlog_bt_ok2","sys_dlog_bt_can2" ]);
+			.selectBoutton.setButtomSelectMode= [1,1];
+			.selectBoutton.checked_Execute= onOKCancel;
+			.selectBoutton.AllLockOut= true;
+			
+			.selectBoutton.soundfile= %[ enter:"A1_12219s", leave:"", select:"", click:"A1_12217s" ];
+			
+			.backGrpBot.loadImages( "sys_dlog_bace" );
+		
+			var la= .selectBoutton.buttomSelectArray[0];
+			.backGrpBot.copyRect(  53, 631, la, 0, 0, la.width, la.height );
+		
+			la= .selectBoutton.buttomSelectArray[1];
+			.backGrpBot.copyRect( 226, 631, la, 0, 0, la.width, la.height );
+		
+		}
+	}
+	
+	///////////////////////////////////////////////////////
+	// method
+	//
+	function execute( mes_, ev_=void, ex_=void, evo_=void )
+	{
+		if( !Result ) {
+			Result= false;
+			viewText= mes_;
+			dialogCallback= ev_;
+			dialogCallbackOpt= evo_;
+			dialogCallback2= ex_;
+			
+			ShowScreen( 200 );
+		}
+		return Result;
+	}
+	
+	function execute2( mes_, mes2_="", ev_=void, ex_=void, evo_=void )
+	{
+		if( !Result ) {
+			closeLock= true;
+			Result= false;
+			viewText= mes_;
+			clickViewText= mes2_;
+			dialogCallback= ev_;
+			dialogCallbackOpt= evo_;
+			dialogCallback2= ex_;
+			
+			ShowScreen( 200 );
+		}
+		return Result;
+	}
+	
+	function reset_flag() {
+		Result= false;
+	}
+	
+	///////////////////////////////////////////////////////
+	// callback
+	//
+	function onOKCancel( n )
+	{
+		switch( n )
+		{
+			case 0:
+				Result= true;
+				
+				if(clickViewText!="") {
+					panel.textLayer2.visible= true;
+					panel.textLayer.visible= false;
+				}
+				
+				if(dialogCallback2!==void) frameWork.callBackStart(dialogCallback2);
+				else HideScreen( 100 );
+				dm( "ScreenDialog.onOK()" );
+				break;
+				
+			case 1:
+				Result= false;
+				dialogCallback= void;
+				dialogCallback2= void;
+				HideScreen( 100 );
+				dm( "ScreenDialog.onCancel()" );
+				break;
+		}
+	}
+	
+	function rightClickCallBack()
+	{
+		onOKCancel(1);
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		panel.selectBoutton.setEnableEvent(f_);
+		backGround.setEnableEvent(f_);
+	}
+	
+	///////////////////////////////////////////////////////
+	// show
+	//
+	function onInit()
+	{
+		backGround.setLayer( 0, 0, 960, 720, 0x66000000 );
+		
+		backGround.visible= false;
+		backGround.opacity= 0;
+	}
+	
+	function onShow( time_, en_ )
+	{
+		init_panel();
+		
+		var txtsp;
+		txtsp= viewText.split( ";" );
+		
+		panel.textLayer.clearText();
+		
+		for(var i=0; i<txtsp.count; i++) {
+			var hl= panel.textLayer.font.getTextWidth(txtsp[i]);
+			
+			panel.textLayer.drawText2( ((320-hl)/2), 30*i, txtsp[i], 0xf0d2a0, 24,
+				%[ outline:2, outlinecolor:0x664927,
+				shadow:1, shadowopacity:200, shadowblur:2,
+				gradcolor1:0xa68667, gradcolor2:0xffffff
+	//			gradcolor1:0x664927, gradcolor2:0xffffff
+				] );
+		}
+		
+		if(clickViewText!="") {
+			var txtsp;
+			txtsp= clickViewText.split( ";" );
+		
+			panel.textLayer2.clearText();
+		
+			for(var i=0; i<txtsp.count; i++) {
+				var hl= panel.textLayer2.font.getTextWidth(txtsp[i]);
+			
+				panel.textLayer2.drawText2( ((320-hl)/2), 30*i, txtsp[i], 0xf0d2a0, 24,
+					%[ outline:2, outlinecolor:0x664927,
+					shadow:1, shadowopacity:200, shadowblur:2,
+					gradcolor1:0xa68667, gradcolor2:0xffffff
+					] );
+			}
+		}
+		
+		panel.selectBoutton.visible= false;
+		
+		panel.selectBoutton.buttom_Reset();
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 255;
+		
+		panel.backGrpBot.setPos( 262, -570 );
+		panel.backGrpBot.beginMove( %[ time:200, path:"(262,-270,255)", accel:-3 ] );
+		
+		backGround.beginMove( %[ time:200, path:"(0,0,255)" ] );
+		
+		
+	}
+	
+	function onShowEnd()
+	{
+		panel.selectBoutton.buttom_Reset();
+		panel.selectBoutton.visible= true;
+		
+		backGround.opacity= 255;
+		
+		//backGround.setMode();
+	}
+	
+	function onHide( time_, en_ )
+	{
+		//backGround.removeMode();
+		
+		panel.selectBoutton.buttom_Reset();
+		
+		panel.selectBoutton.visible= false;
+		panel.selectBoutton.setSelected( 0 );
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,255)", accel:2 ] );
+	}
+	
+	function onHideEnd()
+	{
+		invalidatePanel();
+		
+		backGround.visible= false;
+		backGround.opacity= 0;
+		
+		kag.KeyDown_CallBack= void;
+		
+		clickViewText= "";
+		
+		if( dialogCallback!==void ) {
+			dialogCallback(dialogCallbackOpt);
+			dialogCallback= void;
+		}
+		
+		//if( !closeLock ) core2.setEvent_aLock_false();
+	}
+}

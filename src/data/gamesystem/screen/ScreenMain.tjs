@@ -1,0 +1,249 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenCntrol
+//
+/////////////////////////////////////////////////////////////////////////
+Scripts.execStorage("FrameWork.tjs");
+
+Scripts.execStorage("GameDatas.tjs");
+
+Scripts.execStorage("ScreenGameLoop.tjs");
+
+Scripts.execStorage("userfunctions.tjs");
+//Scripts.execStorage("battlefunctions.tjs");
+
+Scripts.execStorage("ScreenDialog.tjs");
+Scripts.execStorage("ScreenDialog2.tjs");
+//Scripts.execStorage("SimpleDialog.tjs");
+
+Scripts.execStorage("ScreenConfig.tjs");
+
+//Scripts.execStorage("ScreenBattle.tjs");
+//Scripts.execStorage("ScreenCharSetting.tjs");
+
+Scripts.execStorage("ScreenAvg.tjs");
+Scripts.execStorage("ScreenSave.tjs");
+
+Scripts.execStorage("ScreenKag.tjs");
+
+/////
+Scripts.execStorage("ScreenGameMain.tjs");
+Scripts.execStorage("ScreenGameMainMap.tjs");
+Scripts.execStorage("ScreenGameMainOrg.tjs");
+Scripts.execStorage("ScreenGameMainPre.tjs");
+Scripts.execStorage("ScreenGameMainDir.tjs");
+Scripts.execStorage("ScreenGameMainDra.tjs");
+Scripts.execStorage("ScreenGameMainCal.tjs");
+Scripts.execStorage("ScreenGameMainIfo.tjs");
+//
+
+Scripts.execStorage("ScreenStandby.tjs");
+
+//
+class ScreenMain extends FrameWork
+{
+	var icon_base_info;
+	
+	/* 基本画面 */
+	function ScreenMain(evc_) {
+		super.FrameWork(...);
+	}
+	
+	function finalize() {
+		invalidate icon_base_info;
+		super.finalize(...);
+	}
+	
+	function createImage( win, par ) {
+		super.createImage(...);
+		
+		//初期設定
+		kag.fore.messages[0].opacity= 255*kag.sflags.systemcore.option.text.windowopacity;
+		kag.back.messages[0].opacity= 255*kag.sflags.systemcore.option.text.windowopacity;
+		
+		Debug.message( "ScreenMain.createImage()" );
+	}
+		
+	function createScreen()
+	{
+		
+		//screen.avg= new ScreenAvg( 1, 250, 132 );
+		screen.avg= new ScreenAvg( 1, 250, 162 );
+		//screen.avg.backGround.absolute= 900000;
+		global.kag.add(screen.avg);
+		
+		screen.kag= new ScreenKag( this );
+		global.kag.add(screen.kag);
+		screen.kag.InitScreen("ScreenKag");
+		
+		////
+		screen.gamemain= new ScreenGameMain( this );
+		global.kag.add(screen.gamemain);
+		screen.gamemain.InitScreen("ScreenGameMain");
+		screen.gamemain.backGround.absolute= 900;
+		
+		screen.gamemap= new ScreenGameMainMap( this, screen.gamemain );
+		global.kag.add(screen.gamemap);
+		screen.gamemap.InitScreen("ScreenGameMainMap");
+		screen.gamemap.modelMode= false;
+		screen.gamemap.loopCallback= gameLoop.mainLoopEnd_callback;
+		
+		screen.gameorg= new ScreenGameMainOrg( this, screen.gamemain );
+		global.kag.add(screen.gameorg);
+		screen.gameorg.InitScreen("ScreenGameMainOrg");
+		screen.gameorg.modelMode= false;
+		
+		screen.gamepre= new ScreenGameMainPre( this, screen.gamemain );
+		global.kag.add(screen.gamepre);
+		screen.gamepre.InitScreen("ScreenGameMainPre");
+		screen.gamepre.modelMode= false;
+		
+		screen.gamedir= new ScreenGameMainDir( this, screen.gamemain );
+		global.kag.add(screen.gamedir);
+		screen.gamedir.InitScreen("ScreenGameMainDir");
+		screen.gamedir.modelMode= false;
+		
+		screen.gamedra= new ScreenGameMainDra( this, screen.gamemain );
+		global.kag.add(screen.gamedra);
+		screen.gamedra.InitScreen("ScreenGameMainDra");
+		screen.gamedra.modelMode= false;
+		
+		screen.gamecal= new ScreenGameMainCal( this, screen.gamemain );
+		global.kag.add(screen.gamecal);
+		screen.gamecal.InitScreen("ScreenGameMainCal");
+		screen.gamecal.modelMode= false;
+		
+		screen.gameifo= new ScreenGameMainIfo( this, screen.gamemain );
+		global.kag.add(screen.gamecal);
+		screen.gameifo.InitScreen("ScreenGameMainIfo");
+		screen.gameifo.modelMode= false;
+		////
+		
+		screen.save= new ScreenSave( this );
+		global.kag.add(screen.save);
+		screen.save.InitScreen("ScreenSave");
+		//screen.save.backGround.absolute= 1000;
+		
+		screen.config= new ScreenConfig( this );
+		global.kag.add(screen.config);
+		screen.config.InitScreen("ScreenConfig");
+		//screen.config.backGround.absolute= 1010;
+		
+		
+		screen.dialog= new ScreenDialog( this );
+		global.kag.add(screen.dialog);
+		screen.dialog.InitScreen("ScreenDialog");
+		
+		screen.dialog2= new ScreenDialog2( this );
+		global.kag.add(screen.dialog2);
+		screen.dialog2.InitScreen("ScreenDialog2");
+		
+		//screen.dialog.backGround.absolute= 2000;
+		
+		//backGroundDialog= new SimpleDialog( window, backGround, this );
+		//backGroundDialog.setLayer(0,0);
+		icon_base_info= new LayerTrueBase( kag, backGroundCompo );
+		icon_base_info.setLayer( 650, 20 );
+		icon_base_info.visible= false;
+				
+		//ボリューム情報をセット
+		screen.config.opt_update_status_set();
+		
+		//kag.chUserMode();
+		
+		kag.KeyDown_CallBack_debug= KeyDown_CallBack_debug_exec;
+		
+		dm( "ScreenMain.createScreen()" );
+	}
+
+	function createInitData()
+	{
+		dm( "ScreenMain.createScreen()" );
+	}
+	
+	function callback_quicksaveload(f)
+	{
+		
+		backGroundCompo.fillRect( 0,0, 960,720, 0x00000000 );
+		//backGroundCompo.type= ltAlpha;
+		//backGroundCompo.face= dfAuto;
+		backGroundCompo.visible= true;
+		
+		icon_base_info.opacity= 255;
+		icon_base_info.setLayer( 650, 20 );
+		icon_base_info.loadImages(f);
+		icon_base_info.visible= true;
+		icon_base_info.beginMove( %[ time:3000, path:"( 700, 20, 0 )" ] );
+		icon_base_info.moveFinalCallback= function(){ visible= false; };
+	}
+	
+	function KeyDown_CallBack_debug_exec(key, shift)
+	{
+		if( key==VK_1 && sf.debugmode==1 ){
+			f.used.stat.food.now= 9999999;
+			f.used.stat.resource.now= 9999999;
+			f.used.stat.energy.now= 9999999;
+			f.used.stat.gold.now= 9999999;
+		}
+		
+		if( key==VK_2 && sf.debugmode==1 ){
+	 		f.used.medalionopen= [
+	 			1,1,1,1,1,1,
+	 			1,1,1,1,1,1,
+	 			1,1,1,1,1,1,
+	 			1,1,1,1,1,1,
+	 			1,1,1,0,0,1
+	 			];
+		}
+		
+		if( key==VK_3 && sf.debugmode==1 ){
+	 		f.used.medalion= [
+	 			500,500,500,500,500,500,
+	 			500,500,500,500,500,500,
+	 			500,500,500,500,500,500,
+	 			500,500,500,500,500,500,
+	 			500,500,500,0,0,500
+	 			];
+		}
+		
+		if( key==VK_4 && sf.debugmode==1 ){
+			f.used.itemcount= [
+				0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+				0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+				0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+				0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+				0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+				0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+				0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+				0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+				0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+				0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+				0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+				999,999,999,999,999,999, 999,999,999,50,50,50, 50,0,0,0,0,0
+			]; //所持item indexはitemlistとペア
+		}
+		
+		if( key==VK_5 && sf.debugmode==1 ){
+			f.used.itemstockMat= [
+				999,999,999,999,999,999,999,999,999,999
+			]; //鉱石item
+		}
+		
+		if( key==VK_6 && sf.debugmode==1 ){
+			f.used.itemcount= [
+				50,50,50,50,50,50, 50,50,50,50,50,50, 50,50,50,50,50,50,
+				50,50,50,50,50,50, 50,50,50,50,50,50, 50,50,50,50,50,50,
+				50,50,50,50,50,50, 50,50,50,50,50,50, 50,50,50,50,50,50,
+				50,50,50,50,50,50, 50,50,50,50,50,50, 50,50,50,50,50,50,
+				50,50,50,50,50,50, 50,50,50,50,50,50, 50,50,50,50,50,50,
+				50,50,50,50,50,50, 50,50,50,50,50,50, 50,50,50,50,50,50,
+				50,50,50,50,50,50, 50,50,50,50,50,50, 50,50,50,50,50,50,
+				50,50,50,50,50,50, 50,50,50,50,50,50, 50,50,50,50,50,50,
+				50,50,50,50,50,50, 50,50,50,50,50,50, 50,50,50,50,50,50,
+				50,50,50,50,50,50, 50,50,50,50,50,50, 50,50,50,50,50,50,
+				50,50,50,50,50,50, 50,50,50,50,50,50, 50,50,50,50,50,50,
+				999,999,999,999,999,999, 999,999,999,0,0,0, 0,0,0,0,0,0
+			]; //所持item indexはitemlistとペア
+		}
+	}
+}

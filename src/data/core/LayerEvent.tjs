@@ -1,0 +1,947 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	EventLayer
+//
+/////////////////////////////////////////////////////////////////////////
+//
+class LayerBackground extends Layer
+{
+	
+	var _isMouseWheelThrow; //
+	
+	function LayerBackground( w_, p_ ) {
+		super.Layer(...);
+		
+		_isMouseWheelThrow= false;
+		
+		hitType= htMask;
+		hitThreshold= 256;
+		focusable= false;
+		type= ltAddAlpha;
+		face = dfAuto;
+		
+		name= "LayerBackground";
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	property isMouseWheelThrow {
+		setter(v) {
+			_isMouseWheelThrow= v;
+			//hitType= htMask;
+			if( _isMouseWheelThrow ) 
+			{
+				hitThreshold= 0;
+				focusable= true;
+			}
+			else {
+				hitThreshold= 256;
+				focusable= false;
+			}
+		}
+		getter() {
+			return _isMouseWheelThrow;
+		}
+	}
+	
+}
+
+/////////////////////////////////////////////////////////////////////////
+//
+class CompoLayer extends Layer
+{
+	var _id= 0;
+	var _data= void;
+	var _data2= void;
+	var _data3= void;
+	
+	var lays= [];
+	
+	var fontsize= 14;
+	var moveObject= void;
+	var moveValueObject= void;
+	var moveFinalCallback= void;
+	
+	var enabledEvent= false; //イベント有効
+	var enabledEventLock= false; //イベント有効
+	
+	var isModel= false;
+	
+	var framePanel= void;
+	
+	var value= 0.0; //表示データ正規化
+	
+	var storage= ""; //ファイル名
+	
+	var movevalue_callbak;
+	var movevalueend_callbak;
+	
+	function CompoLayer( win, par=null, pal=void ){
+		super.Layer(...);
+		framePanel= pal;
+		name= "CompoLayer";
+		type = parent.type;
+		face = dfAuto;
+	}
+	
+	function finalize() {
+		
+		var e = [];
+		e.assign(lays);
+		for(var i=0; i<e.count; i+=2){
+			invalidate lays[e[i]];
+		}
+		
+		if( moveObject!==void ) invalidate moveObject;
+		if( moveValueObject!==void ) invalidate moveValueObject;
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	//
+	function setLayer( x_=0, y_=0, w_=32, h_=32, c_=void )
+	{
+		setPos( x_, y_ );
+		setSize( w_, h_ );
+		setImageSize( w_, h_ );
+		if(c_!==void) fillRect( 0, 0, w_, h_, c_ );
+		visible= true;
+		type = ltAddAlpha;
+		//type = parent.type;
+		face = dfAuto;
+	}
+	
+	function setData( i_=0, d_=void, d2_=void )
+	{
+		_id= i_;
+		_data= d_;
+		if(_data!==void && d2_===void) _data2= _data[_id]; else _data2= d2_;
+	}
+	
+	function setToAlpha()
+	{
+ 		type= ltAlpha;
+ 		face= dfAuto;
+ 		convertType(dfAddAlpha);
+	}
+	
+	function loadImages( image, colorKey=clNone ) {
+		storage= image;
+		return super.loadImages(...);
+    }
+	///////////////////////////////////////////////////////
+	//
+	function drawImageFile( x_, y_, file_, x2_=0, y2_=0, w_=void, h_=void )
+	{
+		var s= new global.Layer( window, this );
+		s.loadImages( file_ );
+		s.setSizeToImageSize();
+		
+		var ww= s.width, hh= s.height;
+		
+		if( w_!==void ) ww= w_;
+		if( h_!==void ) hh= h_;
+		
+		operateRect( x_, y_, s, x2_, y2_, ww, hh );
+		
+		invalidate s;
+	}
+	
+	function drawImageFileStretch(dleft, dtop, dwidth, dheight, file_ )
+	{
+		var s= new global.Layer( window, this );
+		s.loadImages( file_ );
+		s.setSizeToImageSize();
+		
+		operateStretch( dleft, dtop, dwidth, dheight, s, s.left, s.top, s.width, s.height,,, stFastLinear );
+		
+		invalidate s;
+	}
+	
+	function fill( c_=0x00000000 )
+	{
+		fillRect( 0, 0, width, height, c_ );
+	}
+	
+	
+	function Drop_parentDraw()
+	{
+		parent.fillRect( left, top, width, height, 0xff000000 );
+		parent.operateRect( left, top, this, 0, 0, width, height, omAuto, 128);
+	}
+	
+	///////////////////////////////////////////////////////
+	// font
+	function drawText2( x_, y_, text_, color_, size_, mp )
+	{
+		if( size_!=fontsize ) setFontSize( size_ );
+		_text_draw_super_( this, x_, y_, text_, color_, size_, mp );
+		if( size_!=fontsize ) setFontSize( fontsize );
+	}
+	
+	function drawText3( x_=0, y_=0, text_, color_=0xffffff, size_=16 )
+	{
+		if( size_!=fontsize ) setFontSize( size_ );
+		drawText( x_, y_, text_, color_ );
+		if( size_!=fontsize ) setFontSize( fontsize );
+	}
+	
+	function drawText4( x_, y_, text_, color_, size_, color2_=0x202020 )
+	{
+		if( size_!=fontsize ) setFontSize( size_ );
+		
+		_text_draw_super_( this, x_, y_, text_, color_, size_, 
+			%[ outline:1, outlinecolor:color2_,
+			] );
+			
+		if( size_!=fontsize ) setFontSize( fontsize );
+	}
+	
+	function setFontSize( fontsize_=16 )
+	{
+		if(fontsize_>100){
+			//var ft= [ "uppgc", "ugc", "cpm", "uppgc", "mpm", "mpc", "cpm" ];
+			var ft= [ "uppgc", "ugc", "cpm" ];
+			var ftt= "%s%d.tft".sprintf(ft[fontsize_\100],fontsize_%100);
+			
+			font.mapPrerenderedFont( ftt );
+		}
+		
+		switch( fontsize_ )
+		{
+			case 12: font.mapPrerenderedFont( "uppg12.tft" ); break;
+			case 13: font.mapPrerenderedFont( "upg13.tft" ); break;
+			case 14: font.mapPrerenderedFont( "uppg14.tft" ); break;
+			case 15: font.mapPrerenderedFont( "upg14.tft" ); break;
+			case 16: font.mapPrerenderedFont( "uppg16.tft" ); break;
+			case 17: font.mapPrerenderedFont( "upg16.tft" ); break;
+			case 18: font.mapPrerenderedFont( "uppg18.tft" ); break;
+			case 19: font.mapPrerenderedFont( "upg18.tft" ); break;
+			case 20: font.mapPrerenderedFont( "uppg20.tft" ); break;
+			case 24: font.mapPrerenderedFont( "uppg24.tft" ); break;
+		}
+	}
+	
+	
+	///////////////////////////////////////////////////////
+	//
+	function setMode()
+	{
+		if( !isModel ) {
+			super.setMode();
+			isModel= true;
+		}
+	}
+	
+	function removeMode()
+	{
+		if( isModel ) {
+			super.removeMode();
+			isModel= false;
+		}
+	}
+	
+	///////////////////////////////////////////////////////
+	//
+	function beginWait( time_ ) {
+		if(moveObject !== void) invalidate moveObject, moveObject = void;
+		//moveFinalCallback= end_;
+		beginMove( %[ time:time_, path:"(%d,%d,%d)".sprintf(left,top,opacity) ] );
+	}
+	
+	function beginMove(elm)
+	{
+		// elm に従い自動移動を開始する
+		if(moveObject !== void) invalidate moveObject, moveObject = void;
+		
+		// path の分解
+		var array = [].split("(), ", elm.path, , true);
+		for(var i = array.count-1; i>=0; i--) array[i+3] = +array[i];
+		array[0] = left;
+		array[1] = top;
+		array[2] = opacity;
+		
+		// 移動用オブジェクトの作成
+		// 直線補間
+		moveObject = new LinearMover2(this, array, +elm.time,
+			elm.accel === void ? 0 : +elm.accel, moveFinalFunction, elm.loop );
+				
+		//window.moveCount++;
+		moveObject.startMove(+elm.delay);
+	}
+	
+	function moveFinalFunction() {
+		// 自動移動が終了するときに呼ばれる関数
+		//window.moveCount--;
+		window.onLayerMoveStop();
+		if( moveFinalCallback!==void ) {
+			var exe= moveFinalCallback;
+			moveFinalCallback= void;
+			exe();
+		}
+		//moveFinalCallback= void;
+	}
+	
+	function stopMove(){
+		if(moveObject !== void) invalidate moveObject, moveObject = void;
+		//moveFinalCallback= void;
+	}
+	
+	///////////////////////////////////////////////////////
+	//
+	function move_end() {}
+	
+	function move_callbak( v ) {}
+	
+	function beginMoveValue(elm) {
+		var ne= stopMoveValue();
+		
+		// path の分解
+		var array;
+		if(elm.path!==void) array= [ value, elm.path ];
+		else array = [ 0.0, 1.0 ];
+		
+		// 移動用オブジェクトの作成
+		// 直線補間
+		var callend= move_end;
+		if(movevalueend_callbak!=void) callend= movevalueend_callbak;
+		
+		var callb= move_callbak;
+		if(movevalue_callbak!=void) callb= movevalue_callbak;
+		
+		
+		
+// 			moveValueObject = new LinearMoverValue( movevalue_callbak, array, +elm.time,
+// 					elm.accel === void ? 0 : +elm.accel, move_end, elm.loop, true );
+// 		}else{
+// 			moveValueObject = new LinearMoverValue( move_callbak, array, +elm.time,
+// 					elm.accel === void ? 0 : +elm.accel, move_end, elm.loop, true );
+// 
+// 		}
+			moveValueObject = new LinearMoverValue( callb, array, +elm.time,
+					elm.accel === void ? 0 : +elm.accel, callend, elm.loop, true );
+					
+		//window.moveCount++;
+		moveValueObject.startMove(+elm.delay);
+	}
+	
+	function stopMoveValue() {
+		var r= 0.0;
+		if(moveValueObject !== void) {
+			r=moveValueObject.naerCount;
+			invalidate moveValueObject, moveValueObject= void;
+		}
+		return r;
+	}
+	
+	function resetEvent()
+	{
+		if(moveObject!==void) invalidate moveObject, moveObject= void;
+		if(moveValueObject!==void) invalidate moveValueObject, moveValueObject =void;
+		moveFinalCallback= void;
+		
+		enabledEvent= false;
+		enabledEventLock= false;
+	}
+	
+	//念のためにデフォルト動作は殺しておく
+	function onKeyDown(key, shift, process=true) { super.onKeyDown( key, shift, false ); }
+	function onKeyUp(key, shift, process=true) { super.onKeyUp( key, shift, false ); }
+	
+}
+
+
+/////////////////////////////////////////////////////////////////////////
+//
+class LayerEventBase2 extends CompoLayer
+{
+	
+	var onMouseWheelThrow= false; //
+	var onMouseMoveThrow= false; //
+	var onMouseEnterThrow= false; //
+	var onMouseEventThrow= false;
+	
+	var isMouseEnter= false; //マウスエンターフラグ
+	var isMouseDrug= false; //マウスエンターフラグ
+	var isMouseDrugr= false; //マウスエンターフラグ
+	
+	var _nKeyset= [ void, void, void, void ];
+	
+	var snapL= %[ sx:0, sy:0, mx:0, my:0 ];
+	var snapR= %[ sx:0, sy:0, mx:0, my:0 ];
+	
+	var action_Execute= void; //
+	
+	function LayerEventBase2( win, par, pal ) {
+		super.CompoLayer(...);
+		hitType= htMask;
+		hitThreshold= 0;
+		focusable= true;
+		cursor= crArrow;
+		name= "LayerEventBase2";
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function loadImages( image, colorKey=clNone ) {
+		var ret= false;
+		//if(Storages.isExistentStorage(image)||Storages.isExistentStorage(image+".bmp")){
+		//if(!Storages.isExistentStorage(image)) dm("%s->画像が見つからない。".sprintf(image));
+			ret= super.loadImages(...);
+			loadImagesHelper();
+		//} else dm("%s->画像が見つからない。".sprintf(image));
+		return ret;
+    }
+	
+	function loadImagesHelper() {
+		setSizeToImageSize();
+		hitType= htMask;
+		hitThreshold= 0;
+		focusable= true;
+	}
+	
+	//イベントスルー設定
+	function setMouseEventThrow( f_=false ) {
+		onMouseEventThrow= f_;
+		if( onMouseEventThrow ){
+			hitType= htMask;
+			hitThreshold= 256;
+		} else {
+			hitType= htMask;
+			hitThreshold= 0;
+		}
+	}
+	
+	function resetEvent() {
+		isMouseEnter= false;
+		isMouseDrug= false;
+	}
+	
+	function setKeyset( u_=void, d_=void, l_=void, r_=void ) {
+		_nKeyset[0]= u_;
+		_nKeyset[1]= d_;
+		_nKeyset[2]= l_;
+		_nKeyset[3]= r_;
+	}
+	
+	function processKeyset( n_ ) {
+		var r= false;
+		if( _nKeyset[n_]!==void ) {
+			if( _nKeyset[n_]!==null ) _nKeyset[n_].focus(true);
+			r= true;
+		}
+		return r;
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		if(f_!==void) enabledEvent= f_;
+		if(f2_!==void) enabledEventLock= f2_;
+		//window.core2_lock_all_event= false;
+		//core2.setEvent_aLock_false();
+	}
+	
+	function actionCallBack( elm )
+	{
+		//dm( "actionCallBack= "+window.core2_lock_all_event );
+		if( enabledEvent && !enabledEventLock ) {
+		//if( enabledEvent && !enabledEventLock ) {
+		
+			if( (elm.type=="onMouseUp" || elm.type=="onMouseDown" || elm.type=="onClick" )
+				&& window.core2_lock_all_event ) return;
+			
+				onAction( elm );
+				if(action_Execute!==void) action_Execute(elm);
+			//dm( "actionCallBack= "+enabledEvent );
+			
+			//setEvent_AllLock(false);
+			
+		}
+		//dm( "actionCallBack= "+window.core2_lock_all_event );
+	}
+	
+	function setDropDraw(f_=true)
+	{
+		Drop_parentDraw();
+	}
+	
+	///////////////////////////////////////////////////////
+	//
+	function onMouseUp( x, y, button, shift )
+	{
+		snapL.sx= 0;
+		snapL.sy= 0;
+		snapL.mx= 0;
+		snapL.my= 0;
+		isMouseDrug= false;
+		snapR.sx= 0;
+		snapR.sy= 0;
+		snapR.mx= 0;
+		snapR.my= 0;
+		isMouseDrugr= false;
+		
+		actionCallBack( %[
+			layer: this,
+			type: "onMouseUp",
+			x: x,
+			y: y,
+			button: button,
+			] );
+
+		super.onMouseUp(...);
+	}
+	
+	function onMouseDown( x, y, button, shift )
+	{
+		if( button==0 ){
+			snapL.sx= x;
+			snapL.sy= y;
+			snapL.mx= x;
+			snapL.my= y;
+			isMouseDrug= true;
+		}
+		
+		if( button==1 ){
+			snapR.sx= x;
+			snapR.sy= y;
+			snapR.mx= x;
+			snapR.my= y;
+			isMouseDrugr= true;
+		}
+		
+		actionCallBack( %[
+			layer: this,
+			type: "onMouseDown",
+			x: x,
+			y: y,
+			button: button
+			] );
+		super.onMouseDown(...);
+	}
+	
+	
+	function onClick( x, y )
+	{
+		actionCallBack( %[
+			layer: this,
+			type: "onClick",
+			x: x,
+			y: y,
+			] );
+		super.onClick(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	//
+	function onMouseEnter()
+	{
+		isMouseEnter= true;
+		if( onMouseEnterThrow ) parent.isMouseEnter= true;
+		if( enabledEvent && !focused ) focus(true);
+		actionCallBack( %[ layer: this, type:"onMouseEnter" ] );
+		super.onMouseEnter();
+	}
+	
+	function onMouseLeave()
+	{
+		isMouseEnter= false;
+		if( onMouseEnterThrow ) parent.isMouseEnter= false;
+		actionCallBack( %[ layer: this, type:"onMouseLeave" ] );
+		if( focused ) focus(false);
+		super.onMouseLeave();
+	}
+	
+	
+	function onMouseWheel( shift, delta, x, y )
+	{
+		if( onMouseWheelThrow )
+		{
+			parent.actionCallBack( %[
+				layer: this,
+				type: "onMouseWheel",
+				x: x,
+				y: y,
+				delta: delta
+				] );
+				Debug.message( "LayerEvent.onMouseWheel.onMouseWheelThrow= "+delta );
+		} else {
+			actionCallBack( %[
+				layer: this,
+				type: "onMouseWheel",
+				x: x,
+				y: y,
+				delta: delta
+				] );
+		}
+		super.onMouseWheel(...);
+	}
+	
+	function onMouseMove( x, y, shift )
+	{
+		if( enabledEvent && !focused ) focus(true);
+		if( onMouseMoveThrow )
+		{
+			parent.actionCallBack( %[
+				layer: this,
+				type: "onMouseMove",
+				x: x,
+				y: y,
+				shift: shift
+				] );
+		} else {
+			actionCallBack( %[
+				layer: this,
+				type: "onMouseMove",
+				x: x,
+				y: y,
+				shift: shift
+				] );
+		}
+		
+		if( isMouseDrug ){
+			snapL.mx= x;
+			snapL.my= y;
+		}
+		
+		if( isMouseDrugr ){
+			snapR.mx= x;
+			snapR.my= y;
+		}
+		
+		super.onMouseMove(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	//
+	function onFocus( focused, direction )
+	{
+		actionCallBack( %[ focused:focused, direction:direction, type:"onFocus" ] );
+		super.onFocus(...);
+	}
+	
+	function onBlur( focused )
+	{
+		actionCallBack( %[ focused:focused, type:"onBlur" ] );
+		isMouseEnter= false; //マウスエンターフラグ
+		isMouseDrug= false; //マウスエンターフラグ
+		isMouseDrugr= false; //マウスエンターフラグ
+		super.onBlur(...);
+	}
+	
+	function onKeyDown(key, shift, process=true) {
+		actionCallBack( %[ key:key, shift:shift, type:"onKeyDown" ] );
+		super.onKeyDown( key, shift, false );
+	}
+	
+	function onKeyUp(key, shift, process=true) {
+		actionCallBack( %[ key:key, shift:shift, type:"onKeyUp" ] );
+		super.onKeyUp( key, shift, false );
+	}
+	
+	function onAction( ev ) {}
+}
+
+/////////////////////////////////////////////////////////////////////////
+//
+class LayerTrueBase extends CompoLayer
+{
+
+	function LayerTrueBase( win, par, pal ) {
+		super.CompoLayer(...);
+		hitType= htMask;
+		hitThreshold= 256;
+		focusable= false;
+		name= "LayerTrueBase";
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function loadImages( image, colorKey=clNone ) {
+		var ret = super.loadImages(...);
+		setSizeToImageSize();
+		hitType= htMask;
+		hitThreshold= 256;
+		focusable= false;
+		return ret;
+	}
+	
+}
+
+
+/////////////////////////////////////////////////////////////////////////
+//
+class LayerBufferBase extends Layer
+{
+
+	function LayerBufferBase( win, par, pal ) {
+		super.Layer(...);
+		focusable= false;
+		visible= false;
+		name= "LayerBufferBase";
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function loadImages( image, colorKey=clNone ) {
+		var ret = super.loadImages(...);
+		setSizeToImageSize();
+		focusable= false;
+		visible= false;
+		return ret;
+	}
+	
+	function releaseBuffer() {
+		setSize(32,32);
+		setImageSize(32,32);
+		visible= false;
+		return ret;
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////
+//
+class LayerTextBase extends CompoLayer
+{
+	var textData= "";
+	var textDataSize= 14;
+	var textDataColor= 0xffffff;
+	
+	var countMove= void;
+	
+	var inputText= false;
+	
+	var valuedata= 0;
+	var valuemode= 0;
+	
+	function LayerTextBase( win, par, pal ) {
+		super.CompoLayer(...);
+		hitType= htMask;
+		hitThreshold= 256;
+		focusable= false;
+		name= "LayerTextBase";
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	//
+	function setLayer( x_=0, y_=0, w_=32, h_=32, cl=false )
+	{
+		setPos( x_, y_ );
+		setSize( w_, h_ );
+		setImageSize( w_, h_ );
+		if(cl) fillRect( 0, 0, w_, h_, 0x99ff0000 );
+		else fillRect( 0, 0, w_, h_, 0x00000000 );
+		visible= true;
+	}
+	
+	function clearText() {
+		fillRect( 0,0, width,height, 0x00000000 );
+		//textArr.clear();
+	}
+	
+//	function move_callbak(v){
+//		if(countMove!==void) countMove(v);
+//	}
+	
+	
+	function setInputText(f_){
+		inputText= f_;
+		if(inputText){
+			hitType= htMask;
+			hitThreshold= 0;
+			focusable= true;
+			focus();
+			imeMode= imDontCare;
+		}else{
+			hitType= htMask;
+			hitThreshold= 256;
+			focusable= false;
+		}
+	}
+	
+	function drawTextEdit( v_, c_=0xffffff, s_=14 ){
+		textData= v_;
+		textDataSize= s_;
+		textDataColor= c_;
+		drawTextEdit_update();
+	}
+	
+	function drawTextEdit_update(){
+		fillRect( 0,0, width,height, 0x00000000 );
+		drawText2( 0,0, textData, textDataColor, textDataSize );
+	}
+	
+	function onKeyPress(key, process=true){
+		super.onKeyPress(...);
+		textData= key;
+		drawTextEdit_update();
+		dm("LayerTextBase.onKeyPress= %s".sprintf(textData));
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////
+//
+class LayerGroupBase extends CompoLayer
+{
+	
+	function LayerGroupBase( win, par, pal ) {
+		super.CompoLayer(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_, w_=960, h_=720 )
+	{
+	
+		setPos( x_, y_ );
+		setSize( w_, h_ );
+		
+		
+		type = ltAddAlpha;
+		//type = parent.type;
+		face = dfAuto;
+        hitType= htMask;
+		hitThreshold= 256;
+		focusable= false;
+		
+		hasImage= false;
+		visible= true;
+		
+	}
+}
+/////////////////////////////////////////////////////////////////////////
+//
+class LayerTrueBase2D extends LayerEventBase2
+{
+	//拡大率
+	var zoom= 1.0;
+	var zoomlimit= 2.5;
+	
+	//画像バッファ
+	var _buffImage= void;
+	
+	//中心位置補正
+	var centW=0.5, centH=0.5;
+	
+	//var adata= void;
+	
+	function LayerTrueBase2D( win, par, pal ) {
+		super.LayerEventBase2(...);
+        hitType= htMask;
+		hitThreshold= 64;
+		focusable= true;
+		name= "LayerTrueBase2D";
+	}
+	
+	function finalize() {
+		invalidate _buffImage;
+		super.finalize(...);
+	}
+	
+	function setLayer( x_=0, y_=0, w_=32, h_=32, c_=0x00000000 )
+	{
+		setPos( x_, y_ );
+		setImageSize( w_*zoomlimit, h_*zoomlimit );
+		setSizeToImageSize();
+		fillRect( 0, 0, width, height, 0x00000000 );
+		visible= true;
+		type = ltAddAlpha;
+		//type= parent.type;
+		face= dfAuto;
+		
+		_buffImage= new global.Layer( window, this );
+		_buffImage.setImageSize( w_, h_ );
+		_buffImage.setSizeToImageSize();
+		_buffImage.visible= false;
+		_buffImage.fillRect( 0, 0, w_, h_, c_ );
+		_buffImage.type= ltAddAlpha;
+		//_buffImage.type= type;
+		_buffImage.face= dfAuto;
+	}
+	
+    function loadImages( image, colorKey=clNone, cw=void, ch=void ) {
+    
+		_buffImage.loadImages( image );
+		_buffImage.setSizeToImageSize();
+		_buffImage.type= ltAddAlpha;
+		//_buffImage.type= type;
+		_buffImage.visible= false;
+		
+		if(cw!==void) centW= cw; else centW= 0.5;
+		if(ch!==void) centH= ch; else centH= 0.5;
+		
+		setImageSize( _buffImage.width*zoomlimit, _buffImage.height*zoomlimit );
+		setSizeToImageSize();
+        hitType= htMask;
+		hitThreshold= 64;
+		focusable= true;
+		
+		fillRect( 0, 0, width, height, 0x00000000 );
+		
+		onPaint();
+		
+    }
+	
+    function setPos2D( x, y, z=void ) {
+    	left= xx-int((_buffImage.height*zoom)*centW);
+    	top= yy-int((_buffImage.height*zoom)*centH);
+    	if(z!==void) {
+	    	if(zoom>zoomlimit) zoom=zoomlimit;
+	    	zoom= z;
+    	}
+    	onPaint();
+    }
+    
+    function setPos2Dvec( vc1, vc2, va=1.0 ) {
+    	
+    	//ベースマップの拡大率
+		var xx= int(vc1.x*va); //表示ベクター
+		var yy= int(vc1.y*va); //表示ベクター
+		var xx2= int(vc2.x*va); //比率用サブベクター
+    	
+    	//拡大率設定
+    	zoom= (xx2-xx)/_buffImage.height;
+    	if(zoom>zoomlimit) zoom=zoomlimit;
+    	if(zoom<0.0001) zoom=0.0001;
+    	
+    	//座標センター修正
+    	left= xx-int((_buffImage.height*zoom)*centW);
+    	top= yy-int((_buffImage.height*zoom)*centH);
+    	
+    	onPaint();
+    }
+    
+    function setPos2Dd( ds, va=1.0 ) {
+    	setPos2Dvec( ds.drawTrans[0], ds.drawTrans[1], 2.0 );
+    }
+    
+	function onPaint()
+	{
+		if(_buffImage!==void){
+			stretchCopy( 0, 0, int(_buffImage.width*zoom), int(_buffImage.height*zoom), _buffImage,
+				0, 0, _buffImage.width, _buffImage.height, stNearest
+			);
+//			stretchCopy( 0, 0, int(_buffImage.width*zoom), int(_buffImage.height*zoom), _buffImage,
+//				0, 0, _buffImage.width, _buffImage.height, stFastLinear
+//			);
+			
+			setSize(int(_buffImage.width*zoom),int(_buffImage.height*zoom));
+		}
+		super.onPaint();
+	}
+	
+}

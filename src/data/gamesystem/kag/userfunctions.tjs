@@ -1,0 +1,634 @@
+//=============================
+//■関数各種
+//=============================
+//名前空間の衝突がいやなのですべてここにまとめてもらう
+// userfunctionsからアクセス
+
+global.userfunctions= new Tuserfunctions();
+global._uf= global.userfunctions;
+
+class Tuserfunctions
+{
+
+	var volumeList= void;
+	var voiceListChar= void;
+	
+	var recall_auto_mode= false;
+	var recall_skip_mode= false;
+	
+	function Tuserfunctions()
+	{
+	
+		//ボイスリスト
+		volumeList= %[
+			cv_A0:0,
+			cv_B0:1,
+			cv_C0:2,
+			cv_D0:3,
+			cv_E0:4,
+			cv_K0:5,
+			cv_L0:6,
+			cv_M0:7,
+			cv_J0:8,
+			cv_N0:9,
+			cv_P0:10,
+			cv_F0:11,
+			cv_G0:11,
+			cv_I0:12,
+			cv_H0:13,
+			cv_Q0:14,
+			cv_R0:15,
+			cv_X1:16,
+			cv_X2:16,
+			cv_X5:16,
+			cv_Y1:16,
+			cv_Y3:16,
+			cv_Y6:16,
+			cv_X3:17,
+			cv_X4:17,
+			cv_X6:17,
+			cv_X7:17,
+			cv_X8:17,
+			cv_X9:17,
+			cv_Y2:17,
+			cv_Y4:17,
+			cv_Y7:17,
+			cv_Y8:17,
+			cv_Y9:17,
+			cv_Z1:17,
+			cv_Z2:17,
+			cv_Z3:17,
+			cv_Z4:17,
+			cv_Z5:17,
+			cv_Z6:17
+		];
+		
+		voiceListChar= [
+			"cv_A00001",
+			"cv_B00001",
+			"cv_C00001",
+			"cv_D00001",
+			"cv_E00001",
+			"cv_K00001",
+			"cv_L00001",
+			"cv_M00001",
+			"cv_J00001",
+			"cv_N00001",
+			"cv_P00001",
+			"cv_F08011",
+			"cv_I00001",
+			"cv_H00001",
+			"cv_Q00001",
+			"cv_R00001",
+			"cv_X10001",
+			"cv_Z40001",
+			"cv_A09006",
+			"cv_A00001"
+		];
+	
+	}
+	
+	function finalize() {
+	}
+	
+	////////////////////
+	// 初期定数設定
+	function setLiteral()
+	{
+	}
+	
+	
+	////////////////////
+	// ムービー表示に使用
+	function setMovieLayer()
+	{
+		with( kag.fore.layers[0] )
+		{
+			.type=ltOpaque;
+			.setPos(0,0);
+			.setSize(960,720);
+			.setImageSize(960,720);
+			.opacity = 255;
+			.fillRect(0,0,960,720,0x000000);
+			.visible=true;
+			.hitType=htProvince;
+			.holdAlpha=false;
+		}
+	}
+
+
+	////////////////////
+	// すべてのSE停止
+	function seAllStop()
+	{
+		//for(var i=0; i<=5; i++) kag.se[i].stop();
+		for(var i=0; i<kag.se.count; i++) if( kag.se[i]!==void ) kag.se[i].stop();
+	}
+
+	////////////////////
+	// 音声2
+	//音声ファイル,チャンネル,ループ
+	function playVoiceList(storage,n_=1,p_=false,max=1.0)
+	{
+		var ret= false;
+		
+		with(kag.sflags.systemcore.option.volume)
+		{
+			max*= 100;
+			var mvol= .voice;
+			var cvol= 1.0;
+			var cvolm= false;
+			
+			//リスト
+			var vl= volumeList[storage.substr(0,5)];
+			
+			//リストにある場合はそのボリュームをセット
+			if( vl!==void)
+			{
+				cvol= .char[vl].value;
+				cvolm= .char[vl].mute;
+			}
+			
+			kag.se[n_].stop();
+			
+			//キャラvol=0 マスターvol=0 キャラmute=true 以外再生
+			if( playVolumeSet( mvol, cvol, cvolm, max, n_ )){
+				//if(cvol!=0 && mvol!=0 && !cvolm){
+				kag.se[n_].play(%[storage:storage, loop:p_]);
+				ret= true;
+			}
+			//dm("playVoiceList= %s->%d,%f,%f,%d v=%d".sprintf(storage.substr(0,5),vl,mvol,vol,mute,(100*mas)*vol));
+		}
+		return ret;
+	}
+	
+	function playVolumeSet( mas=1.0, vol=1.0, mute=false, max=100, n_=1 )
+	{
+		var ret= false;
+		//キャラvol=0 マスターvol=0 キャラmute=true 以外再生
+		if(vol!=0 && mas!=0 && !mute){
+			var vlc= (max*mas)*vol;
+			kag.se[n_].setOptions(%[gvolume:vlc]);
+			ret= true;
+		}
+		return ret;
+	}
+	
+	////////////////////
+	// 音声
+	function playVoice(storage)
+	{
+		if(playVoiceList( storage, 1,, sf.systemcore.option.volume.voice )) kag.se[2].stop();
+	}
+	
+	////////////////////
+	// 履歴音声
+	function historyVoice(storage)
+	{
+		return "userfunctions.playVoiceList( \"%s\", 1,, sf.systemcore.option.volume.voice );".sprintf(storage);
+	}
+	
+	////////////////////
+	// バックボイス
+	function playBackVoice(storage)
+	{
+		if(kag.sflags.systemcore.option.voice.background){
+			if(playVoiceList( storage, 2, true, _BGV_VOLUME_MAX )) kag.se[1].stop();
+		}
+	}
+	
+	function playBackVoicePause()
+	{
+		kag.se[2].pause();
+	}
+	
+	function playVoiceStopCheck()
+	{
+		if(kag.sflags.systemcore.option.voice.messcut) kag.se[1].stop();
+	}
+	
+	//BGMのボリュームを設定
+	function setBgmVolume(v=1.0,i=0,max=1.0)
+	{
+		var vo= int((100*max)*v);
+		kag.bgm.setOptions(%[gvolume:vo]);
+	}
+	
+	function setBgmMute(mu=false)
+	{
+		if(mu) kag.bgm.setOptions(%[volume:0]);
+		else kag.bgm.setOptions(%[volume:100]);
+	}
+	
+	//MOVIEのボリュームを設定
+	function setMovieVolume(v=1.0,i=0,max=1.0)
+	{
+		kag.movies[i].setOptions(%[volume:v]);
+	}
+	
+	function setMovieMute(v=1.0,i=0,max=1.0,mu=false)
+	{
+		kag.movies[i].setOptions(%[volume:0]);
+	}
+	
+	//SEのボリュームを設定
+	function setSeVolume(v=1.0,i=0,max=1.0)
+	{
+		var vo= int((100*max)*v);
+		kag.se[i].setOptions(%[gvolume:vo]);
+	}
+	
+	function setSeVolumeMute(i=0,mu=false)
+	{
+		if(mu) kag.se[i].setOptions(%[volume:0]);
+		else kag.se[i].setOptions(%[volume:100]);
+	}
+	
+	//スキップ停止直前の状態を保存
+	function SkipAutoMode_statusset() {
+		recall_auto_mode= kag.autoMode;
+		recall_skip_mode= kag.skipMode>0;
+	}
+	
+	function AutoMode_statusset(f=false) {
+		recall_auto_mode= f;
+		if(recall_auto_mode) recall_skip_mode= false;
+	}
+	
+	function SkipMode_statusset(f=false) {
+		recall_skip_mode= f;
+		if(recall_skip_mode) recall_auto_mode= false;
+	}
+	
+	//状態を復帰
+	function recall_SkipAuto()
+	{
+		if( kag.sflags.systemcore.option.text.selectskip ) {
+			if(recall_auto_mode) kag.onAutoModeMenuItemClick();
+			if(recall_skip_mode>0) kag.onSkipToNextStopMenuItemClick();
+			recall_skip_mode= false;
+			recall_auto_mode= false;
+		}
+	}
+	
+	function SkipAutoMode_reset() {
+			recall_skip_mode= false;
+			recall_auto_mode= false;
+	}
+	////////////////////
+	// 選択肢配置
+	function slinkLocate(num)
+	{
+		var xPos = (960-(2001/3))\2;
+		var yPos = 55*num;
+		//kag.tagHandlers.locate(%[x : xPos, y : yPos]);
+		//直接指定する?
+		
+		if( kag.currentWithBack ) kag.current.comp.locate( xPos, yPos );
+		kag.current.locate( xPos, yPos );
+		
+	}
+
+	function slinkTextColor(num, text)
+	{
+		var i = num - 1;		// リンク番号を調整
+		var size = 22;			// フォントサイズ
+		var shadow = true;		// 影を描画(無効はfalse)
+		var shadowlevel = 1024;		// 影の不透明度
+		var shadowcolor = 0x1A1A1A;	// 影の色
+		var shadowwidth= 2;		// 影のぼけ幅
+		var shadowofsx = 0;		// 影のX座標
+		var shadowofsy = 0;		// 影のY座標
+
+		with (kag.current.links[i].object)
+		{
+			.font.face = 'ＭＳ ゴシック';
+			.font.bold = false;
+			.font.height = size;
+
+			// 文字列幅を求め、ボタン画像の中央に表示されるように座標を調整
+			var w = .font.getTextWidth(text);
+			var x = (.width - w) \ 2;
+			var y = (.height - size) \ 2;
+
+			if(tf.slinkcolor == true)
+			{
+				if(shadow){
+					.drawText(x,               y, text, 0xA5A5A5, , true, shadowlevel, shadowcolor, shadowwidth, shadowofsx, shadowofsy);
+					.drawText(x+.width,        y, text, 0xA5A5A5, , true, shadowlevel, shadowcolor, shadowwidth, shadowofsx, shadowofsy);
+					.drawText(x+.width+.width, y, text, 0xA5A5A5, , true, shadowlevel, shadowcolor, shadowwidth, shadowofsx, shadowofsy);
+				}else{
+					.drawText(x,               y, text, 0xA5A5A5);
+					.drawText(x+.width,        y, text, 0xA5A5A5);
+					.drawText(x+.width+.width, y, text, 0xA5A5A5);
+				}
+			}else{
+				if(shadow){
+					.drawText(x,               y, text, 0xFFFFFF, , true, shadowlevel, shadowcolor, shadowwidth, shadowofsx, shadowofsy);
+					.drawText(x+.width,        y, text, 0xFFFFFF, , true, shadowlevel, shadowcolor, shadowwidth, shadowofsx, shadowofsy);
+					.drawText(x+.width+.width, y, text, 0xFFFFFF, , true, shadowlevel, shadowcolor, shadowwidth, shadowofsx, shadowofsy);
+				}else{
+					.drawText(x,               y, text, 0xFFFFFF);
+					.drawText(x+.width,        y, text, 0xFFFFFF);
+					.drawText(x+.width+.width, y, text, 0xFFFFFF);
+				}
+			}
+		}
+	}
+
+
+	////////////////////
+	// エモーション
+	//function emotionName(type)
+	function emotionName( m=void )
+	{
+		if( m!==void )
+		{
+			switch(m.type)
+			{
+				case 'ビックリ': m.type='exclamation';  break;
+				case '疑問':     m.type='Question';     break;
+				case '怒り':     m.type='stressicon';   break;
+				case '驚き':     m.type='Surprisicon';  break;
+				case '驚き1':    m.type='Surprisicon1'; break;
+				case '驚き2':    m.type='Surprisicon2'; break;
+				case '焦り':     m.type='sweaticon';    break;
+				case '汗':       m.type='tearicon';     break;
+				case 'ハート':   m.type='hearticon';    break;
+				case 'ハート1':  m.type='vAB';          break;
+				case 'ハート2':  m.type='vAC';          break;
+				case 'ハート3':  m.type='vAD';          break;
+				case 'ハート4':  m.type='vAE';          break;
+				case 'ハート5':  m.type='vAF';          break;
+				case 'ハート6':  m.type='vAG';          break;
+				case 'ハート7':  m.type='vBC';          break;
+				case 'ハート8':  m.type='vBD';          break;
+				case 'ハート9':  m.type='vBE';          break;
+				case 'ハート10': m.type='vBF';          break;
+				case 'ハート11': m.type='vBG';          break;
+				case 'ハート12': m.type='vCD';          break;
+				case 'ハート13': m.type='vCE';          break;
+				case 'ハート14': m.type='vCF';          break;
+				case 'ハート15': m.type='vCG';          break;
+				case 'ハート16': m.type='vDE';          break;
+				case 'ハート17': m.type='vDF';          break;
+				case 'ハート18': m.type='vDG';          break;
+				case 'ハート19': m.type='vEF';          break;
+				case 'ハート20': m.type='vEG';          break;
+				case 'ハート21': m.type='vFG';          break;
+				case '光源':     m.type='light';        break;
+				case '雷':       m.type='sparking';     break;
+				default: break; 
+			}
+		}
+	}
+
+
+	////////////////////
+	// キャラ立ち絵
+	function charaSet(storage,p1,p2,p3)
+	//function charaSet( mp=void, storage, p1, p2, p3 )
+	{
+	//	if( mp!==void )
+	//	{
+			
+			if(p1===void) p1=0;
+			if(p2===void) p2=0;
+			if(p3===void) p3=0;
+			if(tf.alignment === 'b') p1=p3;
+			
+			tf.face=p1;
+			
+			switch(storage)
+			{
+				case 'cn01_a110': mp.x=55; mp.y=60; mp.dx=382; mp.dy=140; mp.sx=92*p1; mp.sy=0; mp.sw=92; mp.sh=71; if(p2==0){mp.face='fn01_a110';}else{mp.face='fn01_a110a';} break;
+				case 'cn01_a120': mp.x=55; mp.y=60; mp.dx=382; mp.dy=140; mp.sx=92*p1; mp.sy=0; mp.sw=92; mp.sh=71; if(p2==0){mp.face='fn01_a110';}else{mp.face='fn01_a110a';} break;
+				case 'cn01_a210': mp.x=55; mp.y=60; mp.dx=382; mp.dy=140; mp.sx=92*p1; mp.sy=0; mp.sw=92; mp.sh=71; if(p2==0){mp.face='fn01_a110';}else{mp.face='fn01_a110a';} break;
+				case 'cn01_a220': mp.x=55; mp.y=60; mp.dx=382; mp.dy=140; mp.sx=92*p1; mp.sy=0; mp.sw=92; mp.sh=71; if(p2==0){mp.face='fn01_a110';}else{mp.face='fn01_a110a';} break;
+				case 'cn01_b110': mp.x=-108; mp.y=-66; mp.dx=598; mp.dy=292; mp.sx=98*p1; mp.sy=0; mp.sw=98; mp.sh=73; if(p2==0){mp.face='fn01_b110';}else{mp.face='fn01_b110a';} break;
+				case 'cn01_b120': mp.x=-108; mp.y=-66; mp.dx=598; mp.dy=292; mp.sx=98*p1; mp.sy=0; mp.sw=98; mp.sh=73; if(p2==0){mp.face='fn01_b120';}else{mp.face='fn01_b120a';} break;
+				case 'cn01_b210': mp.x=-108; mp.y=-66; mp.dx=598; mp.dy=292; mp.sx=98*p1; mp.sy=0; mp.sw=98; mp.sh=73; if(p2==0){mp.face='fn01_b210';}else{mp.face='fn01_b210a';} break;
+				case 'cn01_b220': mp.x=-108; mp.y=-66; mp.dx=598; mp.dy=292; mp.sx=98*p1; mp.sy=0; mp.sw=98; mp.sh=73; if(p2==0){mp.face='fn01_b120';}else{mp.face='fn01_b120a';} break;
+	
+				case 'cb01_a110': mp.x=-338; mp.y=-86; mp.dx=733; mp.dy=281; mp.sx=182*p1; mp.sy=0; mp.sw=182; mp.sh=141; if(p2==0){mp.face='fb01_a110';}else{mp.face='fb01_a110a';} break;
+				case 'cb01_a120': mp.x=-338; mp.y=-86; mp.dx=733; mp.dy=281; mp.sx=182*p1; mp.sy=0; mp.sw=182; mp.sh=141; if(p2==0){mp.face='fb01_a110';}else{mp.face='fb01_a110a';} break;
+				case 'cb01_a210': mp.x=-338; mp.y=-86; mp.dx=733; mp.dy=281; mp.sx=182*p1; mp.sy=0; mp.sw=182; mp.sh=141; if(p2==0){mp.face='fb01_a110';}else{mp.face='fb01_a110a';} break;
+				case 'cb01_a220': mp.x=-338; mp.y=-86; mp.dx=733; mp.dy=281; mp.sx=182*p1; mp.sy=0; mp.sw=182; mp.sh=141; if(p2==0){mp.face='fb01_a110';}else{mp.face='fb01_a110a';} break;
+				case 'cb01_b110': mp.x=-628; mp.y=-335; mp.dx=1126; mp.dy=585; mp.sx=196*p1; mp.sy=0; mp.sw=196; mp.sh=144; if(p2==0){mp.face='fb01_b110';}else{mp.face='fb01_b110a';} break;
+				case 'cb01_b120': mp.x=-628; mp.y=-335; mp.dx=1126; mp.dy=585; mp.sx=196*p1; mp.sy=0; mp.sw=196; mp.sh=144; if(p2==0){mp.face='fb01_b120';}else{mp.face='fb01_b120a';} break;
+				case 'cb01_b210': mp.x=-628; mp.y=-335; mp.dx=1126; mp.dy=585; mp.sx=196*p1; mp.sy=0; mp.sw=196; mp.sh=144; if(p2==0){mp.face='fb01_b210';}else{mp.face='fb01_b210a';} break;
+				case 'cb01_b220': mp.x=-628; mp.y=-335; mp.dx=1126; mp.dy=585; mp.sx=196*p1; mp.sy=0; mp.sw=196; mp.sh=144; if(p2==0){mp.face='fb01_b120';}else{mp.face='fb01_b120a';} break;
+	
+				///////////
+	
+				case 'cn02_a110': mp.x=205; mp.y=106; mp.dx=221; mp.dy=58; mp.sx=100*p1; mp.sy=0; mp.sw=100; mp.sh=72; if(p2==0){mp.face='fn02_a110';}if(p2==1){mp.face='fn02_a110a';}if(p2==2){mp.face='fn02_a110b';}if(p2==3){mp.face='fn02_a110c';} break;
+				case 'cn02_a120': mp.x=205; mp.y=106; mp.dx=221; mp.dy=58; mp.sx=100*p1; mp.sy=0; mp.sw=100; mp.sh=72; if(p2==0){mp.face='fn02_a110';}if(p2==1){mp.face='fn02_a110a';}if(p2==2){mp.face='fn02_a110b';}if(p2==3){mp.face='fn02_a110c';} break;
+				case 'cn02_a130': mp.x=205; mp.y=106; mp.dx=221; mp.dy=58; mp.sx=100*p1; mp.sy=0; mp.sw=100; mp.sh=72; if(p2==0){mp.face='fn02_a110';}if(p2==1){mp.face='fn02_a110a';}if(p2==2){mp.face='fn02_a110b';}if(p2==3){mp.face='fn02_a110c';} break;
+				case 'cn02_b110': mp.x=155; mp.y=102; mp.dx=274; mp.dy=66; mp.sx=90*p1; mp.sy=0; mp.sw=90; mp.sh=65; if(p2==0){mp.face='fn02_b110';}if(p2==1){mp.face='fn02_b110a';}if(p2==2){mp.face='fn02_b110b';}if(p2==3){mp.face='fn02_b110c';} break;
+				case 'cn02_b120': mp.x=155; mp.y=102; mp.dx=274; mp.dy=66; mp.sx=90*p1; mp.sy=0; mp.sw=90; mp.sh=65; if(p2==0){mp.face='fn02_b110';}if(p2==1){mp.face='fn02_b110a';}if(p2==2){mp.face='fn02_b110b';}if(p2==3){mp.face='fn02_b110c';} break;
+				case 'cn02_b130': mp.x=155; mp.y=102; mp.dx=274; mp.dy=66; mp.sx=90*p1; mp.sy=0; mp.sw=90; mp.sh=65; if(p2==0){mp.face='fn02_b130';}if(p2==1){mp.face='fn02_b130a';}if(p2==2){mp.face='fn02_b130b';}if(p2==3){mp.face='fn02_b130c';} break;
+	
+				case 'cb02_a110': mp.x=-37; mp.y=53; mp.dx=410; mp.dy=116; mp.sx=198*p1; mp.sy=0; mp.sw=198; mp.sh=143; if(p2==0){mp.face='fb02_a110';}if(p2==1){mp.face='fb02_a110a';}if(p2==2){mp.face='fb02_a110b';}if(p2==3){mp.face='fb02_a110c';} break;
+				case 'cb02_a120': mp.x=-37; mp.y=53; mp.dx=410; mp.dy=116; mp.sx=198*p1; mp.sy=0; mp.sw=198; mp.sh=143; if(p2==0){mp.face='fb02_a110';}if(p2==1){mp.face='fb02_a110a';}if(p2==2){mp.face='fb02_a110b';}if(p2==3){mp.face='fb02_a110c';} break;
+				case 'cb02_a130': mp.x=-37; mp.y=53; mp.dx=410; mp.dy=116; mp.sx=198*p1; mp.sy=0; mp.sw=198; mp.sh=143; if(p2==0){mp.face='fb02_a110';}if(p2==1){mp.face='fb02_a110a';}if(p2==2){mp.face='fb02_a110b';}if(p2==3){mp.face='fb02_a110c';} break;
+				case 'cb02_b110': mp.x=70; mp.y=54; mp.dx=311; mp.dy=131; mp.sx=176*p1; mp.sy=0; mp.sw=176; mp.sh=129; if(p2==0){mp.face='fb02_b110';}if(p2==1){mp.face='fb02_b110a';}if(p2==2){mp.face='fb02_b110b';}if(p2==3){mp.face='fb02_b110c';} break;
+				case 'cb02_b120': mp.x=70; mp.y=54; mp.dx=311; mp.dy=131; mp.sx=176*p1; mp.sy=0; mp.sw=176; mp.sh=129; if(p2==0){mp.face='fb02_b110';}if(p2==1){mp.face='fb02_b110a';}if(p2==2){mp.face='fb02_b110b';}if(p2==3){mp.face='fb02_b110c';} break;
+				case 'cb02_b130': mp.x=70; mp.y=54; mp.dx=311; mp.dy=131; mp.sx=176*p1; mp.sy=0; mp.sw=176; mp.sh=129; if(p2==0){mp.face='fb02_b130';}if(p2==1){mp.face='fb02_b130a';}if(p2==2){mp.face='fb02_b130b';}if(p2==3){mp.face='fb02_b130c';} break;
+	
+				///////////
+	
+				case 'cn03_a110': mp.x=130; mp.y=-49; mp.dx=303; mp.dy=211; mp.sx=106*p1; mp.sy=0; mp.sw=106; mp.sh=81; if(p2==0){mp.face='fn03_a110';}else{mp.face='fn03_a110a';} break;
+				case 'cn03_a120': mp.x=130; mp.y=-49; mp.dx=303; mp.dy=211; mp.sx=106*p1; mp.sy=0; mp.sw=106; mp.sh=81; if(p2==0){mp.face='fn03_a120';}else{mp.face='fn03_a120a';} break;
+				case 'cn03_b110': mp.x=160; mp.y=-81; mp.dx=265; mp.dy=240; mp.sx=104*p1; mp.sy=0; mp.sw=104; mp.sh=76; if(p2==0){mp.face='fn03_b110';}else{mp.face='fn03_b110a';} break;
+				case 'cn03_b120': mp.x=160; mp.y=-81; mp.dx=265; mp.dy=240; mp.sx=104*p1; mp.sy=0; mp.sw=104; mp.sh=76; if(p2==0){mp.face='fn03_b110';}else{mp.face='fn03_b110a';} break;
+	
+				case 'cb03_a110': mp.x=-216; mp.y=-261; mp.dx=605; mp.dy=423; mp.sx=210*p1; mp.sy=0; mp.sw=210; mp.sh=160; if(p2==0){mp.face='fb03_a110';}else{mp.face='fb03_a110a';} break;
+				case 'cb03_a120': mp.x=-216; mp.y=-261; mp.dx=605; mp.dy=423; mp.sx=210*p1; mp.sy=0; mp.sw=210; mp.sh=160; if(p2==0){mp.face='fb03_a120';}else{mp.face='fb03_a120a';} break;
+				case 'cb03_b110': mp.x=-155; mp.y=-304; mp.dx=529; mp.dy=480; mp.sx=206*p1; mp.sy=0; mp.sw=206; mp.sh=151; if(p2==0){mp.face='fb03_b110';}else{mp.face='fb03_b110a';} break;
+				case 'cb03_b120': mp.x=-155; mp.y=-304; mp.dx=529; mp.dy=480; mp.sx=206*p1; mp.sy=0; mp.sw=206; mp.sh=151; if(p2==0){mp.face='fb03_b110';}else{mp.face='fb03_b110a';} break;
+	
+				///////////
+	
+				case 'cn04_a110': mp.x=260; mp.y=66; mp.dx=166; mp.dy=203; mp.sx=106*p1; mp.sy=0; mp.sw=106; mp.sh=72; if(p2==0){mp.face='fn04_a110';}else{mp.face='fn04_a110a';} break;
+				case 'cn04_a120': mp.x=260; mp.y=66; mp.dx=166; mp.dy=203; mp.sx=106*p1; mp.sy=0; mp.sw=106; mp.sh=72; if(p2==0){mp.face='fn04_a120';}else{mp.face='fn04_a120a';} break;
+				case 'cn04_b110': mp.x=165; mp.y=48; mp.dx=274; mp.dy=215; mp.sx=94*p1; mp.sy=0; mp.sw=94; mp.sh=71; if(p2==0){mp.face='fn04_b110';}else{mp.face='fn04_b110a';} break;
+				case 'cn04_b120': mp.x=165; mp.y=48; mp.dx=274; mp.dy=215; mp.sx=94*p1; mp.sy=0; mp.sw=94; mp.sh=71; if(p2==0){mp.face='fn04_b110';}else{mp.face='fn04_b110a';} break;
+	
+				case 'cb04_a110': mp.x=136; mp.y=-167; mp.dx=238; mp.dy=405; mp.sx=210*p1; mp.sy=0; mp.sw=210; mp.sh=143; if(p2==0){mp.face='fb04_a110';}else{mp.face='fb04_a110a';} break;
+				case 'cb04_a120': mp.x=136; mp.y=-167; mp.dx=238; mp.dy=405; mp.sx=210*p1; mp.sy=0; mp.sw=210; mp.sh=143; if(p2==0){mp.face='fb04_a120';}else{mp.face='fb04_a120a';} break;
+				case 'cb04_b110': mp.x=-150; mp.y=-191; mp.dx=549; mp.dy=431; mp.sx=186*p1; mp.sy=0; mp.sw=186; mp.sh=141; if(p2==0){mp.face='fb04_b110';}else{mp.face='fb04_b110a';} break;
+				case 'cb04_b120': mp.x=-150; mp.y=-191; mp.dx=549; mp.dy=431; mp.sx=186*p1; mp.sy=0; mp.sw=186; mp.sh=141; if(p2==0){mp.face='fb04_b110';}else{mp.face='fb04_b110a';} break;
+	
+				///////////
+	
+				case 'cn05_a110': mp.x=170; mp.y=67; mp.dx=259; mp.dy=209; mp.sx=96*p1; mp.sy=0; mp.sw=96; mp.sh=74; if(p2==0){mp.face='fn05_a110';}else{mp.face='fn05_a110a';} break;
+				case 'cn05_a120': mp.x=170; mp.y=67; mp.dx=259; mp.dy=209; mp.sx=96*p1; mp.sy=0; mp.sw=96; mp.sh=74; if(p2==0){mp.face='fn05_a110';}else{mp.face='fn05_a110a';} break;
+				case 'cn05_a210': mp.x=170; mp.y=67; mp.dx=259; mp.dy=209; mp.sx=96*p1; mp.sy=0; mp.sw=96; mp.sh=74; if(p2==0){mp.face='fn05_a210';}else{mp.face='fn05_a210a';} break;
+				case 'cn05_a220': mp.x=170; mp.y=67; mp.dx=259; mp.dy=209; mp.sx=96*p1; mp.sy=0; mp.sw=96; mp.sh=74; if(p2==0){mp.face='fn05_a210';}else{mp.face='fn05_a210a';} break;
+				case 'cn05_b110': mp.x=185; mp.y=67; mp.dx=250; mp.dy=200; mp.sx=92*p1; mp.sy=0; mp.sw=92; mp.sh=82; if(p2==0){mp.face='fn05_b110';}else{mp.face='fn05_b110a';} break;
+				case 'cn05_b120': mp.x=185; mp.y=67; mp.dx=250; mp.dy=200; mp.sx=92*p1; mp.sy=0; mp.sw=92; mp.sh=82; if(p2==0){mp.face='fn05_b110';}else{mp.face='fn05_b110a';} break;
+				case 'cn05_b210': mp.x=185; mp.y=67; mp.dx=250; mp.dy=200; mp.sx=92*p1; mp.sy=0; mp.sw=92; mp.sh=82; if(p2==0){mp.face='fn05_b110';}else{mp.face='fn05_b110a';} break;
+				case 'cn05_b220': mp.x=185; mp.y=67; mp.dx=250; mp.dy=200; mp.sx=92*p1; mp.sy=0; mp.sw=92; mp.sh=82; if(p2==0){mp.face='fn05_b110';}else{mp.face='fn05_b110a';} break;
+	
+				case 'cb05_a110': mp.x=-138; mp.y=-174; mp.dx=518; mp.dy=419; mp.sx=190*p1; mp.sy=0; mp.sw=190; mp.sh=147; if(p2==0){mp.face='fb05_a110';}else{mp.face='fb05_a110a';} break;
+				case 'cb05_a120': mp.x=-138; mp.y=-174; mp.dx=518; mp.dy=419; mp.sx=190*p1; mp.sy=0; mp.sw=190; mp.sh=147; if(p2==0){mp.face='fb05_a110';}else{mp.face='fb05_a110a';} break;
+				case 'cb05_a210': mp.x=-138; mp.y=-174; mp.dx=518; mp.dy=419; mp.sx=190*p1; mp.sy=0; mp.sw=190; mp.sh=147; if(p2==0){mp.face='fb05_a210';}else{mp.face='fb05_a210a';} break;
+				case 'cb05_a220': mp.x=-138; mp.y=-174; mp.dx=518; mp.dy=419; mp.sx=190*p1; mp.sy=0; mp.sw=190; mp.sh=147; if(p2==0){mp.face='fb05_a210';}else{mp.face='fb05_a210a';} break;
+				case 'cb05_b110': mp.x=43; mp.y=-180; mp.dx=350; mp.dy=400; mp.sx=184*p1; mp.sy=0; mp.sw=184; mp.sh=163; if(p2==0){mp.face='fb05_b110';}else{mp.face='fb05_b110a';} break;
+				case 'cb05_b120': mp.x=43; mp.y=-180; mp.dx=350; mp.dy=400; mp.sx=184*p1; mp.sy=0; mp.sw=184; mp.sh=163; if(p2==0){mp.face='fb05_b110';}else{mp.face='fb05_b110a';} break;
+				case 'cb05_b210': mp.x=43; mp.y=-180; mp.dx=350; mp.dy=400; mp.sx=184*p1; mp.sy=0; mp.sw=184; mp.sh=163; if(p2==0){mp.face='fb05_b110';}else{mp.face='fb05_b110a';} break;
+				case 'cb05_b220': mp.x=43; mp.y=-180; mp.dx=350; mp.dy=400; mp.sx=184*p1; mp.sy=0; mp.sw=184; mp.sh=163; if(p2==0){mp.face='fb05_b110';}else{mp.face='fb05_b110a';} break;
+	
+				///////////
+	
+				case 'cn06_a110': mp.x=40; mp.y=-173; mp.dx=399; mp.dy=279; mp.sx=88*p1; mp.sy=0; mp.sw=88; mp.sh=80; mp.face='fn06_a110'; break;
+				case 'cn06_a120': mp.x=40; mp.y=-173; mp.dx=399; mp.dy=279; mp.sx=88*p1; mp.sy=0; mp.sw=88; mp.sh=80; mp.face='fn06_a110'; break;
+				case 'cn06_a130': mp.x=40; mp.y=-173; mp.dx=399; mp.dy=279; mp.sx=88*p1; mp.sy=0; mp.sw=88; mp.sh=80; mp.face='fn06_a110'; break;
+				case 'cn06_a140': mp.x=40; mp.y=-173; mp.dx=399; mp.dy=279; mp.sx=88*p1; mp.sy=0; mp.sw=88; mp.sh=80; mp.face='fn06_a110'; break;
+				case 'cn06_a150': mp.x=40; mp.y=-173; mp.dx=399; mp.dy=279; mp.sx=88*p1; mp.sy=0; mp.sw=88; mp.sh=80; mp.face='fn06_a110'; break;
+				case 'cn06_a160': mp.x=40; mp.y=-173; mp.dx=399; mp.dy=279; mp.sx=88*p1; mp.sy=0; mp.sw=88; mp.sh=80; mp.face='fn06_a110'; break;
+				case 'cn06_a210': mp.x=40; mp.y=-173; mp.dx=399; mp.dy=279; mp.sx=88*p1; mp.sy=0; mp.sw=88; mp.sh=80; mp.face='fn06_a210'; break;
+				case 'cn06_a220': mp.x=40; mp.y=-173; mp.dx=399; mp.dy=279; mp.sx=88*p1; mp.sy=0; mp.sw=88; mp.sh=80; mp.face='fn06_a210'; break;
+				case 'cn06_a230': mp.x=40; mp.y=-173; mp.dx=399; mp.dy=279; mp.sx=88*p1; mp.sy=0; mp.sw=88; mp.sh=80; mp.face='fn06_a210'; break;
+				case 'cn06_a240': mp.x=40; mp.y=-173; mp.dx=399; mp.dy=279; mp.sx=88*p1; mp.sy=0; mp.sw=88; mp.sh=80; mp.face='fn06_a210'; break;
+				case 'cn06_a250': mp.x=40; mp.y=-173; mp.dx=399; mp.dy=279; mp.sx=88*p1; mp.sy=0; mp.sw=88; mp.sh=80; mp.face='fn06_a210'; break;
+				case 'cn06_a260': mp.x=40; mp.y=-173; mp.dx=399; mp.dy=279; mp.sx=88*p1; mp.sy=0; mp.sw=88; mp.sh=80; mp.face='fn06_a210'; break;
+				case 'cn06_b110': mp.x=44; mp.y=-273; mp.dx=401; mp.dy=338; mp.sx=78*p1; mp.sy=0; mp.sw=78; mp.sh=75; mp.face='fn06_b110'; break;
+				case 'cn06_b120': mp.x=44; mp.y=-273; mp.dx=401; mp.dy=338; mp.sx=78*p1; mp.sy=0; mp.sw=78; mp.sh=75; mp.face='fn06_b110'; break;
+				case 'cn06_b130': mp.x=44; mp.y=-273; mp.dx=401; mp.dy=338; mp.sx=78*p1; mp.sy=0; mp.sw=78; mp.sh=75; mp.face='fn06_b110'; break;
+				case 'cn06_b210': mp.x=44; mp.y=-273; mp.dx=401; mp.dy=338; mp.sx=78*p1; mp.sy=0; mp.sw=78; mp.sh=75; mp.face='fn06_b110'; break;
+				case 'cn06_b220': mp.x=44; mp.y=-273; mp.dx=401; mp.dy=338; mp.sx=78*p1; mp.sy=0; mp.sw=78; mp.sh=75; mp.face='fn06_b110'; break;
+				case 'cn06_b230': mp.x=44; mp.y=-273; mp.dx=401; mp.dy=338; mp.sx=78*p1; mp.sy=0; mp.sw=78; mp.sh=75; mp.face='fn06_b110'; break;
+				case 'cn06_b310': mp.x=44; mp.y=-273; mp.dx=401; mp.dy=338; mp.sx=78*p1; mp.sy=0; mp.sw=78; mp.sh=75; mp.face='fn06_b110'; break;
+				case 'cn06_b320': mp.x=44; mp.y=-273; mp.dx=401; mp.dy=338; mp.sx=78*p1; mp.sy=0; mp.sw=78; mp.sh=75; mp.face='fn06_b110'; break;
+				case 'cn06_b330': mp.x=44; mp.y=-273; mp.dx=401; mp.dy=338; mp.sx=78*p1; mp.sy=0; mp.sw=78; mp.sh=75; mp.face='fn06_b110'; break;
+
+				case 'cb06_a110': mp.x=-400; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a110'; break;
+				case 'cb06_a120': mp.x=-400; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a110'; break;
+				case 'cb06_a130': mp.x=-400; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a110'; break;
+				case 'cb06_a140': mp.x=-400; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a110'; break;
+				case 'cb06_a150': mp.x=-400; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a110'; break;
+				case 'cb06_a160': mp.x=-400; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a110'; break;
+				case 'cb06_a210': mp.x=-400; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a210'; break;
+				case 'cb06_a220': mp.x=-400; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a210'; break;
+				case 'cb06_a230': mp.x=-400; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a210'; break;
+				case 'cb06_a240': mp.x=-400; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a210'; break;
+				case 'cb06_a250': mp.x=-400; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a210'; break;
+				case 'cb06_a260': mp.x=-400; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a210'; break;
+				case 'cb06_b110': mp.x=-140; mp.y=-604; mp.dx=548; mp.dy=675; mp.sx=154*p1; mp.sy=0; mp.sw=154; mp.sh=148; mp.face='fb06_b110'; break;
+				case 'cb06_b120': mp.x=-140; mp.y=-604; mp.dx=548; mp.dy=675; mp.sx=154*p1; mp.sy=0; mp.sw=154; mp.sh=148; mp.face='fb06_b110'; break;
+				case 'cb06_b130': mp.x=-140; mp.y=-604; mp.dx=548; mp.dy=675; mp.sx=154*p1; mp.sy=0; mp.sw=154; mp.sh=148; mp.face='fb06_b110'; break;
+				case 'cb06_b210': mp.x=-140; mp.y=-604; mp.dx=548; mp.dy=675; mp.sx=154*p1; mp.sy=0; mp.sw=154; mp.sh=148; mp.face='fb06_b110'; break;
+				case 'cb06_b220': mp.x=-140; mp.y=-604; mp.dx=548; mp.dy=675; mp.sx=154*p1; mp.sy=0; mp.sw=154; mp.sh=148; mp.face='fb06_b110'; break;
+				case 'cb06_b230': mp.x=-140; mp.y=-604; mp.dx=548; mp.dy=675; mp.sx=154*p1; mp.sy=0; mp.sw=154; mp.sh=148; mp.face='fb06_b110'; break;
+				case 'cb06_b310': mp.x=-140; mp.y=-604; mp.dx=548; mp.dy=675; mp.sx=154*p1; mp.sy=0; mp.sw=154; mp.sh=148; mp.face='fb06_b110'; break;
+				case 'cb06_b320': mp.x=-140; mp.y=-604; mp.dx=548; mp.dy=675; mp.sx=154*p1; mp.sy=0; mp.sw=154; mp.sh=148; mp.face='fb06_b110'; break;
+				case 'cb06_b330': mp.x=-140; mp.y=-604; mp.dx=548; mp.dy=675; mp.sx=154*p1; mp.sy=0; mp.sw=154; mp.sh=148; mp.face='fb06_b110'; break;
+	
+				///////////
+	
+				case 'cn07_110': mp.x=344; mp.y=121; mp.dx=96; mp.dy=96; mp.sx=84*p1; mp.sy=0; mp.sw=84; mp.sh=64; if(p2==0){mp.face='fn07_110';}else{mp.face='fn07_110a';} break;
+				case 'cn07_120': mp.x=344; mp.y=121; mp.dx=96; mp.dy=96; mp.sx=84*p1; mp.sy=0; mp.sw=84; mp.sh=64; if(p2==0){mp.face='fn07_110';}else{mp.face='fn07_110a';} break;
+	
+				case 'cb07_110': mp.x=305; mp.y=19; mp.dx=94; mp.dy=192; mp.sx=166*p1; mp.sy=0; mp.sw=166; mp.sh=127; if(p2==0){mp.face='fb07_110';}else{mp.face='fb07_110a';} break;
+				case 'cb07_120': mp.x=305; mp.y=19; mp.dx=94; mp.dy=192; mp.sx=166*p1; mp.sy=0; mp.sw=166; mp.sh=127; if(p2==0){mp.face='fb07_110';}else{mp.face='fb07_110a';} break;
+	
+				///////////
+	
+				case 'cn08_110': mp.x=120; mp.y=41; mp.dx=256; mp.dy=30; mp.sx=206*p1; mp.sy=0; mp.sw=206; mp.sh=131; mp.face='fn08_110'; break;
+				case 'cn08_120': mp.x=120; mp.y=41; mp.dx=256; mp.dy=30; mp.sx=206*p1; mp.sy=0; mp.sw=206; mp.sh=131; mp.face='fn08_120'; break;
+				case 'cn08_130': mp.x=120; mp.y=41; mp.dx=256; mp.dy=30; mp.sx=206*p1; mp.sy=0; mp.sw=206; mp.sh=131; mp.face='fn08_130'; break;
+				case 'cn08_140': mp.x=120; mp.y=41; mp.dx=256; mp.dy=30; mp.sx=206*p1; mp.sy=0; mp.sw=206; mp.sh=131; mp.face='fn08_140'; break;
+	
+				case 'cb08_110': mp.x=-226; mp.y=8; mp.dx=500; mp.dy=60; mp.sx=412*p1; mp.sy=0; mp.sw=412; mp.sh=260; mp.face='fb08_110'; break;
+				case 'cb08_120': mp.x=-226; mp.y=8; mp.dx=500; mp.dy=60; mp.sx=412*p1; mp.sy=0; mp.sw=412; mp.sh=260; mp.face='fb08_120'; break;
+				case 'cb08_130': mp.x=-226; mp.y=8; mp.dx=500; mp.dy=60; mp.sx=412*p1; mp.sy=0; mp.sw=412; mp.sh=260; mp.face='fb08_130'; break;
+				case 'cb08_140': mp.x=-226; mp.y=8; mp.dx=500; mp.dy=60; mp.sx=412*p1; mp.sy=0; mp.sw=412; mp.sh=260; mp.face='fb08_140'; break;
+	
+				///////////
+	
+				case 'cn09_110': mp.x=130; mp.y=19; mp.dx=316; mp.dy=59; mp.sx=82*p1; mp.sy=0; mp.sw=82; mp.sh=70; mp.face='fn09_110'; break;
+				case 'cn09_120': mp.x=130; mp.y=19; mp.dx=316; mp.dy=59; mp.sx=82*p1; mp.sy=0; mp.sw=82; mp.sh=70; mp.face='fn09_110'; break;
+				case 'cn09_130': mp.x=130; mp.y=19; mp.dx=316; mp.dy=59; mp.sx=82*p1; mp.sy=0; mp.sw=82; mp.sh=70; mp.face='fn09_110'; break;
+	
+				case 'cb09_110': mp.x=-224; mp.y=-14; mp.dx=632; mp.dy=118; mp.sx=164*p1; mp.sy=0; mp.sw=164; mp.sh=138; mp.face='fb09_110'; break;
+				case 'cb09_120': mp.x=-224; mp.y=-14; mp.dx=632; mp.dy=118; mp.sx=164*p1; mp.sy=0; mp.sw=164; mp.sh=138; mp.face='fb09_110'; break;
+				case 'cb09_130': mp.x=-224; mp.y=-14; mp.dx=632; mp.dy=118; mp.sx=164*p1; mp.sy=0; mp.sw=164; mp.sh=138; mp.face='fb09_110'; break;
+	
+				///////////
+	
+				case 'cn10_110': mp.x=16; mp.y=-166; mp.dx=417; mp.dy=335; mp.sx=86*p1; mp.sy=0; mp.sw=86; mp.sh=64; if(p2==0){mp.face='fn10_110';}else{mp.face='fn10_110a';} break;
+				case 'cn10_120': mp.x=16; mp.y=-166; mp.dx=417; mp.dy=335; mp.sx=86*p1; mp.sy=0; mp.sw=86; mp.sh=64; if(p2==0){mp.face='fn10_110';}else{mp.face='fn10_110a';} break;
+	
+				case 'cb10_110': mp.x=-448; mp.y=-476; mp.dx=835; mp.dy=671; mp.sx=170*p1; mp.sy=0; mp.sw=170; mp.sh=127; if(p2==0){mp.face='fb10_110';}else{mp.face='fb10_110a';} break;
+				case 'cb10_120': mp.x=-448; mp.y=-476; mp.dx=835; mp.dy=671; mp.sx=170*p1; mp.sy=0; mp.sw=170; mp.sh=127; if(p2==0){mp.face='fb10_110';}else{mp.face='fb10_110a';} break;
+	
+				///////////
+	
+				case 'cn11_110': mp.x=176; mp.y=87; mp.dx=254; mp.dy=86; mp.sx=90*p1; mp.sy=0; mp.sw=90; mp.sh=77; if(p2==0){mp.face='fn11_110';}else{mp.face='fn11_110a';} break;
+				case 'cn11_120': mp.x=176; mp.y=87; mp.dx=254; mp.dy=86; mp.sx=90*p1; mp.sy=0; mp.sw=90; mp.sh=77; if(p2==0){mp.face='fn11_110';}else{mp.face='fn11_110a';} break;
+	
+				case 'cb11_110': mp.x=-128; mp.y=14; mp.dx=509; mp.dy=172; mp.sx=176*p1; mp.sy=0; mp.sw=176; mp.sh=152; if(p2==0){mp.face='fb11_110';}else{mp.face='fb11_110a';} break;
+				case 'cb11_120': mp.x=-128; mp.y=14; mp.dx=509; mp.dy=172; mp.sx=176*p1; mp.sy=0; mp.sw=176; mp.sh=152; if(p2==0){mp.face='fb11_110';}else{mp.face='fb11_110a';} break;
+	
+				///////////
+	
+				case 'cn12_110': mp.x=211; mp.y=212; mp.dx=218; mp.dy=50; mp.sx=90*p1; mp.sy=0; mp.sw=90; mp.sh=90; if(p2==0){mp.face='fn12_110';}else{mp.face='fn12_110a';} break;
+				case 'cn12_120': mp.x=211; mp.y=212; mp.dx=218; mp.dy=50; mp.sx=90*p1; mp.sy=0; mp.sw=90; mp.sh=90; if(p2==0){mp.face='fn12_110';}else{mp.face='fn12_110a';} break;
+	
+				case 'cb12_110': mp.x=-53; mp.y=102; mp.dx=436; mp.dy=98; mp.sx=178*p1; mp.sy=0; mp.sw=178; mp.sh=180; if(p2==0){mp.face='fb12_110';}else{mp.face='fb12_110a';} break;
+				case 'cb12_120': mp.x=-53; mp.y=102; mp.dx=436; mp.dy=98; mp.sx=178*p1; mp.sy=0; mp.sw=178; mp.sh=180; if(p2==0){mp.face='fb12_110';}else{mp.face='fb12_110a';} break;
+	
+				///////////
+	
+				case 'cn13_110': mp.x=8; mp.y=-57; mp.dx=430; mp.dy=117; mp.sx=88*p1; mp.sy=0; mp.sw=88; mp.sh=102; mp.face='fn13_110'; break;
+				case 'cn13_120': mp.x=8; mp.y=-57; mp.dx=430; mp.dy=117; mp.sx=88*p1; mp.sy=0; mp.sw=88; mp.sh=102; mp.face='fn13_110'; break;
+				case 'cn13_130': mp.x=8; mp.y=-57; mp.dx=430; mp.dy=117; mp.sx=88*p1; mp.sy=0; mp.sw=88; mp.sh=102; mp.face='fn13_110'; break;
+	
+				case 'cb13_110': mp.x=-134; mp.y=-181; mp.dx=534; mp.dy=235; mp.sx=172*p1; mp.sy=0; mp.sw=172; mp.sh=203; mp.face='fb13_110'; break;
+				case 'cb13_120': mp.x=-134; mp.y=-181; mp.dx=534; mp.dy=235; mp.sx=172*p1; mp.sy=0; mp.sw=172; mp.sh=203; mp.face='fb13_110'; break;
+				case 'cb13_130': mp.x=-134; mp.y=-181; mp.dx=534; mp.dy=235; mp.sx=172*p1; mp.sy=0; mp.sw=172; mp.sh=203; mp.face='fb13_110'; break;
+				case 'cb13_140': mp.x=-134; mp.y=-181; mp.dx=534; mp.dy=235; mp.sx=172*p1; mp.sy=0; mp.sw=172; mp.sh=203; mp.face='fb13_110'; break;
+	
+				///////////
+	
+				case 'cn14_110': mp.x=319; mp.y=120; mp.dx=129; mp.dy=91; mp.sx=82*p1; mp.sy=0; mp.sw=82; mp.sh=79; if(p2==0){mp.face='fn14_110';}else{mp.face='fn14_110a';} break;
+				case 'cn14_120': mp.x=319; mp.y=120; mp.dx=129; mp.dy=91; mp.sx=82*p1; mp.sy=0; mp.sw=82; mp.sh=79; if(p2==0){mp.face='fn14_110';}else{mp.face='fn14_110a';} break;
+	
+				case 'cb14_110': mp.x=188; mp.y=31; mp.dx=226; mp.dy=183; mp.sx=164*p1; mp.sy=0; mp.sw=164; mp.sh=156; if(p2==0){mp.face='fb14_110';}else{mp.face='fb14_110a';} break;
+				case 'cb14_120': mp.x=188; mp.y=31; mp.dx=226; mp.dy=183; mp.sx=164*p1; mp.sy=0; mp.sw=164; mp.sh=156; if(p2==0){mp.face='fb14_110';}else{mp.face='fb14_110a';} break;
+	
+				///////////
+
+				case 'cn15_110': mp.x=-260; mp.y=-16; mp.dx=718; mp.dy=156; mp.sx=100*p1; mp.sy=0; mp.sw=100; mp.sh=81; if(p2==0){mp.face='fn15_110';}else{mp.face='fn15_110a';} break;
+				case 'cn15_120': mp.x=-260; mp.y=-16; mp.dx=718; mp.dy=156; mp.sx=100*p1; mp.sy=0; mp.sw=100; mp.sh=81; if(p2==0){mp.face='fn15_110';}else{mp.face='fn15_110a';} break;
+				case 'cn15_130': mp.x=-260; mp.y=-16; mp.dx=718; mp.dy=156; mp.sx=100*p1; mp.sy=0; mp.sw=100; mp.sh=81; if(p2==0){mp.face='fn15_110';}else{mp.face='fn15_110a';} break;
+				case 'cn15_140': mp.x=-260; mp.y=-16; mp.dx=718; mp.dy=156; mp.sx=100*p1; mp.sy=0; mp.sw=100; mp.sh=81; if(p2==0){mp.face='fn15_110';}else{mp.face='fn15_110a';} break;
+	
+				case 'cb15_110': mp.x=-372; mp.y=-176; mp.dx=789; mp.dy=312; mp.sx=198*p1; mp.sy=0; mp.sw=198; mp.sh=159; if(p2==0){mp.face='fb15_110';}else{mp.face='fb15_110a';} break;
+				case 'cb15_120': mp.x=-372; mp.y=-176; mp.dx=789; mp.dy=312; mp.sx=198*p1; mp.sy=0; mp.sw=198; mp.sh=159; if(p2==0){mp.face='fb15_110';}else{mp.face='fb15_110a';} break;
+				case 'cb15_130': mp.x=-372; mp.y=-176; mp.dx=789; mp.dy=312; mp.sx=198*p1; mp.sy=0; mp.sw=198; mp.sh=159; if(p2==0){mp.face='fb15_110';}else{mp.face='fb15_110a';} break;
+				case 'cb15_140': mp.x=-372; mp.y=-176; mp.dx=789; mp.dy=312; mp.sx=198*p1; mp.sy=0; mp.sw=198; mp.sh=159; if(p2==0){mp.face='fb15_110';}else{mp.face='fb15_110a';} break;
+	
+				///////////
+
+				case 'cn16_110': mp.x=-300; mp.y=-43; mp.dx=733; mp.dy=221; mp.sx=112*p1; mp.sy=0; mp.sw=112; mp.sh=83; if(p2==0){mp.face='fn16_110';}else{mp.face='fn16_110a';} break;
+				case 'cn16_120': mp.x=-300; mp.y=-43; mp.dx=733; mp.dy=221; mp.sx=112*p1; mp.sy=0; mp.sw=112; mp.sh=83; if(p2==0){mp.face='fn16_120';}else{mp.face='fn16_120a';} break;
+	
+				case 'cb16_110': mp.x=-338; mp.y=-86; mp.dx=733; mp.dy=281; mp.sx=182*p1; mp.sy=0; mp.sw=182; mp.sh=141; if(p2==0){mp.face='fb16_110';}else{mp.face='fb16_110a';} break;
+
+				///////////
+
+				case 'cn17_110': mp.x=-140; mp.y=-129; mp.dx=591; mp.dy=193; mp.sx=92*p1; mp.sy=0; mp.sw=92; mp.sh=75; mp.face='fn17_110'; break;
+				case 'cn17_120': mp.x=-140; mp.y=-129; mp.dx=591; mp.dy=193; mp.sx=92*p1; mp.sy=0; mp.sw=92; mp.sh=75; mp.face='fn17_110'; break;
+
+				case 'cb17_110': mp.x=-140; mp.y=-604; mp.dx=548; mp.dy=675; mp.sx=154*p1; mp.sy=0; mp.sw=154; mp.sh=148; mp.face='fb17_110'; break;
+
+				///////////
+	
+				default: break;
+			}
+	//	}
+	}
+
+}

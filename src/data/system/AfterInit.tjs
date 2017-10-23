@@ -1,0 +1,53 @@
+////////////////////////////////////////////////////////////////////////////
+//
+Plugins.link("perspective23b.dll");
+Plugins.link("layerExImage.dll");
+Plugins.link("util_generic.dll");
+Plugins.link("util_graph.dll");
+Plugins.link("util_system.dll");
+////////////////////////////////////////////////////////////////////////////
+//コアスクリーン作成
+Scripts.execStorage("ScreenMain.tjs");
+
+//サブタスク
+global.EventControls= new EventStack(this);
+global.kag.add(EventControls);
+
+//メイン
+global.core2= new ScreenMain(global.EventControls);
+global.kag.add(core2);
+global.core2.createImage( kag, kag.fore.base, kag.back.base );
+global.core2.createScreen();
+global.core2.createInitData();
+
+// coreシステム別名
+var games = core2.games; // core2 calc
+var gf = games.data; // core2 data
+//var gt = games.data.temporary; // core2 data temp
+//var ca = games.calc; // core2 calc
+var gam = core2.gameLoop; // core2 calc
+var gmp= %[];
+
+var askYesNoD= core2.screen.dialog.execute;
+var askYesNoD2= core2.screen.dialog.execute2;
+var askYesNoD_reset= core2.screen.dialog.reset_flag;
+
+//var askYesNoD= core2.backGroundDialog.execute;
+//var askYesNoD_reset= core2.backGroundDialog.reset_flag;
+
+if(System.getArgument("-debug")=="yes") Debug.console.visible = true;
+//Debug.console.visible = true;
+
+////////////////////////////////////////////////////////////////////////////
+//プロトタイプ書き換え
+// ［画面‐フルスクリーン/ウィンドウ表示の切り替え］メニューのハンドラ
+kag.onChangeScreenModeClick = function(sender)
+{
+  if (global.kag.fullScreen)
+    global.kag.onWindowedMenuItemClick(global.kag);
+  else
+    global.kag.onFullScreenMenuItemClick(global.kag);
+} incontextof kag;
+
+////////////////////////////////////////////////////////////////////////////
+//

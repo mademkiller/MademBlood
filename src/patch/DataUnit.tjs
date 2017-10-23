@@ -1,0 +1,1227 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	データ群
+//
+/////////////////////////////////////////////////////////////////////////
+//
+class DataUnit
+{
+	var tmpCsv= %[];
+	var savedata= %[];
+	
+	function DataUnit(){
+	}
+	
+	////////////////////
+	// セーブさせたいフラグはここに表記
+	//　逆方向でロードにも使う。
+	function setSaveData2( s=%[], d=%[] )
+	{
+		//フラグの存在確認
+		if(s===void||d===void) return;
+		
+		s.char= [] if s.char===void;
+		
+		for(var i= 0; i<d.char.count; i++ ){
+			
+			if(d.char[i]!==void)
+			{
+				s.char[i]= %[] if s.char[i]===void;
+				s.char[i].level			= d.char[i].level;  //レベル
+				s.char[i].experience	= d.char[i].experience;  //経験値
+				
+				s.char[i].HP= %[] if s.char[i].HP===void;
+				s.char[i].HP.max		= d.char[i].HP.max; 		  //最大HP
+				s.char[i].HP.now		= d.char[i].HP.now;			  //現在HP
+				
+				s.char[i].divine      = d.char[i].divine;     //加護
+				s.char[i].growth      = d.char[i].growth;     //成長限界
+				s.char[i].uniqueName  = d.char[i].uniqueName; //ユニット固有名称(名前変更等用名称表示用)
+				s.char[i].troopsNo    = d.char[i].troopsNo;   //所属軍番号
+				s.char[i].troops      = d.char[i].troops;     //所属軍名称
+				s.char[i].pow         = d.char[i].pow;        //攻撃
+				s.char[i].def         = d.char[i].def;        //防御
+				s.char[i].spd         = d.char[i].spd;        //速度
+				s.char[i].mor         = d.char[i].mor;        //士気
+				s.char[i].attribute   = d.char[i].attribute;  //属性(str)
+				s.char[i].attributeBit= d.char[i].attributeBit;//属性(bit)
+				s.char[i].special     = d.char[i].special;    //特攻(str)
+				s.char[i].specialBit  = d.char[i].specialBit; //特攻(bit)
+				//s.char[i].food        = d.char[i].food;       //食料
+				s.char[i].loyalty     = d.char[i].loyalty;    //忠誠
+				s.char[i].valor       = d.char[i].valor;      //武功
+				
+				s.char[i].skill= [] if s.char[i].equiped===void;
+				for(var ix= 0; ix<12; ix++ ){
+					s.char[i].skill[ix]= %[ name:d.char[i].skill[ix].name, value:d.char[i].skill[ix].value ];
+					s.char[i].skill[ix]= %[ name:d.char[i].skill[ix].name, value:d.char[i].skill[ix].value ];
+					s.char[i].skill[ix]= %[ name:d.char[i].skill[ix].name, value:d.char[i].skill[ix].value ];
+					s.char[i].skill[ix]= %[ name:d.char[i].skill[ix].name, value:d.char[i].skill[ix].value ];
+				}
+				
+				s.char[i].prefix     = d.char[i].prefix;							//称号接頭語
+				s.char[i].suffix     = d.char[i].suffix;							//称号接尾語
+				
+				s.char[i].equiped= %[] if s.char[i].equiped===void;			//装備可能アイテム
+				s.char[i].equiped.weapon= d.char[i].equiped.weapon;
+				s.char[i].equiped.armor	= d.char[i].equiped.armor;
+				
+				s.char[i].equipment= %[] if s.char[i].equipment===void;		//装備中アイテム
+				s.char[i].equipment.weapon	= d.char[i].equipment.weapon;
+				s.char[i].equipment.armor	= d.char[i].equipment.armor;
+				
+				s.char[i].equipedID= %[] if s.char[i].equipedID===void;		//装備可能アイテム
+				s.char[i].equipedID.weapon	= d.char[i].equipedID.weapon;
+				s.char[i].equipedID.armor	= d.char[i].equipedID.armor;
+				
+				s.char[i].equipedADD= %[] if s.char[i].equipedADD===void;		//装備能力補正
+				s.char[i].equipedADD.pow	= d.char[i].equipedADD.pow;
+				s.char[i].equipedADD.def	= d.char[i].equipedADD.def;
+				s.char[i].equipedADD.spd	= d.char[i].equipedADD.spd;
+				s.char[i].equipedADD.mor	= d.char[i].equipedADD.mor;
+				
+				s.char[i].rank			= d.char[i].rank;				//等級
+				s.char[i].statickcost	= d.char[i].statickcost;		//維持コスト
+				
+				s.char[i].parbackup= %[] if s.char[i].parbackup===void; //バックアップ
+				s.char[i].parbackup.pow= d.char[i].parbackup.pow;
+				s.char[i].parbackup.def= d.char[i].parbackup.def;
+				s.char[i].parbackup.spd= d.char[i].parbackup.spd;
+				s.char[i].parbackup.mor= d.char[i].parbackup.mor;
+				s.char[i].parbackup.divine= d.char[i].parbackup.divine;
+				s.char[i].parbackup.special= d.char[i].parbackup.special;
+				
+			}
+		}
+		
+		s.map= [] if s.map===void;
+		
+		for(var i= 0; i<d.map.count; i++ ){
+			
+			if(d.map[i]!==void)
+			{
+			
+				s.map[i]= %[] if s.map[i]===void;
+				s.map[i].enable	= d.map[i].enable;//有効
+				s.map[i].view	= d.map[i].view;//表示
+				
+				s.map[i].post= %[];
+				s.map[i].post.division	= d.map[i].post.division; //駐屯師団NO
+				s.map[i].post.max		= d.map[i].post.max; //最大駐屯師団可能数
+				
+				s.map[i].experience		= d.map[i].experience;//地形経験値
+				s.map[i].level			= d.map[i].level;//地形レベル
+				
+				s.map[i].revision= %[] if s.map[i].revision===void; //地形補正
+				s.map[i].revision.paw	= d.map[i].revision.paw;//攻撃
+				s.map[i].revision.def	= d.map[i].revision.def;//防御
+				s.map[i].revision.spd	= d.map[i].revision.spd;//速度
+				s.map[i].revision.mor	= d.map[i].revision.mor;//士気
+				
+				s.map[i].HP= %[] if s.map[i].HP===void;//耐久度
+				s.map[i].HP.max			= d.map[i].HP.max;//最大耐久度
+				s.map[i].HP.now			= d.map[i].HP.now;//現在耐久度
+				
+				s.map[i].frag= d.map[i].frag; //旗
+				
+				s.map[i].type= %[] if s.map[i].type===void;
+				s.map[i].type.building= d.map[i].type.building; //建物
+			}
+		}
+		
+		s.enemy= [] if s.enemy===void;
+		
+ 		for(var i= 0; i<d.enemy.count; i++ ){
+ 			
+ 			if(d.enemy[i]!==void)
+ 			{
+ 				s.enemy[i]= %[] if s.enemy[i]===void;
+ 				s.enemy[i].status	= d.enemy[i].status;
+ 				s.enemy[i].attack	= d.enemy[i].attack;
+ 				s.enemy[i].attackmax= d.enemy[i].attackmax;
+ 				s.enemy[i].target	= d.enemy[i].target;
+ 				
+ 				s.enemy[i].dev= [] if s.enemy[i].dev===void;
+ 				for(var x= 0; x<6; x++ ){
+ 					s.enemy[i].dev[x]= %[] if s.enemy[i].dev[x]===void;
+ 					s.enemy[i].dev[x].level	= d.enemy[i].dev[x].level;
+ 					s.enemy[i].dev[x].exp	= d.enemy[i].dev[x].exp;
+ 					s.enemy[i].dev[x].hp	= d.enemy[i].dev[x].hp;
+ 					s.enemy[i].dev[x].mhp	= d.enemy[i].dev[x].mhp;
+ 				}
+ 			}
+		}
+	}
+	
+// 	function setSaveData( s=%[], d=%[] )
+// 	{
+// 		//フラグの存在確認
+// 		if(s===void||d===void) return;
+// 		
+// 		//if(s.char===void) s.char= [];
+// 		s.char= [] if s.char===void;
+// 		
+// 		for(var i= 0; i<d.char.count; i++ ){
+// 			
+// 			if(d.char[i]!==void)
+// 			{
+// 				s.char[i]= %[] if s.char[i]===void;
+// 				
+// 				s.char[i].level = d.char[i].level;  //レベル
+// 				s.char[i].experience = d.char[i].experience;  //経験値
+// 				s.char[i].HP         =  %[
+// 									base:d.char[i].HP.base,   //基本HP
+// 									max:d.char[i].HP.max,     //最大HP
+// 									now:d.char[i].HP.now ];   //現在HP
+// 				s.char[i].divine      = d.char[i].divine;     //加護
+// 				s.char[i].growth      = d.char[i].growth;     //成長限界
+// 				s.char[i].uniqueName  = d.char[i].uniqueName; //ユニット固有名称(名前変更等用名称表示用)
+// 				s.char[i].troopsNo    = d.char[i].troopsNo;   //所属軍番号
+// 				s.char[i].troops      = d.char[i].troops;     //所属軍名称
+// 				s.char[i].pow         = d.char[i].pow;        //攻撃
+// 				s.char[i].def         = d.char[i].def;        //防御
+// 				s.char[i].spd         = d.char[i].spd;        //速度
+// 				s.char[i].mor         = d.char[i].mor;        //士気
+// 				s.char[i].attribute   = d.char[i].attribute;  //属性(str)
+// 				s.char[i].attributeBit= d.char[i].attributeBit;//属性(bit)
+// 				s.char[i].special     = d.char[i].special;    //特攻(str)
+// 				s.char[i].specialBit  = d.char[i].specialBit; //特攻(bit)
+// 				s.char[i].food        = d.char[i].food;       //食料
+// 				s.char[i].loyalty     = d.char[i].loyalty;    //忠誠
+// 				s.char[i].valor       = d.char[i].valor;      //武功
+// 				
+// 				//s.char[i].skill.assignStruct( d.char[i].skill );
+// 				
+// 				s.char[i].skill= [];
+// 				for(var ix= 0; ix<12; ix++ ) s.char[i].skill[ix]= %[ name:d.char[i].skill[ix].name, value:d.char[i].skill[ix].value ];
+// 				
+// 				s.char[i].prefix     = d.char[i].prefix;							//称号接頭語
+// 				s.char[i].suffix     = d.char[i].suffix;							//称号接尾語
+// 				//s.char[i].equiped.assignStruct( d.char[i].equiped );
+// 				//s.char[i].equipment.assignStruct( d.char[i].equipment );
+// 				s.char[i].equiped    = %[weapon:d.char[i].equiped.weapon, armor:d.char[i].equiped.armor];		//装備中アイテム
+// 				s.char[i].equipment  = %[weapon:d.char[i].equipment.weapon, armor:d.char[i].equipment.armor];		//装備可能アイテム
+// 				s.char[i].equipedID  = %[weapon:d.char[i].equipedID.weapon, armor:d.char[i].equipedID.armor];			//装備中アイテム
+// 				s.char[i].equipedADD = %[pow:d.char[i].equipedADD.pow, def:d.char[i].equipedADD.def, spd:d.char[i].equipedADD.spd, mor:d.char[i].equipedADD.mor];//装備能力補正
+// 				s.char[i].rank       = d.char[i].rank;							//等級
+// 				
+// 				s.char[i].statickcost = d.char[i].statickcost;							//維持コスト
+// 				
+// 
+// 			}
+// 			
+// 			
+// 		}
+// 		
+// 		s.map= [] if s.map===void;
+// 		
+// 		for(var i= 0; i<d.map.count; i++ ){
+// 			
+// 			if(d.map[i]!==void)
+// 			{
+// 			
+// 				s.map[i]= %[] if s.map[i]===void;
+// 				s.map[i].post= %[//駐屯師団データ
+// 							division:d.map[i].post.division,//駐屯師団NO
+// 							max:d.map[i].post.max//最大駐屯師団可能数
+// 						];
+// 				
+// 				s.map[i].experience= d.map[i].experience;//地形経験値
+// 				s.map[i].level= d.map[i].level;//地形レベル
+// 				s.map[i].revision= %[//地形補正
+// 								paw:d.map[i].revision.paw,//攻撃
+// 								def:d.map[i].revision.def,//防御
+// 								spd:d.map[i].revision.spd,//速度
+// 								mor:d.map[i].revision.mor//士気
+// 							];
+// 				s.map[i].HP= %[//耐久度
+// 						base:d.map[i].HP.base,//基本耐久度
+// 						max:d.map[i].HP.max,//最大耐久度
+// 						now:d.map[i].HP.now//現在耐久度
+// 					];
+// 				
+// 				s.map[i].frag= d.map[i].frag; //旗
+// 				
+// 				s.map[i].type= %[] if s.map[i].type===void;
+// 				s.map[i].type.building= d.map[i].type.building; //建物
+// 			}
+// 		}
+// 		
+//  		for(var i= 0; i<d.enemy.count; i++ ){
+//  			
+//  			if(d.enemy[i]!==void)
+//  			{
+//  				s.enemy[i]= %[] if s.enemy[i]===void;
+//  				s.enemy[i].status= d.enemy[i].status;
+//  				s.enemy[i].attack= d.enemy[i].attack;
+//  				s.enemy[i].move= d.enemy[i].move;
+//  				s.enemy[i].target= d.enemy[i].target;
+//  				
+//  				s.enemy[i].dev= [] if s.enemy[i].dev===void;
+//  				for(var x= 0; x<6; x++ ){
+//  					s.enemy[i].dev[x]= %[] if s.enemy[i].dev[x]===void;
+//  					s.enemy[i].dev[x].level= d.enemy[i].dev[x].level;
+//  					s.enemy[i].dev[x].exp= d.enemy[i].dev[x].exp;
+//  					s.enemy[i].dev[x].hp= d.enemy[i].dev[x].hp;
+//  					s.enemy[i].dev[x].mhp= d.enemy[i].dev[x].mhp;
+//  				}
+//  			}
+// 		}
+// 	}
+
+	
+	//システムデータ
+	function setSystemCoreBase( d=void )
+	{
+	// kag.sflags.systemcore.option.game.adventur= true;
+	// sf.systemcore.option.game.adventur= true;
+	// sf.systemcore.option.jump.mode= 0;
+	//
+	//
+		var o= false;
+		
+		if(d===void) d= %[];
+		else o= true;
+		
+		with(d)
+		{
+			d.option= %[] if d.option===void;
+			d.option.game= %[] if d.option.game===void;
+			d.option.game.adventure= true;
+			d.option.game.battle= true;
+			
+			d.option.text= %[] if d.option.text===void;
+			d.option.text.speed= 0.5;
+			d.option.text.autospeed= 0.5;
+			d.option.text.skip= true;
+			d.option.text.selectskip= true;
+			d.option.text.windowopacity= 0.5;
+			
+			d.option.jump= %[] if d.option.jump===void;
+			d.option.jump.mode1= 0; //既読
+			d.option.jump.mode2= 0; //H
+			d.option.jump.mode3= 0; //全部
+			
+			d.option.voice= %[] if d.option.voice===void;
+			d.option.voice.messcut= true;
+			d.option.voice.background= true;
+			
+			d.option.volume= %[] if d.option.volume===void;
+			d.option.volume.movie= 1.0;
+			d.option.volume.moviemute= 0;
+			d.option.volume.bgm= 1.0;
+			d.option.volume.bgmmute= 0;
+			d.option.volume.system= 1.0;
+			d.option.volume.systemmute= 0;
+			d.option.volume.fx= 1.0;
+			d.option.volume.fxmute= 0;
+			d.option.volume.atom= 1.0;
+			d.option.volume.atommute= 0;
+			d.option.volume.voice= 1.0;
+			d.option.volume.voicemute= 0;
+			
+			d.option.volume.char= [] if d.option.volume.char===void;
+			for(var i= 0; i<18; i++ ) d.option.volume.char[i]= %[ mute:0, value:1.0 ];
+			
+			//セーブデータ設定用
+			d.save= %[] if d.save===void;
+			d.save.list= [] if d.save.list===void;
+			d.save.list[0]= -1;
+			for(var i= 1; i<101; i++ ) d.save.list[i]= i;
+			d.save.list[101]= -1;
+			
+			d.save.index= 1;
+			d.save.viewindex= 1;
+			d.save.viewposition= 0;
+			
+			d.save.newsave= [] if d.save.newsave===void;
+			for(var i= 0; i<30; i++ ) d.save.newsave[i]= -1;
+			
+			d.save.saveex= [] if d.save.saveex===void;
+			for(var i= 0; i<101; i++ ){
+				d.save.saveex.add(%[
+					clear:0,
+					story:0,
+					trun:0,
+					day:0,
+					diff:"",
+					terr:0,
+					cost1:0,
+					cost2:0,
+					cost3:0,
+					cost4:0
+				]);
+			}
+			
+			//セーブデータの構造はいじらない
+			/*
+			for(var i= 0; i<101; i++ ){
+				d.save.saveex.add( [
+					0,
+					0,
+					0,
+					0,
+					"",
+					0,
+					0,
+					0,
+					0,
+					0
+				]);
+			}*/
+			
+			d.game= %[] if d.game===void;
+			d.game.totaltrun= 0;
+			d.game.totaltime= 1;
+			
+			d.game.charopen= []  if d.game.charopen===void;
+			
+		}
+		
+		return d;
+	}
+	
+	//ユーザーデータ
+	//
+	function setGameCoreBase( d=void )
+	{
+	// d.time.turn= 0;
+	// f.used.time.turn= 0;
+	//
+	//
+		
+		d= %[] if d===void;
+		
+		//ターン、時間
+		d.time= %[] if d.time===void;
+		d.time.turn= 0 if d.time.turn===void; //ターン数
+		d.time.counter= 0 if d.time.counter===void; //フェイズカウンタ
+		d.time.time= 0 if d.time.time===void; //時間
+		d.time.zone= 0 if d.time.zone===void; //曜日
+		d.time.day= true if d.time.day===void; //昼夜
+
+		d.difficulty =2 if d.difficulty===void;//難易度(1=easy/2=normal/3=hard/4=vary hard/5～9=)
+
+		//隊列
+		d.party=[] if d.party===void;
+		for(var i= 0; i<10; i++ ) d.party[i]= setPartyBase() if d.party[i]===void;
+		//for(var i= 10; i<50; i++ ) d.party[i]= setPartyEnemyBase();
+		d.partyin= 0 if d.partyin===void;
+		d.partycount= 0 if d.partycount===void;
+		
+		//領地関係
+		d.mapf= %[] if d.mapf===void;
+		d.mapf.selectIndex= 0 if d.mapf.selectIndex===void;
+		d.mapf.territory= [0] if d.mapf.territory===void; //領地
+		
+		//////////
+		//アイテム関係
+		d.itemcount= [
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0
+		] if d.itemcount===void; //所持item indexはitemlistとペア
+		
+		d.itemusedcount= [
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0
+		] if d.itemusedcount===void; //使用中item
+		
+// 		d.itemstock= [
+// 			0,0,0,0,0,0,0,0,0,0
+// 		]; //在庫item
+		
+		d.itemstockMat= [
+			-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+		] if d.itemstockMat===void; //鉱石item
+		
+		d.itemMatAutoSales= 1 if d.itemMatAutoSales===void; //鉱石の自動売却item
+		
+		//メダリオン
+		d.medalion= [
+			5,5,5,0,0,0,
+			0,0,0,0,0,0,
+			0,5,5,5,5,5,
+			0,0,0,0,0,0,
+			0,0,0,0,0,5
+			] if d.medalion===void; //27個
+		
+		//メダリオン開放情報
+		d.medalionopen= [
+			1,1,1,0,0,0,
+			0,0,0,0,0,0,
+			0,1,1,1,1,1,
+			0,0,0,0,0,0,
+			0,0,0,0,0,1
+			] if d.medalionopen===void; //27個
+			
+		
+		d.playMusicfile= "" if d.playMusicfile===void;
+		
+		//ステータス now現在値 addターンエンドで増加する値
+		d.stat= %[] if d.stat===void;
+		d.stat.food= %[ now:1000, add:0 ] if d.stat.food===void;
+		d.stat.resource= %[ now:1000, add:0 ] if d.stat.resource===void;
+		d.stat.energy= %[ now:1000, add:0 ] if d.stat.energy===void;
+		d.stat.gold= %[ now:1000, add:0 ] if d.stat.gold===void;
+		
+		d.stat.level= %[ now:1, add:0 ] if d.stat.level===void;
+		d.stat.exp= %[ now:1, add:0 ] if d.stat.exp===void;
+		d.stat.population= %[ now:0, add:0 ] if d.stat.population===void;
+		
+		d.stat.force= [ 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0 ] if d.stat.force===void; //フォース
+		d.stat.Land = [ 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0 ] if d.stat.Land ===void; //地形基本値
+		d.stat.Lands= [ 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0 ] if d.stat.Lands===void; //地形基本値
+		
+		//例外 ターンエンドで増加する値
+		d.stat.company= %[ hp:0, exp:0 ] if d.stat.company===void;//全軍hp,回復値 戦闘非参加のみ
+		d.stat.companyFc= %[ now:0, add:0 ] if d.stat.companyFc===void;//全軍hp,回復値
+		
+		//シナリオ進行情報
+		d.stat.story= 0 if d.stat.story===void;
+		d.stat.nextstory= true if d.stat.nextstory===void;//章始まりのリセット
+		d.stat.readflag= [] if d.stat.readflag===void;
+		
+		//コール関係
+		d.stat.callchar= [ "", "", "", "", "",  "", "", "", "", "" ] if d.stat.callchar===void;
+		d.stat.calljump= [ "", "", "", "", "",  "", "", "", "", "" ] if d.stat.calljump===void;
+		d.stat.callfrsp= [ 0,0,0,0,0, 0,0,0,0,0 ] if d.stat.callfrsp===void;
+		d.stat.calltrng= [ 0,0,0,0,0, 0,0,0,0,0 ] if d.stat.calltrng===void;
+		
+		//プレーヤの攻撃状態
+		d.stat.attackmode= 0 if d.stat.attackmode===void;
+		//d.stat.atackmodemap= -1;
+		d.stat.enemyattacks= [] if d.stat.enemyattacks===void; //敵の攻撃
+		d.stat.useattack= [] if d.stat.useattack===void; //近接している攻撃できる位置
+		d.attacklock= false if d.attacklock===void;
+		d.attackspeed= 1 if d.attackspeed===void;
+		d.reattackwait= 8 if d.reattackwait===void;
+		d.stat.clearcount= 0 if d.stat.clearcount===void;
+		d.getstatelife= 0.5 if d.getstatelife===void; //占領される体力割合
+		
+		//サブテンポラリ
+		d.view= %[] if d.view===void;
+		//d.view.ppview= [];
+		
+		d.view.chview= [
+				0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0
+			] if d.view.chview===void;
+		d.view.cmview= [
+				0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0
+			] if d.view.cmview===void;
+			
+		
+		//◇親交値フラグ
+		d.親交値= %[ 
+			Tilca:0,
+			Freya:0,
+			Thor:0,
+			Regret:0,
+			Odin:0,
+			Hel:0,
+			Fenrir:0,
+			Jormu:0,
+			Ferna:0,
+			Menia:0
+		] if d.親交値===void;
+		
+		//◇調教値フラグ
+		d.調教値= %[
+			Tilca:0,
+			Freya:0,
+			Thor:0,
+			Regret:0,
+			Odin:0,
+			Ferna:0
+		] if d.調教値===void;
+		
+		d.isRoaded= 0 if d.isRoaded===void;
+		d.returnback_flag= 0 if d.returnback_flag===void;
+		d.loopstarted_flag= false if d.loopstarted_flag===void;
+		
+		d.mapzone= [ 1,1,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0 ] if d.mapzone===void; //frag連動ゾーニング
+		d.mapzones= [ 0, 10 ] if d.mapzones===void; //マップ処理のゾーニング
+		
+		//d.maproadimage= "map_road00" if d.maproadimage===void; //ロードイメージ
+		d.mapimage= [ "map_41_ak", "map_41_ck" ] if d.mapimage===void; //マップイメージ
+		d.mapcimage= [ "map_cloud_a", "map_cloud_c" ] if d.mapcimage===void; //マップイメージ
+		d.mapobjectview= true if d.mapobjectview===void; //マップオブジェクト
+		
+		d.enemyadd= 0 if d.enemyadd===void; //敵ステータス加算値
+		d.enemypar= 1 if d.enemypar===void; //敵ステータス増加倍率
+		
+		d.enemyhpadd= 0 if d.enemyhpadd===void; //敵体力加算値
+		
+		d.enemyfriendship= [] if d.enemyfriendship===void; //友軍
+		
+		d.loginfo= [] if d.loginfo===void; //ログ
+		
+		return d;
+	}
+	
+	
+	//ユーザーデータ  部分初期化用
+	//
+	function setGameCoreBase2( d=void )
+	{
+	// d.time.turn= 0;
+	// f.used.time.turn= 0;
+	//
+
+		//ターン、時間
+		d.time.turn= 0;			//ターン数
+		d.time.counter= 0;		//フェイズカウンタ
+		d.time.time= 0;			//時間
+		d.time.zone= 0;			//曜日
+		d.time.day= true;		//昼夜
+
+		d.difficulty =2;		//難易度(1=easy/2=normal/3=hard/4=vary hard/5～9=)
+
+//▲		//隊列
+//▲		for(var i= 0; i<10; i++ ) d.party[i]= setPartyBase();
+
+		//要素10以降を消去する
+		for(var i= 10; i<d.party.count; i++ ) d.party.erase(i);
+		d.partyin= 0 if d.partyin===void;
+		d.partycount= 0 if d.partycount===void;
+		
+		//領地関係
+		d.mapf.selectIndex= 0;
+		d.mapf.territory= [0];	//領地
+		
+		//////////
+		//アイテム関係
+//▲		d.itemcount= [
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0
+//▲		]; //所持item indexはitemlistとペア
+		
+//▲		d.itemusedcount= [
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+//▲			0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0
+//▲		]; //使用中item
+//▲		
+//▲		d.itemstockMat= [
+//▲			-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+//▲		]; //鉱石item
+//▲		
+//▲		d.itemMatAutoSales= 1; //鉱石の自動売却item
+//▲		
+//▲		//メダリオン
+//▲		d.medalion= [
+//▲			5,5,5,0,0,0,
+//▲			0,0,0,0,0,0,
+//▲			0,5,5,5,5,5,
+//▲			0,0,0,0,0,0,
+//▲			0,0,0,0,0,5
+//▲			]; //27個
+//▲		
+//▲		//メダリオン開放情報
+//▲		d.medalionopen= [
+//▲			1,1,1,0,0,0,
+//▲			0,0,0,0,0,0,
+//▲			0,1,1,1,1,1,
+//▲			0,0,0,0,0,0,
+//▲			0,0,0,0,0,1
+//▲			]; //27個
+			
+		
+		d.playMusicfile= "";
+		
+//▲		//ステータス now現在値 addターンエンドで増加する値
+//▲		d.stat.food= %[ now:1000, add:0 ];
+//▲		d.stat.resource= %[ now:1000, add:0 ];
+//▲		d.stat.energy= %[ now:1000, add:0 ];
+//▲		d.stat.gold= %[ now:1000, add:0 ];
+		
+		d.stat.level= %[ now:1, add:0 ];
+		d.stat.exp= %[ now:1, add:0 ];
+		d.stat.population= %[ now:0, add:0 ];
+		
+		d.stat.force= [ 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0 ]; //フォース
+		d.stat.Land = [ 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0 ]; //地形値
+		d.stat.Lands= [ 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0 ]; //地形基本値
+		
+		//例外 ターンエンドで増加する値
+		d.stat.company= %[ hp:0, exp:0 ];//全軍hp,回復値 戦闘非参加のみ
+		d.stat.companyFc= %[ now:0, add:0 ];//全軍hp,回復値
+		
+		//シナリオ進行情報
+		d.stat.story= 0;
+		d.stat.nextstory= true;//章始まりのリセット
+		d.stat.readflag= [];
+		
+		//コール関係
+		d.stat.callchar= [ "", "", "", "", "",  "", "", "", "", "" ];
+		d.stat.calljump= [ "", "", "", "", "",  "", "", "", "", "" ];
+		d.stat.callfrsp= [ 0,0,0,0,0, 0,0,0,0,0 ];
+		d.stat.calltrng= [ 0,0,0,0,0, 0,0,0,0,0 ];
+		
+		//プレーヤの攻撃状態
+		d.stat.attackmode= 0;
+		//d.stat.atackmodemap= -1;
+		d.stat.enemyattacks= []; //敵の攻撃
+		d.stat.useattack= []; //近接している攻撃できる位置
+		d.attacklock= false;
+		d.attackspeed= 1;
+		d.reattackwait= 8;
+//▲		d.stat.clearcount= 0;
+		d.getstatelife= 0.5; //占領される体力割合
+		
+//▲		//雇用状態
+//▲		d.view.chview= [
+//▲				0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,
+//▲				0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0
+//▲			];
+//▲		d.view.cmview= [
+//▲				0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,
+//▲				0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0
+//▲			];
+			
+		
+		//◇親交値フラグ
+		d.親交値= %[ 
+			Tilca:0,
+			Freya:0,
+			Thor:0,
+			Regret:0,
+			Odin:0,
+			Hel:0,
+			Fenrir:0,
+			Jormu:0,
+			Ferna:0,
+			Menia:0
+		];
+		
+		//◇調教値フラグ
+		d.調教値= %[
+			Tilca:0,
+			Freya:0,
+			Thor:0,
+			Regret:0,
+			Odin:0,
+			Ferna:0
+		];
+		
+		d.isRoaded= 0;
+		d.returnback_flag= 0;
+		d.loopstarted_flag= false;
+		
+		d.mapzone= [ 1,1,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0 ]; //frag連動ゾーニング
+		d.mapzones= [ 0, 10 ]; //マップ処理のゾーニング
+		
+		//d.maproadimage= "map_road00" if d.maproadimage===void; //ロードイメージ
+		d.mapimage= [ "map_41_ak", "map_41_ck" ]; //マップイメージ
+		d.mapcimage= [ "map_cloud_a", "map_cloud_c" ]; //マップイメージ
+		d.mapobjectview= true; //マップオブジェクト
+		
+		d.enemyadd= 0; //敵ステータス加算値
+		d.enemypar= 1; //敵ステータス増加倍率
+		
+		d.enemyhpadd= 0; //敵体力加算値
+		
+		d.enemyfriendship= []; //友軍
+		
+		d.loginfo= []; //ログ
+		
+		return d;
+	}
+	
+	//共有テンポラリ初期化
+	function setGameCoreTempBase( d=void )
+	{
+		d= %[] if d===void;
+		
+		//メダリオン
+		d.medalioncost= [
+			0,0,0,0,0,0,
+			0,0,0,0,0,0,
+			0,0,0,0,0,0,
+			0,0,0,0,0,0,
+			0,0,0,0,0,0
+			];
+		
+		d.pre= %[];
+		d.pre.selectmultiIndex= 0;
+		d.pre.selectCharIndex= 0;
+		d.pre.selectItemIndex= 0;
+		
+		d.org= %[];
+		d.org.selectmCharX= 0;
+		d.org.selectmCharY= 0;
+		
+		//d.map= %[];
+		//d.map.useattack= []; //近接している攻撃できる位置
+		//d.map.enemyattack= []; //近接している攻撃できる位置
+		
+		d.storybattle= 0;
+		d.loaded_flag= false;
+		
+		d.setEnableBtns= [ 1,1,1,1,1, 1,1,1,1 ];
+		
+		return d;
+	}
+	
+	//パーティ
+	function setPartyBase( d=%[] )
+	{
+		
+		d.id= 0; //id
+		d.name= ""; //名前
+		d.type= 0; 
+		
+		d.HP= %[ base:0, max:0, now:0 ]; //パーティーライフ
+		d.experience= 0; //パーティー経験値
+		
+		d.order= %[ style:0, state:0 ]; //0:休息 1:防衛 2:攻撃
+		
+		d.division= [ 0, 0, 0, 0, 0, 0 ]; //隊列情報
+		
+		d.status= 0; //師団状態 0:なし 1:準備 2:待機 3:出兵 4:主戦闘
+		d.paycost= %[ food:0, enegy:0 ]; //出撃コスト
+		
+		return d;
+	}
+	
+	//敵師団用
+	function setPartyEnemyCharListBase( d=%[] )
+	{
+		
+		with(d){
+			.id          = 0;							//ID
+			.name        = "";							//ユニット名称
+			.troopsNo    = 0;							//所属軍番号
+			.leader      = 0;							//リーダー
+			.role        = 0;							//役割
+			.level       = 1;							//レベル
+			.experience  = 1;							//経験値
+			.legionID    = 1;							//レギオンID
+			.locate      = 0;							//滞在場所
+			
+			.breaks      = 0;							//破壊力
+			.rationMax   = 0;							//兵糧最大値
+			.hide        = 0;							//隠密
+			
+			.attacklevel= 0;						//aiの思考レベル
+			.movelevel= 0;							//aiの思考レベル
+			
+			.dev         = [ 							//キャラオーバーライト
+							%[ id:0, level:0, exp:0, hp:0, mhp:0, item0:0, item1:0 ],	//キャラID,初期経験値,装備アイテム0,1
+							%[ id:0, level:0, exp:0, hp:0, mhp:0, item0:0, item1:0 ],	//キャラID,初期経験値,装備アイテム0,1
+							%[ id:0, level:0, exp:0, hp:0, mhp:0, item0:0, item1:0 ],	//キャラID,初期経験値,装備アイテム0,1
+							%[ id:0, level:0, exp:0, hp:0, mhp:0, item0:0, item1:0 ],	//キャラID,初期経験値,装備アイテム0,1
+							%[ id:0, level:0, exp:0, hp:0, mhp:0, item0:0, item1:0 ],	//キャラID,初期経験値,装備アイテム0,1
+							%[ id:0, level:0, exp:0, hp:0, mhp:0, item0:0, item1:0 ]	//キャラID,初期経験値,装備アイテム0,1
+			 			  ];
+			
+			.status= 1;								//師団状態 0:全滅 1:通常
+			
+			.attack= 0;								//攻撃判定
+			.attackmax= 0;							//攻撃判定
+			.move= 0;								//移動判定
+			.target= 0;								//次の位置
+			
+		}
+		return d;
+	}
+	
+	//地形補正データ
+	function MapRevise( d=%[])
+	{
+		d.file = '';
+		d.id   = void;
+		d.name = '';
+		d.revise = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+		return d;
+	}
+	
+	
+	//マップデータ
+	function MapBase( d=%[], i )
+	{
+		//status
+		d.id= i; //ID
+		d.name= ""; //名前
+		d.pos= %[ x:0, y:0 ]; //名前
+		d.enable= true; //選択
+		d.view= true; //表示
+		
+		d.node= [ -1, -1, -1, -1, -1, -1, -1, -1 ]; //接続情報
+		
+		//data
+		d.image= [ //画像
+			%[ file:"" ],
+			%[ file:"" ],
+			%[ file:"", revise:void],
+			%[ file:"", revise:void],
+			%[ file:"" ]
+			];
+		d.country = 0;//国
+				
+		d.type = %[//タイプ
+					ground:"",//地形
+					category: -1, //種別 0:その他 1:都市 2:首都 9:隠し
+					building: 0, //建物
+					state:0 //建設可能地形ID -1:すべて 0:平地 1:市外 2:水場 4:森 5:山岳
+				];
+				
+		d.government = 0;//支配勢力軍
+		d.post = %[//駐屯師団データ
+					division:[],//駐屯師団NO
+					max:8//最大駐屯師団可能数
+				];
+		d.experience = 1;//地形経験値
+		d.level      = 1;//地形レベル
+		d.revision = %[//地形補正
+						paw:0,//攻撃
+						def:0,//防御
+						spd:0,//速度
+						mor:0//士気
+					];
+		d.HP= %[//耐久度
+				base:50,//基本耐久度
+				max:50,//最大耐久度
+				now:50//現在耐久度
+			];
+		d.cost = 0;//コスト
+		d.limit=%[//資源
+					food:0,//フード残量(食料)
+					resource:0,//リソース残量(鉱物)
+					energy:0,//エナジー残量(魔力)
+					gold:0//ゴールド残量(資金)
+			];
+		
+		d.treasure = "";//宝物
+		d.tax= 0 ;//税収
+		d.population= 1 ;//人口
+		d.frag= 0; //旗
+		
+		d.rivise= 0;
+		
+//		d.adds=%[//資源
+//			food:     %[ add:0, par:1 ],//フード残量(食料)
+//			resource: %[ add:0, par:1 ],//リソース残量(鉱物)
+//			energy:   %[ add:0, par:1 ],//エナジー残量(魔力)
+//			gold:     %[ add:0, par:1 ],//ゴールド残量(資金)
+//			popula:0,                   //人口
+//			exp:0                       //地形経験値?
+//			addHp:0,
+//			addFc:0
+//		];
+		
+		return d;
+	}
+	
+	//マップデータ
+	function MapItemBase( d=%[], i )
+	{
+		
+		d.id= i; //ID
+		d.name= ""; //名前
+		
+		d.level= 0; //レベル
+		d.cost= 0; //価格
+		d.addHP= 0; //追加HP
+		
+		d.type = %[//タイプ
+					state:0, //建設可能地形ID -1:すべて 0:平地 1:市外 2:水場 4:森 5:山岳
+					level:"" //建設条件level>=
+				];
+				
+		//特殊効果 0.名称-
+		d.specialeffecttag= [ "","","","","" ];
+		
+		//特殊効果 効果eval イベントタイミング 0.セット 1.ターンエンド
+		d.effect= [ "", "", "", "", "" ];
+		
+		d.enable= true; //選択
+		d.view= true; //表示
+		
+		d.income= 0;
+		
+		d.image= [ //画像
+			%[ file:"" ],
+			%[ file:"" ],
+			%[ file:"" ],
+			%[ file:"" ],
+			%[ file:"" ]
+			];
+			
+			/*
+		d.effect= %[];
+		d.effect.stack= %[
+				food:0,
+				resource:0,
+				energy:0,
+				gold:0,
+				exp:0
+			];
+			
+		d.effect.trunend= %[
+				food:0,
+				resource:0,
+				energy:0,
+				gold:0,
+				exp:0
+			];
+			*/
+			
+		return d;
+	}
+	
+	//キャラクター
+	function setCharBase( d=%[] )
+	{
+		with(d){
+			.id          = void;						//ID
+			.unitName    = "";							//ユニット名称
+			.uniqueName  = "";							//ユニット固有名称(名前変更等用名称表示用)
+			.unitClass   = -1;							//クラス(武将/魔族兵/人間兵)
+			.troopsNo    = -2;							//所属軍番号
+			.troops      = "";							//所属軍名称
+			.effect      = 0;							//戦闘エフェクト
+			.level       = 1;							//レベル
+			.experience  = 1;							//経験値
+			.pow         = 1;							//攻撃
+			.def         = 1;							//防御
+			.spd         = 1;							//速度
+			.mor         = 1;							//士気
+			.HP          =  %[base:50, max:0, now:0];	//HP（.base:基本値/Max:最大値/Now:現在値 ）
+			.cost        = 1;							//治療コスト
+			.type        = "";							//職業タイプ
+			.divine      = "";							//加護
+			.divineEx    = "";							//加護
+			.growth      = "";							//成長限界
+			.food        = 0;							//食料
+			.loyalty     = 25;							//忠誠
+			.valor       = 0;							//武功
+			.attribute   = "";							//属性(str)
+			.attributeBit= 0;							//属性(bit)
+			.special     = "";							//特攻(str)
+			.specialEx   = "";							//特攻(str)
+			.specialBit  = 0;							//特攻(bit)
+			.skill       = [ 							//スキル群
+							%[name:"", value:0],	//Skill[0] .Name:名/.Value:値(固定)
+							%[name:"", value:0],	//Skill[1] .Name:名/.Value:値(固定)
+							%[name:"", value:0],	//Skill[2] .Name:名/.Value:値(固定)
+							%[name:"", value:0],	//Skill[3] .Name:名/.Value:値(固定)
+							%[name:"", value:0],	//Skill[4] .Name:名/.Value:値(固定)
+							%[name:"", value:0],	//Skill[5] .Name:名/.Value:値(称号)
+							%[name:"", value:0],	//Skill[6] .Name:名/.Value:値(称号)
+							%[name:"", value:0],	//Skill[7] .Name:名/.Value:値(称号)
+							%[name:"", value:0],	//Skill[8] .Name:名/.Value:値(装備)
+							%[name:"", value:0],	//Skill[9] .Name:名/.Value:値(装備)
+							%[name:"", value:0],	//Skill[10].Name:名/.Value:値(装備)
+							%[name:"", value:0]		//Skill[11].Name:名/.Value:値(装備)
+			 			  ];
+			.prefix     = "";							//称号接頭語
+			.suffix     = "";							//称号接尾語
+			.prefixID   = 0;							//称号接頭語 0は付いてない
+			.suffixID   = 0;							//称号接尾語
+			.equiped    = %[weapon:"", armor:""];		//装備中アイテム
+			.equipedID  = %[weapon:0, armor:0];			//装備中アイテム
+			.equipment  = %[weapon:"", armor:""];		//装備可能アイテム
+			.equipedADD = %[pow:0, def:0, spd:0, mor:0];//装備能力補正
+			.comment    = "";							//キャラクターコメント
+			.script     = ["","","","",""];					//キャラクターコメントセリフ
+			.rank       = 0;							//等級
+			.revise     = %[pow:0, def:0, spd:0, mor:0];//能力補正
+			.strategy   = %[pow:0, def:0, spd:0, mor:0];//作戦補正
+			.poison     = 0;							//状態異常（毒）
+			.paralyze   = 0;							//状態異常（麻痺）
+			.cutDown    = %[pow:0, def:0, spd:0, mor:0];//能力値削減
+			.curse      = 0;							//状態異常（呪い）
+			.paytype	= 0; //0:food, 1:resource, 2:energy, 3:gold 4:なし
+			
+			.statickcost = 0;							//維持コスト
+			.evaluation  = 0;							//評価
+			.startemploy = 0;							//雇用開始ターン
+			
+			.parbackup  = %[pow:1, def:1, spd:1, mor:1, divine:"", special:"" ];//バックアップ
+			
+			.image= [ //画像
+				%[ file:"" ],
+				%[ file:"" ],
+				%[ file:"" ],
+				%[ file:"" ],
+				%[ file:"" ],
+				%[ file:"" ]
+				];
+				
+			d.recipe = "0x00000000000000000000000000"; //レシピ 0なし 1必要 2開放
+		}
+		return d;
+	}
+	
+	//アイテム
+	function setItemBase( d=%[], f=%[] )
+	{
+		
+		with(d)
+		{
+			.id= 0;									//id
+			.name= "";								//名前
+			.type= 0;								//種類
+			.price= 0;								//値段
+			.rarity= 0;								//希少度
+			.limit= 0;								//所持制限
+			
+			.pow         = 0;						//攻撃
+			.def         = 0;						//防御
+			.spd         = 0;						//速度
+			.mor         = 0;						//士気
+			
+			.attach       = [ 						//スキル群
+							%[name:"", value:0],	//Skill[0] .Name:名/.Value:値(固定)
+							%[name:"", value:0],	//Skill[1] .Name:名/.Value:値(固定)
+			 			  ];
+			
+			.saled		= 0;						//売却可能か？
+			.comment= "";							//コメント
+			
+			.image= [ //画像
+				%[ file:"" ],
+				%[ file:"" ],
+				%[ file:"" ],
+				];
+			
+		}
+		
+		return d;
+	}
+	
+	//称号
+	function setNameSetListBase( d=%[] )
+	{
+		d.id    = ""; //id
+		d.name  = ""; //名前
+		d.rank  =  0;
+		d.set   =  0;
+		
+		d.divine      = "";							//加護
+		d.special     = "";							//特攻(str)
+			
+		d.pow   =  0;
+		d.def   =  0;
+		d.psd   =  0;
+		d.mor   =  0;
+		
+		d.recipe = "0x00000000000000000000000000"; //メダリオンとのペア
+		
+		d.skill =  %[ name:"", value:0 ];
+		
+		d.comment= "";
+		
+		return d;
+	}
+	
+	
+	function setMyItemBase( d=%[] )
+	{
+		
+		with(d)
+		{
+			.index= 0; //id
+			.count= 0; //id
+			.enchantmax= 0; //スロット上限
+			.enchant= [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+		}
+		
+		return d;
+	}
+	
+	//スキル
+	function setSkillBase( d=%[] )
+	{
+		d.user  = ''; //使用者
+		d.id    = ''; //id
+		d.name  = ''; //名前
+		d.level =  0; //習得レベル
+		d.cost  =  0; //発動コスト
+
+		d.contents = [
+					%[pow:0,target:'',type:'',attribute:'',timer:''],
+					%[pow:0,target:'',type:'',attribute:'',timer:''],
+					%[pow:0,target:'',type:'',attribute:'',timer:''],
+				];
+
+		d.voice    = '';
+		d.image    = '';
+		
+		d.effect   =  %[target:'',name:'',type:''];
+		d.memo     = '';
+		d.comment  = '';
+
+		return d;
+	}
+	
+	//キャラクタープロパティー
+	function sset( d_, n_, i_, o_ )
+	{
+		//新規作成
+		if( d_[n_]===void ) { d_[n_]= i_; return true; }
+		//オーバーライトモード
+		if(o_) d_[n_]= i_; return true;
+		return false;
+	}
+	
+	function set( d_, i_, s_=false )
+	{
+		if( d_===void ) { d_= i_; return true; }
+		return false;
+	}
+	
+	function ss( d_, n_, i_, o_=false )
+	{
+		//新規作成
+		if( d_[n_]===void ) { d_[n_]= i_; return true; }
+		//オーバーライトモード
+		if(o_) d_[n_]= i_; return true;
+		return false;
+	}
+	
+	
+
+	
+}

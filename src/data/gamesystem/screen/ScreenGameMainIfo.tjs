@@ -1,0 +1,268 @@
+/////////////////////////////////////////////////////////////////////////
+//
+//	ScreenGameMainIfo
+//
+/////////////////////////////////////////////////////////////////////////
+//
+class ScreenGameMainIfo extends TFrame2
+{
+	//var selectLineIndex= 0;
+	//var selectMiniIndex= 0;
+	//var selectmultiIndex= -1;
+	
+	function ScreenGameMainIfo( g_, s_ ){
+		super.TFrame2(...);
+		backGround.callbackREvent2= rightClickCallBack;
+	}
+	
+	function finalize() {
+		PostReleaseScreen();
+		super.finalize(...);
+	}
+	
+	///////////////////////////////////////////////////////
+	// init
+	//
+	function onPreLoad()
+	{
+		with( panel )
+		{
+			backGround.loadImages("slg_Org_bg");
+			
+			//ui
+			.uiBase= new LayerTrueBase( kag, backGround );
+			.uiBase.setLayer( 0, 540 );
+			.uiBase.loadImages("slg_top_chip01");
+			.uiBase.drawImageFile( 312,10, "slg_topicNP" );
+			.uiBase.drawText4( 310,100, "拠点の建築物で国力に恩恵を受けられます。",0xff0000,15 );
+			.uiBase.drawText4( 310,115, "城壁…戦闘時の防御力ボーナス",0xff0000,15 );
+			.uiBase.drawText4( 310,130, "軍団経験値…戦闘時の作戦による能力ボーナス",0xff0000,15 );
+			.uiBase.drawText4( 310,145, "ターンエンド効果…ターン終了時に恩恵",0xff0000,15 );
+			
+			.uiLList= new enemyinfopanel( kag, backGround, this );
+			.uiLList.setLayer( 0, 67 );
+			
+			.uiMList= new userinfopanel( kag, backGround, this );
+			.uiMList.setLayer( 496, 67 );
+			
+			.uiBTag= new LayerTrueBase( kag, .uiBase );
+			.uiBTag.setLayer( 12, 556 );
+			.uiBTag.loadImages("slg_topicOrg");
+			
+			var c_tmp= [ 'cap_txt01','cap_txt01','cap_txt02','cap_txt03','cap_txt04','cap_txt05','cap_txt06','cap_txt07','cap_txt08' ];
+			
+			backGround.drawImageFile( 5,5, c_tmp[f.used.stat.story] );
+			backGround.drawImageFile( 130,5, cap2files(f.cap_name) );
+			
+			drawStatus();
+			
+			///////////////////////
+			
+		}
+		
+		return true;
+	}
+	
+	function onPostRelease()
+	{
+	}
+	///////////////////////////////////////////////////////
+	// show
+	//
+	function onInit()
+	{
+		backGround.setLayer( 0, 0, 960, 720, 0x00000000 );
+		backGround.visible= false;
+		backGround.opacity= 0;
+	}
+	
+	function onShow( time_, en_ )
+	{
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 0;
+		
+		backGround.beginMove( %[ time:time_, path:"(0,0,255)" ] );
+		
+		panel.uiBase.setPos( 0, 720 );
+		panel.uiBase.beginMove( %[ time:time_, path:"(0,540,255)", accel:-2 ] );
+		
+		panel.uiLList.setPos( -463, 67 );
+		panel.uiLList.beginMove( %[ time:time_, path:"(0,67,255)", accel:-2 ] );
+		
+		panel.uiMList.setPos( 960, 67 );
+		panel.uiMList.beginMove( %[ time:time_, path:"(496,67,255)", accel:-2 ] );
+		
+		
+		dm("onShow");
+	}
+	
+	function onShowEnd()
+	{
+		
+		backGround.setPos( 0, 0 );
+		backGround.visible= true;
+		backGround.opacity= 255;
+		
+		//frameWork.rckicEvent= rightClickCallBack;
+		
+		//parrentSrn.lockButton(false);
+		
+		dm("onShowEnd");
+	}
+	
+	function onHide( time_, en_ )
+	{
+
+		backGround.beginMove( %[ time:time_, path:"(0,0,0)", accel:2 ] );
+		
+		panel.uiBase.beginMove( %[ time:time_, path:"(0,720,255)", accel:2 ] );
+		panel.uiLList.beginMove( %[ time:time_, path:"(-463,67,255)", accel:2 ] );
+		panel.uiMList.beginMove( %[ time:time_, path:"(960,67,255)", accel:2 ] );
+		
+	}
+	
+	function onHideEnd()
+	{
+		backGround.visible= false;
+		backGround.opacity= 0;
+		
+		kag.KeyDown_CallBack= void;
+		
+		PostReleaseScreen();
+	}
+	
+	//表示更新
+	function drawStatus()
+	{
+		panel.uiLList.drawStatus();
+		panel.uiMList.drawStatus();
+	}
+	
+	function rightClickCallBack(){
+		parrentSrn.opt_buttom_top(0);
+	}
+	
+	//ボタンイベントの開始
+	function setEnableEvent( f_=void, f2_=void )
+	{
+		backGround.setEnableEvent(f_);
+		parrentSrn.lockButton(!f_);
+	}
+	
+	///////////////////////////////////////////////////////
+	// method
+	function cap2files(m) {
+		switch(m) {
+			case '春風の戦乙女': 		return 'cap_txta';
+			case '黄金の平原': 			return 'cap_txtb';
+			case '雷神と白狼': 			return 'cap_txtc';
+			case '銀世界に蛇は踊る': 	return 'cap_txtd';
+			case '嵐の神域': 			return 'cap_txte';
+			case '鍵を手にする者': 		return 'cap_txtf';
+			case '力を求めて': 			return 'cap_txtg';
+			case '終末の破壊神': 		return 'cap_txth';
+			case '極夜の至高神': 		return 'cap_txti';
+			case '極夜大戦': 			return 'cap_txtj';
+		}
+	}
+
+	///////////////////////////////////////////////////////
+	// callback
+	//
+	
+}
+
+///////////////////////////////////////////////////////
+//ラインセレクト
+class enemyinfopanel extends LayerTrueBase
+{
+	
+	function enemyinfopanel( win, par, pal ) {
+		super.LayerTrueBase(...);
+	}
+	
+	function finalize(){
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ){
+		super.setLayer( x_, y_, 464,470, 0x00000000 );
+		if(f.game_mode) loadImages("slg_NP_plate_01");
+		else loadImages("slg_NP_plate_03");
+		
+		drawStatus();
+	}
+	
+	////////////////////
+	//
+	function drawStatus()
+	{
+		var vv= [];
+		
+		for(var i=1; i<f.used.mapzone.count; i++ ) {
+			if( f.used.mapzone[i] ) {
+				var nn= _FRAG_TYPE[1+((3*i)+1)];
+				var vg= ca.get_enemy_status_power(i);
+				vv.add( %[ name:nn, pwr:vg.power, cnt:vg.count, frc:f.used.stat.force[i] ] );
+			}
+		}
+		
+		var cc= vv.count;
+		if( cc>10 ) cc=10;
+		
+		for(var i=0; i<cc; i++ ) {
+			drawText2( 39, 70+(40*i), "%s".sprintf(vv[i].name), 0x000000, 18 );
+			drawText2( 211, 70+(40*i), "%4d".sprintf(vv[i].pwr), 0x000000, 218 );
+			drawText2( 292, 70+(40*i), "%4d".sprintf(vv[i].cnt), 0x000000, 218 );
+			drawText2( 374, 70+(40*i), "%4d".sprintf(vv[i].frc), 0x000000, 218 );
+		}
+	}
+}
+
+///////////////////////////////////////////////////////
+//
+class userinfopanel extends LayerTrueBase
+{
+	
+	function userinfopanel( win, par, pal ) {
+		super.LayerTrueBase(...);
+	}
+	
+	function finalize() {
+		super.finalize(...);
+	}
+	
+	function setLayer( x_, y_ ) {
+		super.setLayer( x_, y_, 464,470, 0x00000000 );
+		loadImages("slg_NP_plate_02");
+		
+		drawStatus();
+	}
+	
+	////////////////////
+	//
+	function drawStatus()
+	{
+	
+		var vvp= ca.get_enemy_status_power(0);
+		
+		var vvld= f.used.stat.Land[0]+ f.used.stat.Lands[0];
+		
+		var vvhp= f.used.stat.company.hp+_STANDARD_ADDHP[f.used.difficulty];
+		var vvexp= f.used.stat.company.exp+_STANDARD_ADDEXP[f.used.difficulty];
+		var vvfc= f.used.stat.companyFc.add;
+		
+		drawText2( 359, 18, "%5d".sprintf(vvp.power), 0xffffff, 218 );
+		drawText2( 359, 52, "%5d".sprintf(vvp.count), 0xffffff, 218 );
+		drawText2( 312, 86, "%9d".sprintf(f.used.scr), 0xffffff, 218 );
+		
+		drawText2( 59, 239, "%6d".sprintf(vvld), 0xffffff, 218 );
+		drawText2( 233, 239, "%10d".sprintf(f.used.exp), 0xffffff, 218 );
+		
+		drawText2( 79, 414, "%5d".sprintf(vvhp), 0xffffff, 218 );
+		drawText2( 221, 414, "%5d".sprintf(vvexp), 0xffffff, 218 );
+		drawText2( 363, 414, "%5d".sprintf(vvfc), 0xffffff, 218 );
+	}
+}
