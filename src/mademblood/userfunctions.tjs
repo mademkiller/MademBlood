@@ -504,7 +504,7 @@ class Tuserfunctions
 				case 'cn06_b330': mp.x=44; mp.y=-273; mp.dx=401; mp.dy=338; mp.sx=78*p1; mp.sy=0; mp.sw=78; mp.sh=75; mp.face='fn06_b110'; break;
 
 				case 'cb06_a110': mp.x=-200; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a110'; break;
-				case 'cb06_a120': mp.x=-200; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a110'; break;
+				case 'cb06_a120': mp.x=-400; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a110'; break;
 				case 'cb06_a130': mp.x=-400; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a110'; break;
 				case 'cb06_a140': mp.x=-400; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a110'; break;
 				case 'cb06_a150': mp.x=-400; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a110'; break;
@@ -623,7 +623,7 @@ class Tuserfunctions
 				case 'cn17_120': mp.x=-140; mp.y=-129; mp.dx=591; mp.dy=193; mp.sx=92*p1; mp.sy=0; mp.sw=92; mp.sh=75; mp.face='fn17_110'; break;
 
 				case 'cb17_110': mp.x=-140; mp.y=-604; mp.dx=548; mp.dy=675; mp.sx=154*p1; mp.sy=0; mp.sw=154; mp.sh=148; mp.face='fb17_110'; break;
-                case 'cb22_001': mp.x=-400; mp.y=-449; mp.dx=797; mp.dy=558; mp.sx=174*p1; mp.sy=0; mp.sw=174; mp.sh=158; mp.face='fb06_a210'; break;
+                case 'cn22_001': mp.x=100; mp.y=0; mp.dx=299; mp.dy=172; mp.sx=112*p1; mp.sy=0; mp.sw=112; mp.sh=147; mp.face='njf22_001'; break;
 				///////////
 	
 				default: break;
