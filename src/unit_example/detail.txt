@@ -1,0 +1,9 @@
+﻿1.bc_face1_#id#.png   未知face
+2.bc_face2_#id#.png   #1的灰色版本
+3.bc_mini1_#id#.png   师团编成画面的miniface
+4.bc_mini2_#id#.png   #3的灰色版本
+5.bf_#id#.png	      战斗图及单位放大图
+6.df_#id#.png         征兵画面
+7.hs_#id#.png         上部详细说明画面
+8.um_#id#.png         可能是特技画面
+9.uw_#id#.png         部队缩略图画面 (142 * 44， 单位大小75*22， 位于右上方)
