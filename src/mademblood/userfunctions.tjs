@@ -625,6 +625,7 @@ class Tuserfunctions
 				case 'cb17_110': mp.x=-140; mp.y=-604; mp.dx=548; mp.dy=675; mp.sx=154*p1; mp.sy=0; mp.sw=154; mp.sh=148; mp.face='fb17_110'; break;
                 case 'cn22_001': mp.x=100; mp.y=0; mp.dx=199; mp.dy=172; mp.sx=112*p1; mp.sy=0; mp.sw=112; mp.sh=114; mp.face='njf22_002'; break;
 				case 'cnzjl_001': mp.x=200; mp.y=0; mp.dx=196; mp.dy=176; mp.sx=80*p1; mp.sy=0; mp.sw=80; mp.sh=91; mp.face='zjlf_001'; break;
+                                case 'cnft_001': mp.x=350; mp.y=0; mp.dx=139; mp.dy=132; mp.sx=98*p1; mp.sy=0; mp.sw=98; mp.sh=98; mp.face='cff_001'; break;
 				///////////
 	
 				default: break;
