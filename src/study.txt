@@ -10,7 +10,20 @@ ca.exchenge_teritory_maps(42,9);
    c. 编队框里图片(bf_mini1_5001): 30 * 30, 只有头。需要两张，第二张把brightness调低。
    d. 编队右边头像(bf_face1_5001)： 48 * 64, 需要背景，需要两张，第二张调暗。 头像放在上半部分。
    e. 战斗界面缩略图(uw_5001): 144 * 44, 半脸，高度22， 放在右上角。
-   f. um_5001, 未知，400 * 320
+   f. um_5001, 未知，400 * 320 雇佣画面
    g. 如果是雇佣兵，征兵界面需要df_5001、
 
-chaptercall.ks, 背景图片 960 * 720
+4.chaptercall.ks, 背景图片 960 * 720
+
+5.调教系统:
+  a. 调教按钮： ScreenGameMainCal.tjs, function: setLayer:
+     selectBtn[0].loadImages("slg_call_bt01");
+  b. 人物图片： ScreenGameMainCal.tjs, .uiPMList9.setLayer( 736, 0, "slg_call_ch22a" );
+  c. update: ScreenGameLoop.tjs, function char_friendship_tring()
+  d. initial: ScreenGameMainCal.tjs
+     var ct2= [
+	 			f.used.調教値.Tilca,f.used.調教値.Freya,f.used.調教値.Thor,f.used.調教値.Regret,f.used.調教値.Odin,
+	 			0,0,0,0,f.used.調教値.NjTest
+	 		];
+  e. draw status: ScreenGameMainCal.tjs function drawStatus(), line 340
+     fn是神性比

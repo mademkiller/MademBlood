@@ -1,11 +1,11 @@
 [Output]
 Executable=0
-OutputFileName=D:\git\MademBlood\game_test\patch4.xp3
+OutputFileName=D:\madem\MademBlood\gametest\patch4.xp3
 
 [Extensions]
 Compress=
 Store=.png
-Discard=
+Discard=.rpf
 
 [Options]
 DoCompressSizeLimit=1
