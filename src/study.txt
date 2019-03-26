@@ -27,3 +27,8 @@ ca.exchenge_teritory_maps(42,9);
 	 		];
   e. draw status: ScreenGameMainCal.tjs function drawStatus(), line 340
      fn是神性比
+
+6.徽章
+  开放: f.used.medalionopen
+  位置：f.used.medalionopen[_MEDALION_POS[ii]]
+  
