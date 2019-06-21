@@ -55,7 +55,7 @@ def produce_uw(path, id, source, size):
     target.save('uw_%s.png' % id)
 
 
-def produce_bf_df(path, bg_path, id, source, size):
+def produce_bf_df_um(path, bg_path, id, source, size):
     image = Image.open(path)
     body = get_body(image, source, size).resize((450, 450), Image.ANTIALIAS)
     body.save('bf_%s.png' % id)
@@ -69,6 +69,10 @@ def produce_bf_df(path, bg_path, id, source, size):
     target.paste(body, (1, 1), mask=a)
     target.paste(body, (87, 1), mask=a)
     target.save('df_%s.png' % id)
+    n_size = (size[0] * 1.25, size[1])
+    n_source = (source[0] - size[0] * 0.21, source[1]);
+    body = get_body(image, n_source, n_size).resize((400, 320), Image.ANTIALIAS)
+    body.save('um_%s.png' % id)
 
 def process(id, face_path, fight_path, config_path):
     import csv
@@ -87,12 +91,12 @@ def process(id, face_path, fight_path, config_path):
             elif row[0] == 'uw':
                 produce_uw(face_path, id, (int(row[1]), int(row[2])), (int(row[3]), int(row[4])))
             elif row[0] == 'bf_df':
-                produce_bf_df(fight_path, 'df_bg.png', id,
+                produce_bf_df_um(fight_path, 'df_bg.png', id,
                               (int(row[1]), int(row[2])), (int(row[3]), int(row[4])))
             else:
                 raise Exception('Unexpected key')
 
-process('0010', 'r.png', 'r2.png', '0010.csv')
+process('1300', 'r.png', 'r2.png', '1300.csv')
 #produce_hs('r.png', 'char_background.png', '0010', (648, 135), (636, 561))
 #produce_bc_mini('r.png', '0010', (785, 168), (336, 336))
 #produce_bc_face('r.png', 'face_mask.png', '0010', (722,147), (450, 600))

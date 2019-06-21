@@ -6,6 +6,7 @@ import math
 def transpose_image(path, output_path, reduce_ratio=0.95, optimize_steps=10, color_difference_range=50.0, threshold=0.15):
     img = Image.open(path)
     width, height = img.size
+    img.convert("RGBA")
     data = np.array(img)
     alpha = np.zeros((height, width, 1), dtype=data.dtype)
     alpha.fill(255)
