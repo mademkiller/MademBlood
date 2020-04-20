@@ -49,8 +49,8 @@ kag.historyLayer.clear();
 
 [bgm storage="bgm01"]
 
-@LoopScrollinit forevisible=true backvisible=true
-;@image layer=0 page=fore storage="sys_title_chip04" visible=true left=0 top=0 opacity=0
+@LoopScrollinit forevisible=false backvisible=true
+//;@image layer=0 page=fore storage="sys_title_chip04" visible=true left=0 top=0 opacity=0
 @image layer=1 page=fore storage="sys_title_chip03" visible=true left=0 top=0 opacity=0
 ;@image layer=2 page=fore storage="sys_title_chip02" visible=true left=0 top=0 opacity=0
 ;@image layer=3 page=fore storage="sys_title_chip01" visible=true left=0 top=0 opacity=0
@@ -222,13 +222,13 @@ kag.historyLayer.clear();
 [endscript]
 
 ;•\Ž¦
-@cloudinit forevisible=true backvisible=true
+//@cloudinit forevisible=true backvisible=true
 ;@move layer=0 time=500 path="(0,0,255)" accel=-2
-@move layer=1 time=750 path="(0,0,255)" accel=-2
+@move layer=1 time=200 path="(0,0,255)" accel=-2
 ;@move layer=2 time=1000 path="(0,0,192)" accel=-2
-@move layer=3 time=1250 path="(0,0,255)" accel=-2
+@move layer=3 time=500 path="(0,0,255)" accel=-2
 
-@wait time=1000
+@wait time=300
 
 ;@move layer=0 time=30000 path="(-200,0,255)"
 ;@backlay
