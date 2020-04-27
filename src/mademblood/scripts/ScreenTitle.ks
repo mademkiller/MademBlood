@@ -91,7 +91,7 @@ kag.historyLayer.clear();
 		panel.menu.soundfile= %[ enter:"A1_12219s", leave:"", select:"", click:"A1_12217s" ];
 		//panel.menu.buttomDoubleChecked= true;
 
-		var text_= "ver.1.0.0";
+		var text_= "ver.0.0.1";
 		//backGround.fillRect( 25,695, 200,30, 0xff000000 );
 		//12-1,14+1,16+3,18+5,20+7,22+9,24+11
 		//backGround.setFontSize(124);
@@ -122,14 +122,14 @@ kag.historyLayer.clear();
 					core2.screen.save.saveModeSet= false;
 					core2.screen.save.ShowScreen( 300 );
 					//‰_‚Æ”wŒi‚ğˆê“I‚É~‚ß‚é
-					cloud_object.timer.enabled= false;
-					LoopScroll_object.timer.enabled= false;
+					//cloud_object.timer.enabled= false;
+					//LoopScroll_object.timer.enabled= false;
 					break;
 				case 2:
 					core2.screen.config.ShowScreen( 300 );
 					//‰_‚Æ”wŒi‚ğˆê“I‚É~‚ß‚é
-					cloud_object.timer.enabled= false;
-					LoopScroll_object.timer.enabled= false;
+					//cloud_object.timer.enabled= false;
+					//LoopScroll_object.timer.enabled= false;
 					break;
 				//case 3: kag.processCall( '', "*title_extra" ); break;
 				case 3:
@@ -208,8 +208,8 @@ kag.historyLayer.clear();
 		panel.menu.buttom_Reset();
 		
 		//‰_‚Æ”wŒi‚ğ•œ‹A
-		cloud_object.timer.enabled= true;
-		LoopScroll_object.timer.enabled= true;
+		//cloud_object.timer.enabled= true;
+		//LoopScroll_object.timer.enabled= true;
 	}incontextof core2.screen.kag;
 
 	//”ñ•\¦‚Ìİ’è
