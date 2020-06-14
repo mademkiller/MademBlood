@@ -4,7 +4,7 @@ OutputFileName=C:\git\MademBlood\gametest\patch4.xp3
 
 [Extensions]
 Compress=
-Store=.png
+Store=.png,.py
 Discard=.rpf
 
 [Options]
