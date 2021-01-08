@@ -96,7 +96,7 @@ def process(id, face_path, fight_path, config_path):
             else:
                 raise Exception('Unexpected key')
 
-process('1300', 'r.png', 'r2.png', '1300.csv')
+process('0170', 'r.png', 'r2.png', '0170.csv')
 #produce_hs('r.png', 'char_background.png', '0010', (648, 135), (636, 561))
 #produce_bc_mini('r.png', '0010', (785, 168), (336, 336))
 #produce_bc_face('r.png', 'face_mask.png', '0010', (722,147), (450, 600))

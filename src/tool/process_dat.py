@@ -166,8 +166,19 @@ def main():
     output_path = args[1]
     content = trim(getContent(input_path))
     index, big_object = process_content(content, 0, len(content) - 1)
-    for cha in big_object:
-        cha['recipe'] = '"0x00000000000000011000000000000"'
+
+    i = 4
+    level = 9;
+    while i < 10:
+        for a in big_object[i]['dev']:
+            if a['id'] == '0':
+                a['id'] = '5003'
+                a['level'] = str(level)
+                level += 1
+                break
+        i += 1
+    #for cha in big_object:
+    #    cha['recipe'] = '"0x00000000000000011000000000000"'
     write_to_file(big_object, output_path)
 
 if __name__ == "__main__":
