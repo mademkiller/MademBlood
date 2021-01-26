@@ -638,6 +638,7 @@ class Tuserfunctions
 				case 'cnft_006': mp.x=220; mp.y=0; mp.dx=222; mp.dy=201; mp.sx=82*p1; mp.sy=0; mp.sw=82; mp.sh=100; mp.face='cfft_006'; break;
                 case 'cnft_007': mp.x=220; mp.y=0; mp.dx=223; mp.dy=176; mp.sx=82*p1; mp.sy=0; mp.sw=82; mp.sh=83; mp.face='cfft_007'; break;
 				case 'cnft_008': mp.x=250; mp.y=0; mp.dx=257; mp.dy=211; mp.sx=94*p1; mp.sy=0; mp.sw=94; mp.sh=107; mp.face='cfft_008'; break;
+				case 'cnft_009': mp.x=220; mp.y=0; mp.dx=162; mp.dy=21; mp.sx=166*p1; mp.sy=0; mp.sw=166; mp.sh=107; mp.face='cfft_009'; break;
 				///////////
 	
 				default: break;
