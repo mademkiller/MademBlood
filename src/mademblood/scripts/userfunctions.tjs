@@ -629,6 +629,7 @@ class Tuserfunctions
 				case 'cnnj_003': mp.x=220; mp.y=0; mp.dx=252; mp.dy=141; mp.sx=75*p1; mp.sy=0; mp.sw=75; mp.sh=69; mp.face='cff_003'; break;
 				case 'cnnj_004': mp.x=220; mp.y=0; mp.dx=228; mp.dy=134; mp.sx=74*p1; mp.sy=0; mp.sw=74; mp.sh=76; mp.face='cff_004'; break;
 				case 'cnnj_005': mp.x=220; mp.y=0; mp.dx=215; mp.dy=169; mp.sx=105*p1; mp.sy=0; mp.sw=105; mp.sh=126; mp.face='cff_005'; break;
+				case 'cnnj_006': mp.x=220; mp.y=0; mp.dx=199; mp.dy=124; mp.sx=82*p1; mp.sy=0; mp.sw=82; mp.sh=92; mp.face='cff_006'; break;
 				
 				case 'cnft_001': mp.x=220; mp.y=0; mp.dx=224; mp.dy=180; mp.sx=87*p1; mp.sy=0; mp.sw=87; mp.sh=96; mp.face='cfft_001'; break;
 				case 'cnft_002': mp.x=220; mp.y=0; mp.dx=214; mp.dy=158; mp.sx=84*p1; mp.sy=0; mp.sw=84; mp.sh=87; mp.face='cfft_002'; break;
